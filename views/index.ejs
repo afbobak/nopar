@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <ul>
+    <% var packages = Object.keys(registry).sort();
+       for (var i = 0; i < packages.length; i++) {
+         var pkgName = packages[i];
+         var pkg = registry[pkgName]; %>
+       <li>
+         <h2><a href="/<%= pkgName %>"><%= pkgName %></a></h2>
+         <ul><% var versions = Object.keys(pkg.versions).sort();
+                for (var j = 0; j < versions.length; j++) {
+                  var version = versions[j];
+                  var pkgUrl;
+                  if (pkg.versions[version].dist) {
+                    pkgUrl = pkg.versions[version].dist.tarball;
+                  } else {
+                    version += " (no dist tag)";
+                  }
+                   %>
+            <li><a href="<%= pkgUrl %>"><%= version %></a></li>
+            <% } %>
+         </ul>
+       </li>
+    <% } %>
+    </ul>  </body>
+</html>

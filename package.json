@@ -1,0 +1,35 @@
+{
+  "name": "abstrakt-npm-registry",
+  "version": "0.0.1-dev",
+  "description": "Abstrakt NPM Registry & Proxy",
+  "main": "lib/server.js",
+  "scripts": {
+    "start": "abstrakt-registry",
+    "test": "buster-test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@tg4.afb-studio.com:abstrakt/npm-registry"
+  },
+  "keywords": [
+    "npm",
+    "registry",
+    "proxy"
+  ],
+  "author": "Andreas F. Bobak (bobak@abstrakt.ch)",
+  "license": "BSD",
+  "dependencies": {
+    "ejs": "~0.8.3",
+    "express": "3.0.x",
+    "mustache": "0.7.x",
+    "winston": "0.6.x",
+    "stylus": "0.31.x"
+  },
+  "devDependencies": {
+    "buster": "0.6.x",
+    "buster-lint": "0.3.x"
+  },
+  "engines": {
+    "node": "0.8.x"
+  }
+}
