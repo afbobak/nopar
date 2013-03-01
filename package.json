@@ -1,10 +1,10 @@
 {
-  "name": "abstrakt-npm-registry",
+  "name": "nopar",
   "version": "0.0.1-dev",
-  "description": "Abstrakt NPM Registry & Proxy",
+  "description": "Abstrakt Node Package Registry & Proxy",
   "main": "lib/server.js",
   "scripts": {
-    "start": "abstrakt-registry",
+    "start": "nopar",
     "test": "buster-test"
   },
   "repository": {

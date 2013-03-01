@@ -2,7 +2,7 @@
 
 CONFIG=$1
 if [ "${CONFIG}" = "" ]; then
-  CONFIG=/etc/default/abstrakt-registry
+  CONFIG=/etc/default/nopar
 fi
 
 if [[ -f "${DEFAULT}" ]]; then
