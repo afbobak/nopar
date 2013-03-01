@@ -24,7 +24,7 @@
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="brand" href="/">Abstrakt Registry</a>
+          <a class="brand" href="/">Abstrakt Registry /<small><%= version %></small></a>
           <form class="navbar-form pull-right" action="/">
             <input class="span2" type="text" name="q" placeholder="Search" value="<%= query %>">
             <button type="submit" class="btn"><i class="icon-search"></i></button>
@@ -34,7 +34,6 @@
     </div>
 
     <div class="container">
-      <h1><%= title %></h1>
       <% if (message) {%>
         <div class="alert alert-success">
           <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -52,11 +51,16 @@
          <li class="package accordion-group">
            <h2 class="accordion-heading">
              <div class="actions btn-group">
-               <a class="btn btn-small action-json" href="/<%= pkgName %>"><i class="icon-download-alt"></i> JSON</a>
+               <a class="btn btn-small action-json" href="<%= latest.dist.tarball %>"><i class="icon-download-alt"></i> Latest</a>
+               <a class="btn btn-small action-json" href="/<%= pkgName %>">JSON</a>
              </div>
              <a href="#<%= pkgName %>-versions" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion-packages">
                <%= pkgName %>
                <small>@<%= latest.version %></small>
+               <div class="tags">
+                 <% if (pkg["_proxied"]) { %><div class="label label-warning">proxied</div><% } %>
+                 <% if (pkg["_local"]) { %><div class="label label-success">local</div><% } %>
+               </div>
              </a>
            </h2>
            <div id="<%= pkgName %>-versions" class="accordion-body collapse<% if (packages.length === 1) { %> in<% } %>">
@@ -98,6 +102,7 @@
                       </ul>
                    </td>
                </table>
+               <% if (pkg._readme) { %><div class="readme"><%- pkg._readme %></div><% } %>
              </div>
              <!-- span class="label label-inverse">proxied</span -->
            </div>

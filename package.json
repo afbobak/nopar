@@ -20,8 +20,9 @@
   "license": "BSD",
   "dependencies": {
     "ejs": "~0.8.3",
-    "express": "3.0.x",
+    "express": "~3.0.1",
     "mustache": "0.7.x",
+    "node-markdown": "~0.1.1",
     "winston": "0.6.x",
     "stylus": "0.31.x"
   },

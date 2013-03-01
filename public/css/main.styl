@@ -1,5 +1,10 @@
-h1 {
+body {
   margin-top : 50px;
+}
+
+.brand small {
+  margin-left : 4px;
+  font-size   : 12px;
 }
 
 ul.packages {
@@ -16,6 +21,16 @@ ul.packages {
       .accordion-toggle {
         padding-top    : 0;
         padding-bottom : 0;
+
+        &:hover {
+          background      : #f7f7f9;
+          text-decoration : none;
+        }
+      }
+
+      small {
+        position : relative;
+        top      : -2px;
       }
 
       .actions {
@@ -23,6 +38,13 @@ ul.packages {
         position : relative;
         top      : 3px;
         right    : 7px;
+      }
+
+      .tags {
+        float    : right;
+        position : relative;
+        top      : -7px;
+        right    : 20px;
       }
     }
 
@@ -45,7 +67,7 @@ ul.packages {
         }
       }
 
-      ul {
+      ul.versions {
         margin     : 0;
         list-style : none;
       }

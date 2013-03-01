@@ -1,5 +1,9 @@
-h1 {
+body {
   margin-top: 50px;
+}
+.brand small {
+  margin-left: 4px;
+  font-size: 12px;
 }
 ul.packages {
   margin-left: 0;
@@ -16,11 +20,25 @@ ul.packages > li h2.accordion-heading .accordion-toggle {
   padding-top: 0;
   padding-bottom: 0;
 }
+ul.packages > li h2.accordion-heading .accordion-toggle:hover {
+  background: #f7f7f9;
+  text-decoration: none;
+}
+ul.packages > li h2.accordion-heading small {
+  position: relative;
+  top: -2px;
+}
 ul.packages > li h2.accordion-heading .actions {
   float: right;
   position: relative;
   top: 3px;
   right: 7px;
+}
+ul.packages > li h2.accordion-heading .tags {
+  float: right;
+  position: relative;
+  top: -7px;
+  right: 20px;
 }
 ul.packages > li .accordion-body .actions {
   float: right;
@@ -32,7 +50,7 @@ ul.packages > li .accordion-body .details table th {
   padding-left: 0;
   width: 100px;
 }
-ul.packages > li .accordion-body ul {
+ul.packages > li .accordion-body ul.versions {
   margin: 0;
   list-style: none;
 }
