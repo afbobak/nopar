@@ -1,8 +1,38 @@
-body {
-  padding : 50px;
-  font    : 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+h1 {
+  margin-top : 50px;
 }
 
-a {
-  color : #00B7FF;
+ul.packages {
+  margin-left : 0;
+  list-style  : none;
+
+  > li {
+    margin-bottom : 20px;
+
+    h2.accordion-heading {
+      margin  : 0;
+      padding : 0;
+
+      .accordion-toggle {
+        padding-top    : 0;
+        padding-bottom : 0;
+      }
+
+      .actions {
+        float    : right;
+        position : relative;
+        top      : 3px;
+        right    : 7px;
+      }
+    }
+
+    .accordion-body {
+      .actions {
+        float    : right;
+        position : relative;
+        top      : 5px;
+        right    : 0px;
+      }
+    }
+  }
 }

@@ -1,7 +1,30 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+h1 {
+  margin-top: 50px;
 }
-a {
-  color: #00b7ff;
+ul.packages {
+  margin-left: 0;
+  list-style: none;
+}
+ul.packages > li {
+  margin-bottom: 20px;
+}
+ul.packages > li h2.accordion-heading {
+  margin: 0;
+  padding: 0;
+}
+ul.packages > li h2.accordion-heading .accordion-toggle {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+ul.packages > li h2.accordion-heading .actions {
+  float: right;
+  position: relative;
+  top: 3px;
+  right: 7px;
+}
+ul.packages > li .accordion-body .actions {
+  float: right;
+  position: relative;
+  top: 5px;
+  right: 0px;
 }
