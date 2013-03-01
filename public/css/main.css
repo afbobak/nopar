@@ -28,3 +28,11 @@ ul.packages > li .accordion-body .actions {
   top: 5px;
   right: 0px;
 }
+ul.packages > li .accordion-body .details table th {
+  padding-left: 0;
+  width: 100px;
+}
+ul.packages > li .accordion-body ul {
+  margin: 0;
+  list-style: none;
+}
