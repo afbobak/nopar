@@ -27,4 +27,5 @@ if [ "${NOPAR_RUNAS_USER}" = "" ]; then
   node lib/server.js
 else
   sudo -u ${NOPAR_RUNAS_USER} nohup node lib/server.js > "${NOPAR_RUN_PATH}/./start.log" &
+  echo $! > nopar.pid
 fi
