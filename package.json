@@ -4,7 +4,7 @@
   "description": "Abstrakt Node Package Registry & Proxy",
   "main": "lib/server.js",
   "scripts": {
-    "start": "nopar",
+    "start": "./bin/nopar",
     "test": "buster-test"
   },
   "repository": {

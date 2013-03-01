@@ -1,0 +1,31 @@
+#!/bin/bash
+
+CONFIG=$1
+if [ "${CONFIG}" = "" ]; then
+  CONFIG=/etc/default/nopar
+fi
+
+NOPAR_HOSTNAME=localhost
+NOPAR_PORT=5984
+NOPAR_LOGFILE=
+NOPAR_LOGLEVEL=info
+NOPAR_REGISTRY_PATH=
+NOPAR_PATH=
+NOPAR_RUN_PATH=
+NOPAR_RUNAS_USER=
+
+if [[ -f "${CONFIG}" ]]; then
+  . ${CONFIG}
+fi
+
+if [ "${NOPAR_PATH}" = "" ]; then
+  NOPAR_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"/..
+fi
+
+cd "${NOPAR_PATH}"
+if [ "${NOPAR_RUNAS_USER}" = "" ]; then
+  node lib/server.js
+else
+  sudo -u ${NOPAR_RUNAS_USER} nohup node lib/server.js > "${NOPAR_RUN_PATH}/./start.log" &
+  echo $! > nopar.pid
+fi
