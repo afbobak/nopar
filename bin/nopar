@@ -15,7 +15,7 @@ if [ "${CONFIG}" = "" ]; then
   CONFIG=/etc/default/nopar
 fi
 
-if [[ -f "${CONFIG}" ]]; then
+if test -f ${CONFIG}; then
   . ${CONFIG}
 fi
 
@@ -36,6 +36,15 @@ cd "${NOPAR_HOME}"
 if [ "${NOPAR_RUNAS_USER}" = "" ]; then
   node lib/server.js
 else
-  sudo -u ${NOPAR_RUNAS_USER} nohup node lib/server.js > "${NOPAR_RUN_PATH}/./start.log" &
-  echo $! > nopar.pid
+  ( sudo -u ${NOPAR_RUNAS_USER} nohup env -i \
+    NOPAR_HOSTNAME=$NOPAR_HOSTNAME \
+    NOPAR_PORT=$NOPAR_PORT \
+    NOPAR_LOGFILE=$NOPAR_LOGFILE \
+    NOPAR_LOGLEVEL=$NOPAR_LOGLEVEL \
+    NOPAR_REGISTRY_PATH=$NOPAR_REGISTRY_PATH \
+    NOPAR_HOME=$NOPAR_HOME \
+    NOPAR_RUN_PATH=$NOPAR_RUN_PATH \
+    NOPAR_RUNAS_USER=$NOPAR_RUNAS_USER \
+    node lib/server.js > "${NOPAR_RUN_PATH}/./start.log" 2>&1 ) &
+  echo $! > ${NOPAR_RUN_PATH}/./nopar.pid
 fi
