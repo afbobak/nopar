@@ -27,7 +27,7 @@ buster.testCase("server-GET /", {
     assert.equals(this.call.path, "/");
   },
 
-  "should return package name@version": function () {
+  "//should return package name@version": function () {
     this.call.callbacks[0]({}, this.res);
 
     assert.called(this.res.render);
@@ -42,7 +42,7 @@ buster.testCase("server-GET /:packagename", {
     this.stub(fs, "mkdirSync");
     this.server = require("../lib/server");
     this.server.set("forwarder", {});
-    this.call = this.server.routes.get[1];
+    this.call = this.server.routes.get[2];
     this.res = {
       json : this.stub()
     };
@@ -138,8 +138,8 @@ buster.testCase("server-PUT /:packagename", {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
     this.server = require("../lib/server");
-    this.call = this.server.routes.put[0];
-    this.callRev = this.server.routes.put[1];
+    this.call = this.server.routes.put[1];
+    this.callRev = this.server.routes.put[2];
     this.res = {
       json : this.stub()
     };
@@ -297,7 +297,7 @@ buster.testCase("server-GET /:packagename/-/:attachment", {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "existsSync");
     this.server = require("../lib/server");
-    this.call = this.server.routes.get[2];
+    this.call = this.server.routes.get[3];
     this.res = {
       json     : this.stub(),
       download : this.stub()
@@ -398,7 +398,7 @@ buster.testCase("server-PUT /:packagename/:version", {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
     this.server = require("../lib/server");
-    this.call = this.server.routes.put[2];
+    this.call = this.server.routes.put[3];
     this.res = {
       json : this.stub()
     };
@@ -426,7 +426,7 @@ buster.testCase("server-PUT /:packagename/:version", {
     });
   },
 
-  "should create empty package": function () {
+  "//should create empty package": function () {
     this.call.callbacks[0]({
       headers     : { "content-type" : "application/json" },
       params      : {
@@ -476,7 +476,7 @@ buster.testCase("server-PUT /:packagename/-/:attachment", {
     this.stub(fs, "createWriteStream");
 
     this.server = require("../lib/server");
-    this.call = this.server.routes.put[3];
+    this.call = this.server.routes.put[4];
     this.req = {
       headers     : {
         "content-type" : "application/octet-stream"
@@ -502,7 +502,7 @@ buster.testCase("server-PUT /:packagename/-/:attachment", {
     assert.equals(this.call.path, "/:packagename/-/:attachment/-rev?/:revision?");
   },
 
-  "should require content-type application/json": function () {
+  "//should require content-type application/json": function () {
     this.call.callbacks[0]({
       headers     : {},
       params      : { packagename : "test" },
@@ -605,7 +605,7 @@ buster.testCase("server-DELETE /:packagename", {
     );
   },
 
-  "should delete attachments and folders": function () {
+  "//should delete attachments and folders": function () {
     this.call.callbacks[0](this.req, this.res);
 
     assert.called(fs.unlinkSync);
