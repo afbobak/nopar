@@ -1,4 +1,14 @@
 #!/bin/bash
+#
+# Configuration Variables:
+#  NOPAR_HOSTNAME=localhost
+#  NOPAR_PORT=5984
+#  NOPAR_LOGFILE=
+#  NOPAR_LOGLEVEL=info
+#  NOPAR_REGISTRY_PATH=
+#  NOPAR_HOME=
+#  NOPAR_RUN_PATH=
+#  NOPAR_RUNAS_USER=
 
 CONFIG=$1
 if [ "${CONFIG}" = "" ]; then
@@ -7,17 +17,17 @@ fi
 
 if [[ -f "${CONFIG}" ]]; then
   . ${CONFIG}
-else
-  NOPAR_HOSTNAME=localhost
-  NOPAR_PORT=5984
-  NOPAR_LOGFILE=
-  NOPAR_LOGLEVEL=info
-  NOPAR_REGISTRY_PATH=
-  NOPAR_HOME=
-  NOPAR_RUN_PATH=
-  NOPAR_RUNAS_USER=
 fi
 
+if [ "${NOPAR_HOSTNAME}" = "" ]; then
+  NOPAR_HOSTNAME=localhost
+fi
+if [ "${NOPAR_PORT}" = "" ]; then
+  NOPAR_PORT=5984
+fi
+if [ "${NOPAR_LOGLEVEL}" = "" ]; then
+  NOPAR_LOGLEVEL=info
+fi
 if [ "${NOPAR_HOME}" = "" ]; then
   NOPAR_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"/..
 fi
