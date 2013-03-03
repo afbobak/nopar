@@ -54,7 +54,7 @@
                <a class="btn btn-small action-json" href="<%= latest.dist.tarball %>"><i class="icon-download-alt"></i> Latest</a>
                <a class="btn btn-small action-json" href="/<%= pkgName %>">JSON</a>
              </div>
-             <a href="#<%= pkgName %>-versions" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion-packages">
+             <a href="#<%= pkgName.replace(".", "-") %>-versions" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion-packages">
                <%= pkgName %>
                <small>@<%= latest.version %></small>
                <div class="tags">
@@ -63,7 +63,7 @@
                </div>
              </a>
            </h2>
-           <div id="<%= pkgName %>-versions" class="accordion-body collapse<% if (packages.length === 1) { %> in<% } %>">
+           <div id="<%= pkgName.replace(".", "-") %>-versions" class="accordion-body collapse<% if (packages.length === 1) { %> in<% } %>">
              <div class="actions btn-group pull-right">
                <a class="btn btn-small btn-link action-delete" href="/-delete/<%= pkgName %>">
                  <i class="icon-trash"></i> Delete Package
