@@ -1,5 +1,5 @@
 body {
-  margin-top : 50px;
+  margin-top : 60px;
 }
 
 .brand small {
@@ -72,5 +72,47 @@ ul.packages {
         list-style : none;
       }
     }
+  }
+}
+
+#content {
+  margin-bottom : 40px;
+}
+
+#footer {
+  position   : fixed;
+  height     : 40px;
+
+  .container {
+    margin-top : 8px;
+  }
+
+  .result-info {
+    float : left;
+  }
+  .credit {
+    float : right;
+  }
+}
+
+@media (max-width: 799px) {
+  body {
+    margin-top : 0;
+  }
+
+  #footer .navbar-inner {
+    padding-top : 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .navbar .navbar-form input {
+    display : inline;
+    width   : 120px;
+  }
+
+  #footer {
+    margin-left  : 0;
+    margin-right : 0;
   }
 }
