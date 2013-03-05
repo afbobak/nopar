@@ -14,6 +14,6 @@ rm -fr \
  views \
  package.json \
  README.md
-tar xvzf nopar.tgz
+tar xzf nopar.tgz
 
 /usr/local/nopar/bin/nopar

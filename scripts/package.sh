@@ -6,7 +6,7 @@ PKG_VERSION=`node -e 'process.stdout.write(require("./package.json").version);'`
 rm -fr node_modules
 npm install --production
 
-tar cvzf ${PKG_NAME}.tgz \
+tar czf ${PKG_NAME}.tgz \
  bin \
  lib \
  node_modules \
