@@ -7,6 +7,7 @@ var buster = require("buster");
 var assert = buster.assertions.assert;
 var refute = buster.assertions.refute;
 var fs     = require("fs");
+var http   = require("http");
 var path   = require("path");
 
 // ==== Test Case
@@ -104,7 +105,26 @@ buster.testCase("server-GET /:packagename", {
     assert.calledWith(this.res.json, 200, registry.pkg.versions["0.0.1"]);
   },
 
-  "//should get package from forwarder": function () {
+  "should get full package JSON from forwarder": function () {
+    this.stub(http, "get").returns({on : this.spy()});
+    this.server.set("forwarder", {registry : "http://u.url/the/path/"});
+
+    this.call.callbacks[0]({
+      params : {
+        packagename : "fwdpkg",
+        version     : "0.0.1"
+      }
+    }, this.res);
+
+    assert.called(http.get);
+    assert.calledWith(http.get, {
+      hostname : "u.url",
+      port     : undefined,
+      path     : "/the/path/fwdpkg"
+    });
+  },
+
+  "//should rewrite attachment urls": function () {
   }
 
 });

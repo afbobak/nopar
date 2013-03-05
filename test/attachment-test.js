@@ -110,6 +110,22 @@ buster.testCase("server-GET /:packagename/-/:attachment", {
   },
 
   "//should download attachment from forwarder": function () {
+    fs.existsSync.returns(false);
+    var registry = {
+      "test" : {
+        "_fwd-dists" : { "test-0.0.1-dev.tgz" : "http://fwd.url/pkg.tgz" },
+        "versions" : {
+          "0.0.1-dev" : {
+            "dist" : {
+              "tarball" : "test-0.0.1-dev.tgz"
+            }
+          }
+        }
+      }
+    };
+    this.server.set("registry", JSON.parse(JSON.stringify(registry)));
+
+    //TODO finish unit test
   }
 });
 
