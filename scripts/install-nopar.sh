@@ -9,16 +9,19 @@ fi
 
 if test -f ${CONFIG}; then
   . ${CONFIG}
+else
+  echo "Missing configuration file."
+  exit 5
 fi
 
-cd /usr/local/nopar
+cd ${NOPAR_HOME}
 
 PID_FILE="${NOPAR_RUN_PATH}/nopar.pid"
 if test -f ${PID_FILE}; then
-  PID=`cat /var/run/nopar/nopar.pid`
+  PID=`cat ${PID_FILE}`
   echo "== Stopping existing server running at $PID"
   kill $PID
-  rm /var/run/nopar/nopar.pid
+  rm ${PID_FILE}
 fi
 
 echo "== Removing old files"
