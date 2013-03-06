@@ -1,0 +1,27 @@
+# vim:syntax=apparmor
+#include <tunables/global>
+
+/usr/local/nopar/bin/nopar {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  capability sys_resource,
+  capability setgid,
+  capability setuid,
+
+  network tcp,
+
+  /etc/hosts.allow r,
+  /etc/hosts.deny r,
+
+  /etc/default/nopar r,
+  /usr/bin/node mr,
+  /usr/local/nopar/** r,
+  /var/log/nopar/nopar.log rw,
+  /var/lib/nopar/** rw,
+  /var/run/nopar/nopar.pid w,
+  /var/run/nopar/start.log w,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.local.nopar>
+}
