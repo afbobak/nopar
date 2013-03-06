@@ -8,7 +8,7 @@ echo "==== Packaging ${PKG_NAME}@${PKG_VERSION} ===="
 rm -fr node_modules
 npm install --production
 
-tar -c -s ,^,${PKG_NAME}-${PKG_VERSION}/, --owner=root --group=root -z -f ${PKG_NAME}-${PKG_VERSION}.tgz \
+tar -c --transform s,^,${PKG_NAME}-${PKG_VERSION}/, --owner=root --group=root -z -f ${PKG_NAME}-${PKG_VERSION}.tgz \
  bin \
  lib \
  node_modules \
