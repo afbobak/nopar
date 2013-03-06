@@ -8,7 +8,7 @@ echo "==== Packaging ${PKG_NAME}@${PKG_VERSION} ===="
 rm -fr node_modules
 npm install --production
 
-tar -c --owner=root --group=root -z -f ${PKG_NAME}.tgz \
+tar -c -s ,^,${PKG_NAME}-${PKG_VERSION}/, --owner=root --group=root -z -f ${PKG_NAME}-${PKG_VERSION}.tgz \
  bin \
  lib \
  node_modules \
@@ -17,5 +17,6 @@ tar -c --owner=root --group=root -z -f ${PKG_NAME}.tgz \
  views \
  package.json \
  README.md
+echo ${PKG_NAME}-${PKG_VERSION} > .latest.id
 
 echo "==== ${PKG_NAME}@${PKG_VERSION} packaged to ${PKG_NAME}.tgz ===="

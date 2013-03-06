@@ -14,6 +14,10 @@ else
   exit 5
 fi
 
+cd /data/packages/nopar
+LATEST=`cat .latest.id`.tgz
+ln -sf ${LATEST} latest.tgz
+
 cd ${NOPAR_HOME}
 PID_FILE="${NOPAR_RUN_PATH}/nopar.pid"
 if test -f ${PID_FILE}; then
@@ -24,17 +28,9 @@ if test -f ${PID_FILE}; then
 fi
 
 echo "== Removing old files"
-rm -fr \
- bin \
- lib \
- node_modules \
- public \
- scripts \
- views \
- package.json \
- README.md
-echo "== Extracting new files form nopar.tgz"
-tar xzf nopar.tgz
+rm -fr *
+echo "== Extracting new files from /data/packages/nopar/latest.tgz"
+tar -xz --strip-components 1 -f /data/packages/nopar/latest.tgz
 cp scripts/nopar.conf /etc/init/
 
 echo "== Starting server"
