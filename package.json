@@ -5,7 +5,8 @@
   "main": "lib/server.js",
   "scripts": {
     "start": "./bin/nopar",
-    "test": "buster-test"
+    "test": "buster-test",
+    "package": "scripts/package"
   },
   "repository": {
     "type": "git",

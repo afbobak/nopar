@@ -1,14 +1,23 @@
 #!/bin/bash
+set -e
 
 PKG_NAME=`node -e 'process.stdout.write(require("./package.json").name);'`
 PKG_VERSION=`node -e 'process.stdout.write(require("./package.json").version);'`
+PKG=${PKG_NAME}-${PKG_VERSION}
 
 echo "==== Packaging ${PKG_NAME}@${PKG_VERSION} ===="
 
-rm -fr node_modules
+rm -fr nopar*.tgz .latest.id node_modules
 npm install --production
 
-tar -c --transform s,^,${PKG_NAME}-${PKG_VERSION}/, --owner=root --group=root -z -f ${PKG_NAME}-${PKG_VERSION}.tgz \
+GNU_TAR=`tar --version | grep GNU`
+if [ "${GNU_TAR}" = "" ]; then
+  TAR="tar -c -s ,^,${PKG}/,"
+else
+  TAR="tar -c --transform s,^,${PKG}/,"
+fi
+
+$TAR --owner=root --group=root -z -f ${PKG}.tgz \
  bin \
  lib \
  node_modules \
@@ -17,6 +26,6 @@ tar -c --transform s,^,${PKG_NAME}-${PKG_VERSION}/, --owner=root --group=root -z
  views \
  package.json \
  README.md
-echo ${PKG_NAME}-${PKG_VERSION} > .latest.id
+echo ${PKG} > .latest.id
 
-echo "==== ${PKG_NAME}@${PKG_VERSION} packaged to ${PKG_NAME}.tgz ===="
+echo "==== Packaged ${PKG}.tgz ===="
