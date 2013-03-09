@@ -12,7 +12,7 @@ var path   = require("path");
 
 // ==== Test Case
 
-buster.testCase("server-GET /:packagename", {
+buster.testCase("pkg-test - GET /:packagename", {
   setUp: function () {
     this.stub(fs, "mkdirSync");
     this.server = require("../lib/server");
@@ -124,14 +124,53 @@ buster.testCase("server-GET /:packagename", {
     });
   },
 
-  "//should rewrite attachment urls": function () {
+  "should rewrite attachment urls and create fwd url map": function () {
+    this.stub(http, "get").returns({on : this.spy()});
+    this.stub(fs, "writeFileSync");
+    this.server.set("forwarder", {registry : "http://u.url/the/path/"});
+    var on = this.stub();
+    on.withArgs("data").yields(JSON.stringify({
+      versions : {
+        "0.0.1" : {
+          "name"  : "fwdpkg",
+          version : "0.0.1",
+          dist : {
+            tarball : "http://registry.npmjs.org/fwdpkg/-/fwdpkg-0.0.1.tgz"
+          }
+        }
+      }
+    }));
+    on.withArgs("end").yields();
+
+    this.call.callbacks[0]({
+      params : {
+        packagename : "fwdpkg",
+        version     : "0.0.1"
+      }
+    }, this.res);
+    http.get["yield"]({
+      statusCode  : 200,
+      setEncoding : this.spy(),
+      on          : on
+    });
+
+    var registry = this.server.get("registry");
+    assert.called(on);
+    assert.calledWith(on, "data");
+    assert.calledWith(on, "end");
+    assert.equals("http://localhost:5984/fwdpkg/-/fwdpkg-0.0.1.tgz",
+      registry.fwdpkg.versions["0.0.1"].dist.tarball);
+    assert.equals("http://registry.npmjs.org/fwdpkg/-/fwdpkg-0.0.1.tgz",
+      registry.fwdpkg["_fwd-dists"]["fwdpkg-0.0.1.tgz"]);
+    // Just for the sake of it, checking that registry is persisted
+    assert.called(fs.writeFileSync);
   }
 
 });
 
 // ==== Test Case
 
-buster.testCase("server-PUT /:packagename", {
+buster.testCase("pkg-test - PUT /:packagename", {
   setUp: function () {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
@@ -291,7 +330,7 @@ buster.testCase("server-PUT /:packagename", {
 
 // ==== Test Case
 
-buster.testCase("server-PUT /:packagename/:version", {
+buster.testCase("pkg-test - PUT /:packagename/:version", {
   setUp: function () {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
@@ -368,7 +407,7 @@ buster.testCase("server-PUT /:packagename/:version", {
 
 // ==== Test Case
 
-buster.testCase("server-DELETE /:packagename", {
+buster.testCase("pkg-test - DELETE /:packagename", {
   setUp: function () {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");

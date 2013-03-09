@@ -11,7 +11,7 @@ var path   = require("path");
 
 // ==== Test Case
 
-buster.testCase("server-GET /", {
+buster.testCase("server-test - GET /", {
   setUp: function () {
     this.stub(fs, "mkdirSync");
     this.server = require("../lib/server");

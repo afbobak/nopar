@@ -17,6 +17,7 @@ else
   TAR="tar -c --transform s,^,${PKG}/,"
 fi
 
+echo ${PKG} > .latest.id
 $TAR --owner=root --group=root -z -f ${PKG}.tgz \
  bin \
  lib \
@@ -26,6 +27,5 @@ $TAR --owner=root --group=root -z -f ${PKG}.tgz \
  views \
  package.json \
  README.md
-echo ${PKG} > .latest.id
 
 echo "==== Packaged ${PKG}.tgz ===="

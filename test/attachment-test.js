@@ -7,11 +7,12 @@ var buster = require("buster");
 var assert = buster.assertions.assert;
 var refute = buster.assertions.refute;
 var fs     = require("fs");
+var http   = require("http");
 var path   = require("path");
 
 // ==== Test Case
 
-buster.testCase("server-GET /:packagename/-/:attachment", {
+buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
   setUp: function () {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "existsSync");
@@ -94,6 +95,7 @@ buster.testCase("server-GET /:packagename/-/:attachment", {
       }
     };
     this.server.set("registry", JSON.parse(JSON.stringify(registry)));
+
     this.call.callbacks[0]({
       params : {
         packagename : "test",
@@ -109,7 +111,8 @@ buster.testCase("server-GET /:packagename/-/:attachment", {
     });
   },
 
-  "//should download attachment from forwarder": function () {
+  "should download attachment from forwarder": function () {
+    this.stub(http, "get");
     fs.existsSync.returns(false);
     var registry = {
       "test" : {
@@ -125,14 +128,23 @@ buster.testCase("server-GET /:packagename/-/:attachment", {
     };
     this.server.set("registry", JSON.parse(JSON.stringify(registry)));
 
-    //TODO finish unit test
+    this.call.callbacks[0]({
+      params : {
+        packagename : "test",
+        attachment : "test-0.0.1-dev.tgz"
+      }
+    }, this.res);
+
+    assert.called(fs.existsSync);
+    assert.called(http.get);
+    assert.calledWith(http.get, "http://fwd.url/pkg.tgz");
   }
 });
 
 
 // ==== Test Case
 
-buster.testCase("server-PUT /:packagename/-/:attachment", {
+buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
   setUp: function () {
     this.stub(fs, "existsSync");
     this.stub(fs, "mkdirSync");
@@ -215,7 +227,7 @@ buster.testCase("server-PUT /:packagename/-/:attachment", {
 
 // ==== Test Case
 
-buster.testCase("server-DELETE /:packagename/-/:attachment", {
+buster.testCase("attachment-test - DELETE /:packagename/-/:attachment", {
   setUp: function () {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "existsSync");
