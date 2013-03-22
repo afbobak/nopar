@@ -22,16 +22,16 @@
   "dependencies": {
     "ejs": "~0.8.3",
     "express": "~3.0.1",
-    "mustache": "0.7.x",
+    "mustache": "~0.7.2",
     "node-markdown": "~0.1.1",
-    "winston": "0.6.x",
-    "stylus": "0.31.x"
+    "winston": "~0.6.2",
+    "stylus": "~0.31.1"
   },
   "devDependencies": {
-    "buster": "0.6.x",
-    "buster-lint": "0.3.x"
+    "buster": "~0.6.12",
+    "buster-lint": "~0.3.1"
   },
   "engines": {
-    "node": "0.8.x"
+    "node": ">=0.8"
   }
 }
