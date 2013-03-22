@@ -10,6 +10,8 @@ var fs     = require("fs");
 var http   = require("http");
 var path   = require("path");
 
+var findCall = require("./helpers").findCall;
+
 // ==== Test Case
 
 buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
@@ -17,7 +19,7 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "existsSync");
     this.server = require("../lib/server");
-    this.call = this.server.routes.get[3];
+    this.call = findCall(this.server.routes.get, "/:packagename/-/:attachment");
     this.res = {
       json     : this.stub(),
       download : this.stub()
@@ -151,7 +153,8 @@ buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
     this.stub(fs, "createWriteStream");
 
     this.server = require("../lib/server");
-    this.call = this.server.routes.put[4];
+    this.call = findCall(this.server.routes.put,
+      "/:packagename/-/:attachment/-rev?/:revision?");
     this.req = {
       headers     : {
         "content-type" : "application/octet-stream"
@@ -247,7 +250,8 @@ buster.testCase("attachment-test - DELETE /:packagename/-/:attachment", {
       }
     });
 
-    this.call = this.server.routes["delete"][1];
+    this.call = findCall(this.server.routes["delete"],
+      "/:packagename/-/:attachment/-rev?/:revision?");
     this.req = {
       params      : {
         packagename : "test",

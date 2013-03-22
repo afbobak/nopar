@@ -10,6 +10,8 @@ var fs     = require("fs");
 var http   = require("http");
 var path   = require("path");
 
+var findCall = require("./helpers").findCall;
+
 // ==== Test Case
 
 buster.testCase("pkg-test - GET /:packagename", {
@@ -17,7 +19,7 @@ buster.testCase("pkg-test - GET /:packagename", {
     this.stub(fs, "mkdirSync");
     this.server = require("../lib/server");
     this.server.set("forwarder", {});
-    this.call = this.server.routes.get[2];
+    this.call = findCall(this.server.routes.get, "/:packagename/:version?");
     this.res = {
       json : this.stub()
     };
@@ -175,8 +177,8 @@ buster.testCase("pkg-test - PUT /:packagename", {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
     this.server = require("../lib/server");
-    this.call = this.server.routes.put[1];
-    this.callRev = this.server.routes.put[2];
+    this.call = findCall(this.server.routes.put, "/:packagename");
+    this.callRev = findCall(this.server.routes.put, "/:packagename/-rev/:revision");
     this.res = {
       json : this.stub()
     };
@@ -335,7 +337,7 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
     this.server = require("../lib/server");
-    this.call = this.server.routes.put[3];
+    this.call = findCall(this.server.routes.put, "/:packagename/:version/-tag?/:tagname?");
     this.res = {
       json : this.stub()
     };
@@ -429,7 +431,7 @@ buster.testCase("pkg-test - DELETE /:packagename", {
       }
     });
 
-    this.call = this.server.routes["delete"][0];
+    this.call = findCall(this.server.routes["delete"], "/:packagename/-rev?/:revision?");
     this.req = {
       params      : {
         packagename : "test"

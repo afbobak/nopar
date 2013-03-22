@@ -9,6 +9,8 @@ var refute = buster.assertions.refute;
 var fs     = require("fs");
 var path   = require("path");
 
+var findCall = require("./helpers").findCall;
+
 // ==== Test Case
 
 buster.testCase("server-test - GET /", {
@@ -17,7 +19,7 @@ buster.testCase("server-test - GET /", {
     this.server = require("../lib/server");
     this.server.set("registry", {});
     this.server.set("forwarder", {});
-    this.call = this.server.routes.get[0];
+    this.call = findCall(this.server.routes.get, "/");
     this.res = {
       render : this.stub()
     };
