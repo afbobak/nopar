@@ -1,15 +1,16 @@
 {
   "name": "nopar",
-  "version": "0.0.1-dev",
+  "version": "0.1.0",
   "description": "Abstrakt Node Package Registry & Proxy",
   "main": "lib/server.js",
   "scripts": {
     "start": "./bin/nopar",
-    "test": "buster-test"
+    "test": "buster-test --color none",
+    "package": "scripts/package"
   },
   "repository": {
     "type": "git",
-    "url": "git@tg4.afb-studio.com:abstrakt/npm-registry"
+    "url": "git@github.com:afbobak/nopar.git"
   },
   "keywords": [
     "npm",
@@ -21,16 +22,16 @@
   "dependencies": {
     "ejs": "~0.8.3",
     "express": "~3.0.1",
-    "mustache": "0.7.x",
+    "mustache": "~0.7.2",
     "node-markdown": "~0.1.1",
-    "winston": "0.6.x",
-    "stylus": "0.31.x"
+    "winston": "~0.6.2",
+    "stylus": "~0.32.1"
   },
   "devDependencies": {
-    "buster": "0.6.x",
-    "buster-lint": "0.3.x"
+    "buster": "~0.6.12",
+    "buster-lint": "~0.3.1"
   },
   "engines": {
-    "node": "0.8.x"
+    "node": ">=0.8"
   }
 }

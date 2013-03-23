@@ -1,5 +1,5 @@
 body {
-  margin-top: 50px;
+  margin-top: 60px;
 }
 .brand small {
   margin-left: 4px;
@@ -53,4 +53,38 @@ ul.packages > li .accordion-body .details table th {
 ul.packages > li .accordion-body ul.versions {
   margin: 0;
   list-style: none;
+}
+#content {
+  margin-bottom: 40px;
+}
+#footer {
+  position: fixed;
+  height: 40px;
+}
+#footer .container {
+  margin-top: 8px;
+}
+#footer .result-info {
+  float: left;
+}
+#footer .credit {
+  float: right;
+}
+@media (max-width: 799px) {
+  body {
+    margin-top: 0;
+  }
+  #footer .navbar-inner {
+    padding-top: 0;
+  }
+}
+@media (max-width: 767px) {
+  .navbar .navbar-form input {
+    display: inline;
+    width: 120px;
+  }
+  #footer {
+    margin-left: 0;
+    margin-right: 0;
+  }
 }

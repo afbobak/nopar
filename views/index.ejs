@@ -40,75 +40,14 @@
           <%- message %>
         </div>
       <%}%>
-      <ul id="accordion-packages" class="packages accordion">
-      <% var packages = Object.keys(registry).sort();
-         for (var i = 0; i < packages.length; i++) {
-           var idx;
-           var pkgName = packages[i];
-           var pkg = registry[pkgName];
-           var versions = Object.keys(pkg.versions).sort();
-           var latest = pkg.versions[versions[versions.length-1]]; %>
-         <li class="package accordion-group">
-           <h2 class="accordion-heading">
-             <div class="actions btn-group">
-               <a class="btn btn-small action-json" href="<%= latest.dist.tarball %>"><i class="icon-download-alt"></i> Latest</a>
-               <a class="btn btn-small action-json" href="/<%= pkgName %>">JSON</a>
-             </div>
-             <a href="#<%= pkgName %>-versions" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion-packages">
-               <%= pkgName %>
-               <small>@<%= latest.version %></small>
-               <div class="tags">
-                 <% if (pkg["_proxied"]) { %><div class="label label-warning">proxied</div><% } %>
-                 <% if (pkg["_local"]) { %><div class="label label-success">local</div><% } %>
-               </div>
-             </a>
-           </h2>
-           <div id="<%= pkgName %>-versions" class="accordion-body collapse<% if (packages.length === 1) { %> in<% } %>">
-             <div class="actions btn-group pull-right">
-               <a class="btn btn-small btn-link action-delete" href="/-delete/<%= pkgName %>">
-                 <i class="icon-trash"></i> Delete Package
-               </a>
-             </div>
-             <div class="details accordion-inner">
-               <p class="description lead"><%= pkg.description %></p>
-               <table class="table">
-                 <tr><th>Maintainer</th><td><% for (idx = 0; idx < pkg.maintainers.length; idx++) { %><a href="https://npmjs.org/~<%= pkg.maintainers[idx].name %>"><%= pkg.maintainers[idx].name %> <i class="icon-share"></i></a> <% }%></td></tr>
-                 <% if (pkg.users) { var users = Object.keys(pkg.users).sort(); %><tr><th>Users</th><td><% for (idx = 0; idx < users.length; idx++) { %><%= users[idx] %> <% }%></td></tr><% } %>
-                 <% if (pkg.repository) { %><tr><th>Repository</th><td><a href="<%= pkg.repository.url %>"><%= pkg.repository.url %> <i class="icon-share"></i></a> (<%= pkg.repository.type %>)</td></tr><% } %>
-                 <% if (latest.dependencies) { %><tr><th>Dependencies</th><td><% var deps = Object.keys(latest.dependencies).sort(); for (idx = 0; idx < deps.length; idx++) { %><a href="/?q=<%= deps[idx] %>"><%= deps[idx] %></a> <% } %></td></tr><% } %>
-                 <tr>
-                   <th>Versions</th>
-                   <td>
-                     <ul class="versions"><% for (var j = 0; j < versions.length; j++) {
-                              var version = versions[j];
-                              var pkgUrl;
-                              if (pkg.versions[version].dist) {
-                                pkgUrl = pkg.versions[version].dist.tarball;
-                              } else {
-                                version += " (no dist tag)";
-                              }
-                               %>
-                        <li class="version">
-                          <div class=""><%= version %></div>
-                          <!-- span class="label label-success">available</span>
-                          <span class="label">not cached</span>
-                          <div class="btn-group">
-                            <a class="btn btn-small action-cache" href="/-cache/<%= pkgUrl %>"><i class="icon-star"></i> Cache</a>
-                            <a class="btn btn-small action-purge" href="/-purge/<%= pkgUrl %>"><i class="icon-eject"></i> Purge</a>
-                            <a class="btn btn-small action-download" href="<%= pkgUrl %>"><i class="icon-download-alt"></i> Download</a>
-                          </div -->
-                        </li>
-                        <% } %>
-                      </ul>
-                   </td>
-               </table>
-               <% if (pkg._readme) { %><div class="readme"><%- pkg._readme %></div><% } %>
-             </div>
-             <!-- span class="label label-inverse">proxied</span -->
-           </div>
-         </li>
-      <% } %>
-      </ul>
+
+      <h3>Packages</h3>
+      <dl class="dl-horizontal">
+        <dt>Local</dt><dd><%= local %></dd>
+        <dt>Proxied</dt><dd><%= proxied %></dd>
+        <dt>Total</dt><dd><%= total %></dd>
+      </dl>
+
     </div>
 
     <!-- JavaScript includes -->

@@ -1,23 +1,33 @@
 #!/bin/bash
+#
+# Configuration Variables:
+#  NOPAR_HOSTNAME=localhost
+#  NOPAR_PORT=5984
+#  NOPAR_LOGFILE=
+#  NOPAR_LOGLEVEL=info
+#  NOPAR_REGISTRY_PATH=
+#  NOPAR_HOME=
+#  NOPAR_RUN_PATH=
+#  NOPAR_RUNAS_USER=
 
 CONFIG=$1
 if [ "${CONFIG}" = "" ]; then
   CONFIG=/etc/default/nopar
 fi
 
-if [[ -f "${CONFIG}" ]]; then
+if test -f ${CONFIG}; then
   . ${CONFIG}
-else
-  NOPAR_HOSTNAME=localhost
-  NOPAR_PORT=5984
-  NOPAR_LOGFILE=
-  NOPAR_LOGLEVEL=info
-  NOPAR_REGISTRY_PATH=
-  NOPAR_HOME=
-  NOPAR_RUN_PATH=
-  NOPAR_RUNAS_USER=
 fi
 
+if [ "${NOPAR_HOSTNAME}" = "" ]; then
+  NOPAR_HOSTNAME=localhost
+fi
+if [ "${NOPAR_PORT}" = "" ]; then
+  NOPAR_PORT=5984
+fi
+if [ "${NOPAR_LOGLEVEL}" = "" ]; then
+  NOPAR_LOGLEVEL=info
+fi
 if [ "${NOPAR_HOME}" = "" ]; then
   NOPAR_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"/..
 fi
@@ -26,6 +36,15 @@ cd "${NOPAR_HOME}"
 if [ "${NOPAR_RUNAS_USER}" = "" ]; then
   node lib/server.js
 else
-  sudo -u ${NOPAR_RUNAS_USER} nohup node lib/server.js > "${NOPAR_RUN_PATH}/./start.log" &
-  echo $! > nopar.pid
+  ( sudo -u ${NOPAR_RUNAS_USER} nohup env -i \
+    NOPAR_HOSTNAME=$NOPAR_HOSTNAME \
+    NOPAR_PORT=$NOPAR_PORT \
+    NOPAR_LOGFILE=$NOPAR_LOGFILE \
+    NOPAR_LOGLEVEL=$NOPAR_LOGLEVEL \
+    NOPAR_REGISTRY_PATH=$NOPAR_REGISTRY_PATH \
+    NOPAR_HOME=$NOPAR_HOME \
+    NOPAR_RUN_PATH=$NOPAR_RUN_PATH \
+    NOPAR_RUNAS_USER=$NOPAR_RUNAS_USER \
+    node lib/server.js > "${NOPAR_RUN_PATH}/./start.log" 2>&1 ) &
+  echo $! > ${NOPAR_RUN_PATH}/./nopar.pid
 fi
