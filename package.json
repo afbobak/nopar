@@ -1,6 +1,6 @@
 {
   "name": "nopar",
-  "version": "0.0.1-dev",
+  "version": "0.1.0",
   "description": "Abstrakt Node Package Registry & Proxy",
   "main": "lib/server.js",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@tg4.afb-studio.com:abstrakt/npm-registry"
+    "url": "git@github.com:afbobak/nopar.git"
   },
   "keywords": [
     "npm",
