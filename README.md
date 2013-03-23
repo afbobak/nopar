@@ -1,7 +1,7 @@
 == Abstrakt Node Package Registry & Proxy
 
 Provides a local NPM registry that also proxies and caches unknown node packages
-from the original npm registry at registry.npmjs.org.
+from the original npm registry at http://registry.npmjs.org.
 
 == Default Environment Variables
 
