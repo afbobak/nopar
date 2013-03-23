@@ -5,7 +5,7 @@
   "main": "lib/server.js",
   "scripts": {
     "start": "./bin/nopar",
-    "test": "buster-test",
+    "test": "buster-test --color none",
     "package": "scripts/package"
   },
   "repository": {

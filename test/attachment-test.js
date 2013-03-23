@@ -10,15 +10,32 @@ var fs     = require("fs");
 var http   = require("http");
 var path   = require("path");
 
+var registry = require("../lib/registry");
+
 var findCall = require("./helpers").findCall;
+
+function initRegistry(self) {
+  self.server.set("registryPath", "/path");
+
+  self.stub(fs, "existsSync");
+  self.stub(fs, "readFileSync");
+  self.stub(fs, "mkdirSync");
+  self.stub(fs, "writeFileSync");
+
+  fs.existsSync.returns(true); // default to true
+
+  self.stub(registry, "init");
+  self.stub(registry, "getPackage");
+  self.stub(registry, "setPackage");
+}
 
 // ==== Test Case
 
 buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
   setUp: function () {
-    this.stub(fs, "mkdirSync");
-    this.stub(fs, "existsSync");
     this.server = require("../lib/server");
+    this.server.set("registry", registry);
+    initRegistry(this);
     this.call = findCall(this.server.routes.get, "/:packagename/-/:attachment");
     this.res = {
       json     : this.stub(),
@@ -27,7 +44,7 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
   },
 
   tearDown: function () {
-    this.server.set("registry", {});
+    registry.destroy();
   },
 
   "should have route": function () {
@@ -35,7 +52,7 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
   },
 
   "should return package not found": function () {
-    fs.existsSync.returns(false);
+    fs.existsSync.withArgs("/path/non-existant").returns(false);
 
     this.call.callbacks[0]({
       params : { packagename : "non-existant" }
@@ -49,22 +66,21 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
   },
 
   "should return package": function () {
-    fs.existsSync.returns(true);
-    var registry = {
-      "test" : {
-        "dist-tags" : {
-          "latest" : "0.0.1-dev"
-        },
-        "versions" : {
-          "0.0.1-dev" : {
-            "dist" : {
-              "tarball" : "test-0.0.1-dev.tgz"
-            }
+    var pkgMeta = {
+      "name" : "test",
+      "dist-tags" : {
+        "latest" : "0.0.1-dev"
+      },
+      "versions" : {
+        "0.0.1-dev" : {
+          "dist" : {
+            "tarball" : "test-0.0.1-dev.tgz"
           }
         }
       }
     };
-    this.server.set("registry", JSON.parse(JSON.stringify(registry)));
+    registry.getPackage.returns(pkgMeta);
+
     this.call.callbacks[0]({
       params : {
         packagename : "test",
@@ -72,7 +88,7 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
       }
     }, this.res);
 
-    assert.called(this.res.download);
+    assert.calledOnce(this.res.download);
     assert.calledWith(
       this.res.download,
       path.join(this.server.get("registryPath"), "test", "test-0.0.1-dev.tgz"),
@@ -82,30 +98,14 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
 
   "should not return invalid files": function () {
     // http://localhost:5984/abstrakt-npm-proxy/-/..%2Fregistry.json
-    var registry = {
-      "test" : {
-        "dist-tags" : {
-          "latest" : "0.0.1-dev"
-        },
-        "versions" : {
-          "0.0.1-dev" : {
-            "dist" : {
-              "tarball" : "test-0.0.1-dev.tgz"
-            }
-          }
-        }
-      }
-    };
-    this.server.set("registry", JSON.parse(JSON.stringify(registry)));
-
     this.call.callbacks[0]({
       params : {
         packagename : "test",
-        attachment : "../registry.json"
+        attachment : "../invalidFile.json"
       }
     }, this.res);
 
-    refute.called(fs.existsSync);
+    refute.calledWith(fs.existsSync, "/path/invalidFile.json");
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 404, {
       "error"  : "not_found",
@@ -116,19 +116,21 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
   "should download attachment from forwarder": function () {
     this.stub(http, "get");
     fs.existsSync.returns(false);
-    var registry = {
-      "test" : {
-        "_fwd-dists" : { "test-0.0.1-dev.tgz" : "http://fwd.url/pkg.tgz" },
-        "versions" : {
-          "0.0.1-dev" : {
-            "dist" : {
-              "tarball" : "test-0.0.1-dev.tgz"
-            }
+    var pkgMeta = {
+      "name" : "test",
+      "dist-tags" : {
+        "latest" : "0.0.1-dev"
+      },
+      "versions" : {
+        "0.0.1-dev" : {
+          "dist" : {
+            "tarball" : "test-0.0.1-dev.tgz"
           }
         }
-      }
+      },
+      "_fwd-dists" : { "test-0.0.1-dev.tgz" : "http://fwd.url/pkg.tgz" }
     };
-    this.server.set("registry", JSON.parse(JSON.stringify(registry)));
+    registry.getPackage.returns(pkgMeta);
 
     this.call.callbacks[0]({
       params : {
@@ -137,7 +139,7 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
       }
     }, this.res);
 
-    assert.called(fs.existsSync);
+    assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
     assert.called(http.get);
     assert.calledWith(http.get, "http://fwd.url/pkg.tgz");
   }
@@ -148,11 +150,11 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
 
 buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
   setUp: function () {
-    this.stub(fs, "existsSync");
-    this.stub(fs, "mkdirSync");
     this.stub(fs, "createWriteStream");
 
     this.server = require("../lib/server");
+    this.server.set("registry", registry);
+    initRegistry(this);
     this.call = findCall(this.server.routes.put,
       "/:packagename/-/:attachment/-rev?/:revision?");
     this.req = {
@@ -173,7 +175,7 @@ buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
   },
 
   tearDown: function () {
-    this.server.set("registry", {});
+    registry.destroy();
   },
 
   "should have route": function () {
@@ -232,19 +234,18 @@ buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
 
 buster.testCase("attachment-test - DELETE /:packagename/-/:attachment", {
   setUp: function () {
-    this.stub(fs, "mkdirSync");
-    this.stub(fs, "existsSync");
     this.stub(fs, "unlinkSync");
 
     this.server = require("../lib/server");
+    this.server.set("registry", registry);
+    initRegistry(this);
 
-    this.server.set("registry", {
-      "test" : {
-        "versions" : {
-          "0.0.1-dev" : {
-            "dist" : {
-              "tarball" : "http://localhost:5984/test/-/test-0.0.1-dev.tgz"
-            }
+    registry.getPackage.withArgs("test").returns({
+      "name" : "test",
+      "versions" : {
+        "0.0.1-dev" : {
+          "dist" : {
+            "tarball" : "http://localhost:5984/test/-/test-0.0.1-dev.tgz"
           }
         }
       }
@@ -265,7 +266,7 @@ buster.testCase("attachment-test - DELETE /:packagename/-/:attachment", {
   },
 
   tearDown: function () {
-    this.server.set("registry", {});
+    registry.destroy();
   },
 
   "should have route": function () {
@@ -273,8 +274,6 @@ buster.testCase("attachment-test - DELETE /:packagename/-/:attachment", {
   },
 
   "should delete attachment": function () {
-    fs.existsSync.returns(true);
-
     this.call.callbacks[0](this.req, this.res);
 
     assert.called(this.res.json);

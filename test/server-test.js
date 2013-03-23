@@ -9,15 +9,27 @@ var refute = buster.assertions.refute;
 var fs     = require("fs");
 var path   = require("path");
 
+var registry = require("../lib/registry");
+
 var findCall = require("./helpers").findCall;
 
 // ==== Test Case
 
 buster.testCase("server-test - GET /", {
   setUp: function () {
+    this.stub(fs, "existsSync").returns(true);
     this.stub(fs, "mkdirSync");
+    this.stub(fs, "readFileSync");
+    fs.readFileSync.returns(JSON.stringify({}));
+    fs.readFileSync.withArgs("/path/registry.json").returns(JSON.stringify({
+      version : "1.0.0",
+      count   : 1,
+      local   : 1,
+      proxied : 0
+    }));
     this.server = require("../lib/server");
-    this.server.set("registry", {});
+    this.server.set("registry", registry);
+    registry.init("/path");
     this.server.set("forwarder", {});
     this.call = findCall(this.server.routes.get, "/");
     this.res = {
@@ -39,6 +51,8 @@ buster.testCase("server-test - GET /", {
   },
 
   "should render query results": function () {
+    this.stub(fs, "readdirSync").returns([]);
+
     this.call.callbacks[0]({
       query : { q: "bla" }
     }, this.res);

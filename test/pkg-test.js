@@ -10,15 +10,34 @@ var fs     = require("fs");
 var http   = require("http");
 var path   = require("path");
 
+var registry = require("../lib/registry");
+
 var findCall = require("./helpers").findCall;
+
+function initRegistry(self) {
+  self.stub(fs, "existsSync");
+  self.stub(fs, "readFileSync");
+  self.stub(fs, "mkdirSync");
+  self.stub(fs, "writeFileSync");
+  self.stub(registry, "refreshMeta");
+
+  fs.existsSync.returns(true); // default to true
+  fs.existsSync.withArgs("/path").returns(true);
+  fs.existsSync.withArgs("/path/registry.json").returns(true);
+  fs.readFileSync.withArgs("/path/registry.json").
+    returns(JSON.stringify({version: "1.0.0"}));
+
+  registry.init("/path");
+}
 
 // ==== Test Case
 
 buster.testCase("pkg-test - GET /:packagename", {
   setUp: function () {
-    this.stub(fs, "mkdirSync");
     this.server = require("../lib/server");
     this.server.set("forwarder", {});
+    this.server.set("registry", registry);
+    initRegistry(this);
     this.call = findCall(this.server.routes.get, "/:packagename/:version?");
     this.res = {
       json : this.stub()
@@ -26,7 +45,7 @@ buster.testCase("pkg-test - GET /:packagename", {
   },
 
   tearDown: function () {
-    this.server.set("registry", {});
+    registry.destroy();
   },
 
   "should have route": function () {
@@ -34,6 +53,8 @@ buster.testCase("pkg-test - GET /:packagename", {
   },
 
   "should return package not found": function () {
+    fs.existsSync.withArgs("/path/non-existant").returns(false);
+
     this.call.callbacks[0]({
       params : { packagename : "non-existant" }
     }, this.res);
@@ -46,28 +67,29 @@ buster.testCase("pkg-test - GET /:packagename", {
   },
 
   "should return full package": function () {
-    var registry = { pkg : { a : "b" } };
-    this.server.set("registry", registry);
+    var pkgMeta = { a : "b" };
+    fs.readFileSync.withArgs("/path/pkg/pkg.json").
+      returns(JSON.stringify(pkgMeta));
+
     this.call.callbacks[0]({
       params : { packagename : "pkg" }
     }, this.res);
 
     assert.called(this.res.json);
-    assert.calledWith(this.res.json, 200, registry.pkg);
+    assert.calledWith(this.res.json, 200, pkgMeta);
   },
 
   "should return package version not found": function () {
-    var registry = {
-      pkg : {
-        versions : {
-          "0.0.1" : {
-            "name"  : "pkg",
-            version : "0,0.1"
-          }
+    var pkgMeta = {
+      versions : {
+        "0.0.1" : {
+          "name"  : "pkg",
+          version : "0,0.1"
         }
       }
     };
-    this.server.set("registry", registry);
+    fs.readFileSync.withArgs("/path/pkg/pkg.json").
+      returns(JSON.stringify(pkgMeta));
 
     this.call.callbacks[0]({
       params : {
@@ -84,17 +106,16 @@ buster.testCase("pkg-test - GET /:packagename", {
   },
 
   "should return specific package version": function () {
-    var registry = {
-      pkg : {
-        versions : {
-          "0.0.1" : {
-            "name"  : "pkg",
-            version : "0,0.1"
-          }
+    var pkgMeta = {
+      versions : {
+        "0.0.1" : {
+          "name"  : "pkg",
+          version : "0,0.1"
         }
       }
     };
-    this.server.set("registry", registry);
+    fs.readFileSync.withArgs("/path/pkg/pkg.json").
+      returns(JSON.stringify(pkgMeta));
 
     this.call.callbacks[0]({
       params : {
@@ -104,10 +125,11 @@ buster.testCase("pkg-test - GET /:packagename", {
     }, this.res);
 
     assert.called(this.res.json);
-    assert.calledWith(this.res.json, 200, registry.pkg.versions["0.0.1"]);
+    assert.calledWith(this.res.json, 200, pkgMeta.versions["0.0.1"]);
   },
 
   "should get full package JSON from forwarder": function () {
+    fs.existsSync.withArgs("/path/fwdpkg").returns(false);
     this.stub(http, "get").returns({on : this.spy()});
     this.server.set("forwarder", {registry : "http://u.url/the/path/"});
 
@@ -127,21 +149,23 @@ buster.testCase("pkg-test - GET /:packagename", {
   },
 
   "should rewrite attachment urls and create fwd url map": function () {
+    fs.existsSync.withArgs("/path/fwdpkg").returns(false);
     this.stub(http, "get").returns({on : this.spy()});
-    this.stub(fs, "writeFileSync");
     this.server.set("forwarder", {registry : "http://u.url/the/path/"});
     var on = this.stub();
-    on.withArgs("data").yields(JSON.stringify({
+    var pkgMeta = {
+      name     : "fwdpkg",
       versions : {
         "0.0.1" : {
-          "name"  : "fwdpkg",
+          name    : "fwdpkg",
           version : "0.0.1",
           dist : {
             tarball : "http://registry.npmjs.org/fwdpkg/-/fwdpkg-0.0.1.tgz"
           }
         }
       }
-    }));
+    };
+    on.withArgs("data").yields(JSON.stringify(pkgMeta));
     on.withArgs("end").yields();
 
     this.call.callbacks[0]({
@@ -156,16 +180,18 @@ buster.testCase("pkg-test - GET /:packagename", {
       on          : on
     });
 
-    var registry = this.server.get("registry");
     assert.called(on);
     assert.calledWith(on, "data");
     assert.calledWith(on, "end");
-    assert.equals("http://localhost:5984/fwdpkg/-/fwdpkg-0.0.1.tgz",
-      registry.fwdpkg.versions["0.0.1"].dist.tarball);
-    assert.equals("http://registry.npmjs.org/fwdpkg/-/fwdpkg-0.0.1.tgz",
-      registry.fwdpkg["_fwd-dists"]["fwdpkg-0.0.1.tgz"]);
-    // Just for the sake of it, checking that registry is persisted
-    assert.called(fs.writeFileSync);
+
+    pkgMeta.versions["0.0.1"].dist.tarball =
+      "http://localhost:5984/fwdpkg/-/fwdpkg-0.0.1.tgz";
+    pkgMeta["_fwd-dists"] = {
+      "fwdpkg-0.0.1.tgz" : "http://registry.npmjs.org/fwdpkg/-/fwdpkg-0.0.1.tgz"
+    };
+
+    assert.calledOnceWith(fs.writeFileSync, "/path/fwdpkg/fwdpkg.json",
+      JSON.stringify(pkgMeta));
   }
 
 });
@@ -174,9 +200,9 @@ buster.testCase("pkg-test - GET /:packagename", {
 
 buster.testCase("pkg-test - PUT /:packagename", {
   setUp: function () {
-    this.stub(fs, "mkdirSync");
-    this.stub(fs, "writeFileSync");
     this.server = require("../lib/server");
+    this.server.set("registry", registry);
+    initRegistry(this);
     this.call = findCall(this.server.routes.put, "/:packagename");
     this.callRev = findCall(this.server.routes.put, "/:packagename/-rev/:revision");
     this.res = {
@@ -185,7 +211,7 @@ buster.testCase("pkg-test - PUT /:packagename", {
   },
 
   tearDown: function () {
-    this.server.set("registry", {});
+    registry.destroy();
   },
 
   "should have route": function () {
@@ -208,7 +234,7 @@ buster.testCase("pkg-test - PUT /:packagename", {
   },
 
   "should add package and persist registry for new package": function () {
-    this.server.set("registry", {});
+    fs.existsSync.withArgs("/path/test").returns(false);
 
     this.call.callbacks[0]({
       headers     : { "content-type" : "application/json" },
@@ -220,32 +246,24 @@ buster.testCase("pkg-test - PUT /:packagename", {
       }
     }, this.res);
 
-    var expectedRegistry = {
-      "test" : {
-        "_id"  : "test",
-        "name" : "test",
-        "_rev" : 0
-      }
+    var pkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 0
     };
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok" : true});
-    assert.equals(this.server.get("registry"), expectedRegistry);
     assert.called(fs.writeFileSync);
-    assert.calledWith(
-      fs.writeFileSync,
-      path.join(this.server.get("registryPath"), "registry.json"),
-      JSON.stringify(expectedRegistry)
-    );
+    assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
   },
 
   "should bounce with 409 when package already exists": function () {
-    this.server.set("registry", {
-      "test" : {
-        "_id"  : "test",
-        "_rev" : 1,
-        "name" : "test"
-      }
-    });
+    var pkgMeta = {
+      "_id"  : "test",
+      "_rev" : 1,
+      "name" : "test"
+    };
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify(pkgMeta));
 
     this.call.callbacks[0]({
       headers     : { "content-type" : "application/json" },
@@ -265,59 +283,33 @@ buster.testCase("pkg-test - PUT /:packagename", {
   },
 
   "should update package and persist registry": function () {
-    var expectedRegistry = {
-      "test" : {
-        "_id"  : "test",
-        "name" : "test",
-        "_rev" : 2,
-        "versions" : {
-          "0.0.2" : {}
-        }
+    var pkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 2,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {}
       }
     };
-    this.server.set("registry", {
-      "test" : {
-        "_id"  : "test",
-        "name" : "test",
-        "_rev" : 2,
-        "versions" : {
-          "0.0.1" : {},
-          "0.0.2" : {}
-        }
-      }
-    });
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify(pkgMeta));
+    delete pkgMeta.versions["0.0.1"];
 
     this.callRev.callbacks[0]({
       headers     : { "content-type" : "application/json" },
       params      : { packagename : "test", revision : 2 },
       originalUrl : "/test",
-      body        : expectedRegistry.test
+      body        : pkgMeta
     }, this.res);
 
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok" : true});
-    assert.equals(this.server.get("registry"), expectedRegistry);
     assert.called(fs.writeFileSync);
-    assert.calledWith(
-      fs.writeFileSync,
-      path.join(this.server.get("registryPath"), "registry.json"),
-      JSON.stringify(expectedRegistry)
-    );
+    assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
   },
 
   "should keep old version": function () {
-    var registry = {
-      "test" : {
-        "dist-tags" : {
-          "latest" : "0.0.1-dev"
-        },
-        "versions" : {
-          "0.0.1-dev" : {
-          }
-        }
-      }
-    };
-    this.server.set("registry", JSON.parse(JSON.stringify(registry)));
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify({}));
 
     this.call.callbacks[0]({
       headers     : { "content-type" : "application/json" },
@@ -325,7 +317,7 @@ buster.testCase("pkg-test - PUT /:packagename", {
       originalUrl : "/test"
     }, this.res);
 
-    assert.equals(this.server.get("registry"), registry);
+    refute.called(fs.writeFileSync);
   }
 });
 
@@ -334,9 +326,9 @@ buster.testCase("pkg-test - PUT /:packagename", {
 
 buster.testCase("pkg-test - PUT /:packagename/:version", {
   setUp: function () {
-    this.stub(fs, "mkdirSync");
-    this.stub(fs, "writeFileSync");
     this.server = require("../lib/server");
+    this.server.set("registry", registry);
+    initRegistry(this);
     this.call = findCall(this.server.routes.put, "/:packagename/:version/-tag?/:tagname?");
     this.res = {
       json : this.stub()
@@ -344,7 +336,7 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
   },
 
   tearDown: function () {
-    this.server.set("registry", {});
+    registry.destroy();
   },
 
   "should have route": function () {
@@ -365,7 +357,17 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
     });
   },
 
-  "should create empty package": function () {
+  "should create new package and bounce revision": function () {
+    /*jslint nomen: true*/
+    var pkgMeta = {
+      name     : "test",
+      "_rev"   : 1,
+      versions : {
+        "0.0.1-dev" : {}
+      }
+    };
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify(pkgMeta));
+
     this.call.callbacks[0]({
       headers     : { "content-type" : "application/json" },
       params      : {
@@ -375,20 +377,17 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
       originalUrl : "/test/0.0.1-dev"
     }, this.res);
 
+    pkgMeta._rev++;
+
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
-    assert.equals(
-      this.server.get("registry"),
-      {"test" : { "_rev": 1, "versions" : { "0.0.1-dev" : {} }}}
-    );
-    assert.called(fs.writeFileSync);
-    assert.calledWith(
-      fs.writeFileSync,
-      path.join(this.server.get("registryPath"), "registry.json")
-    );
+    assert.calledOnce(fs.writeFileSync);
+    assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
   },
 
   "should add tag and return latest version number in body": function () {
+    fs.existsSync.withArgs("/path/test/test.json").returns(false);
+
     this.call.callbacks[0]({
       headers     : { "content-type" : "application/json" },
       params      : {
@@ -399,8 +398,19 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
       originalUrl : "/test/0.0.1-dev/-tag/latest"
     }, this.res);
 
-    var registry = this.server.get("registry");
-    assert.equals(registry.test["dist-tags"], {"latest" : "0.0.1-dev"});
+    var pkgMeta = {
+      name     : "test",
+      "_rev"   : 1,
+      versions : {
+        "0.0.1-dev" : {}
+      },
+      "dist-tags" : {
+        latest : "0.0.1-dev"
+      }
+    };
+
+    assert.calledOnce(fs.writeFileSync);
+    assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
   }
@@ -411,25 +421,26 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
 
 buster.testCase("pkg-test - DELETE /:packagename", {
   setUp: function () {
-    this.stub(fs, "mkdirSync");
-    this.stub(fs, "writeFileSync");
-    this.stub(fs, "existsSync");
     this.stub(fs, "unlinkSync");
     this.stub(fs, "rmdirSync");
 
     this.server = require("../lib/server");
+    this.server.set("registryPath", "/path");
+    this.server.set("registry", registry);
+    initRegistry(this);
 
-    this.server.set("registry", {
-      "test" : {
-        "versions" : {
-          "0.0.1-dev" : {
-            "dist" : {
-              "tarball" : "http://localhost:5984/test/-/test-0.0.1-dev.tgz"
-            }
+    var pkgMeta = {
+      name     : "test",
+      "_rev"   : 1,
+      "versions" : {
+        "0.0.1-dev" : {
+          "dist" : {
+            "tarball" : "http://localhost:5984/test/-/test-0.0.1-dev.tgz"
           }
         }
       }
-    });
+    };
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify(pkgMeta));
 
     this.call = findCall(this.server.routes["delete"], "/:packagename/-rev?/:revision?");
     this.req = {
@@ -444,35 +455,20 @@ buster.testCase("pkg-test - DELETE /:packagename", {
   },
 
   tearDown: function () {
-    this.server.set("registry", {});
+    registry.destroy();
   },
 
   "should have route": function () {
     assert.equals(this.call.path, "/:packagename/-rev?/:revision?");
   },
 
-  "should remove package from registry and persist registry": function () {
+  "should delete package meta, attachments and folder": function () {
     this.call.callbacks[0](this.req, this.res);
 
-    var registry = this.server.get("registry");
-    refute.defined(registry.test);
-    assert.called(fs.writeFileSync);
-    assert.calledWith(
-      fs.writeFileSync,
-      path.join(this.server.get("registryPath"), "registry.json")
-    );
-  },
+    assert.calledTwice(fs.unlinkSync);
+    assert.calledWith(fs.unlinkSync, "/path/test/test-0.0.1-dev.tgz");
+    assert.calledWith(fs.unlinkSync, "/path/test/test.json");
 
-  "should delete attachments and folders": function () {
-    fs.existsSync.returns(true);
-
-    this.call.callbacks[0](this.req, this.res);
-
-    assert.called(fs.unlinkSync);
-    assert.calledWith(
-      fs.unlinkSync,
-      path.join(this.server.get("registryPath"), "test", "test-0.0.1-dev.tgz")
-    );
     assert.called(fs.rmdirSync);
     assert.calledWith(
       fs.rmdirSync,
