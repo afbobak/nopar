@@ -29,7 +29,13 @@ if [ "${NOPAR_LOGLEVEL}" = "" ]; then
   NOPAR_LOGLEVEL=info
 fi
 if [ "${NOPAR_HOME}" = "" ]; then
-  NOPAR_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"/..
+  IF_LINK=`readlink $0`
+  if [ "${IF_LINK}" = "" ]; then
+    NOPAR_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"/..
+  else
+    cd "$( dirname "${BASH_SOURCE[0]}" )"
+    NOPAR_HOME="$( cd "$( dirname "${IF_LINK}" )" && pwd)"/..
+  fi
 fi
 
 cd "${NOPAR_HOME}"
