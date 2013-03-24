@@ -2,6 +2,7 @@
   "name": "nopar",
   "version": "0.1.1-dev",
   "description": "Abstrakt Node Package Registry & Proxy",
+  "bin" : { "nopar" : "bin/nopar" },
   "main": "lib/server.js",
   "scripts": {
     "start": "./bin/nopar",
