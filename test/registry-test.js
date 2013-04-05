@@ -1,4 +1,4 @@
-/*jslint devel: true, node: true */
+/*jslint devel: true, node: true, nomen: true */
 /*global */
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
@@ -17,11 +17,12 @@ var OLD_META = {
     versions : {
       "0.0.1" : {
         "name"  : "pkg",
-        version : "0,0.1"
+        version : "0.0.1"
       }
     }
   }
 };
+var metaVersion = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"))).version;
 
 // ==== Test Case
 
@@ -93,7 +94,7 @@ buster.testCase("registry-test - init", {
       JSON.stringify(OLD_META.pkg));
     assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json",
       JSON.stringify({
-        version : "1.0.0",
+        version : metaVersion,
         count   : 1,
         local   : 1,
         proxied : 0

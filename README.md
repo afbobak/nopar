@@ -8,7 +8,7 @@ from the original npm registry at <http://registry.npmjs.org>.
 Install the server
 ------------------
 
-It's available in the official NPM registry, so all you need is:
+It's available from the official NPM registry, so all you need is:
 
     npm install -g nopar
 
@@ -20,35 +20,35 @@ whole shebang into ``/usr/local/nopar`` with an install script
 Usage
 -----
 
-If you install NOPAR via ``npm install``, a start script should be installed
-into your path.
+A start script should be installed into your path If you installed NOPAR via
+``npm install` -g nopar`.
 
 Run:
 
     nopar
 
-and your registry should be available at <http://localhost:5984/>. Point your
-browser at it and you should see an empty registry.
+and your registry is available at <http://localhost:5984/>. Point your browser
+at it and you should see an empty registry.
 
-Fill it by configuring your [npm command](https://npmjs.org/doc/config.html) to
-use the local registry:
+Fill your local registry by configuring the
+[npm command](https://npmjs.org/doc/config.html) to use it:
 
     npm config set registry http://localhost:5984/
     npm cache clear
     npm login
 
-Sometimes npm seems confused when with cached packages from other repositories
-than the configured one, clearing the cache remedies those issues.
+Sometimes npm seems confused with cached packages from other repositories,
+clearing the cache remedies those issues.
 
 The login is required for npm to work but NOPAR doesn't implement any user
 management and currently accepts everything.
 
 Install packages with ``npm install PACKAGE`` and NOPAR will automatically proxy
-and cache the packages and dependencies locally.
+and cache the packages and dependencies into your private NOPAR.
 
 Of course you can also publish to NOPAR. Those packages won't get promoted to
-the official [registry](http://registry.npmjs.org/) by NOPAR and be marked with
-a green "local" tag in the browser interface.
+the official [registry](http://registry.npmjs.org/) by NOPAR and will be marked
+with a green "local" tag in the browser interface.
 
 For configuring the registry, see the section "Default Environment Variables"
 below.
@@ -69,7 +69,8 @@ are available:
 * NOPAR_RUN_PATH=
 * NOPAR_RUNAS_USER=
 
-If ``NOPAR_RUNAS_USER`` is set, the service will run as a daemon.
+If the environment variable ``NOPAR_RUNAS_USER`` is set, the service will run
+as a daemon.
 
 
 Upstart Configuration
@@ -84,6 +85,7 @@ Known Issues
 ------------
 
 * Missing user management. Welcome to the "Admin Party"!
-* Once a package meta is cached, it doesn't update it from upstream
-  automatically. Workaround is to delete the cached package from the browser
-  interface and do a fresh ``npm install`` of the said package.
+* Once a package meta is cached, it doesn't get updated from the
+  [upstream registry](http://registry.npmjs.org) automatically. The workaround
+  for now is to delete the cached package via the browser interface and do a
+  fresh ``npm install`` of said package.
