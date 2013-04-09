@@ -62,6 +62,10 @@ are available:
 
 * NOPAR_HOSTNAME=localhost
 * NOPAR_PORT=5984
+* NOPAR_AUTO_FORWARD=yes
+* NOPAR_FORWARDER_URL="https://registry.npmjs.org"
+* NOPAR_PROXY_URL=
+* NOPAR_USER_AGENT=nopar/0.0.0
 * NOPAR_LOGFILE=
 * NOPAR_LOGLEVEL=info
 * NOPAR_REGISTRY_PATH=

@@ -131,7 +131,11 @@ buster.testCase("pkg-test - GET /:packagename", {
   "should get full package JSON from forwarder": function () {
     fs.existsSync.withArgs("/path/fwdpkg").returns(false);
     this.stub(http, "get").returns({on : this.spy()});
-    this.server.set("forwarder", {registry : "http://u.url/the/path/"});
+    this.server.set("forwarder", {
+      registry    : "http://u.url:8888/the/path/",
+      autoForward : true,
+      userAgent   : "nopar/0.0.0-test"
+    });
 
     this.call.callbacks[0]({
       params : {
@@ -142,16 +146,72 @@ buster.testCase("pkg-test - GET /:packagename", {
 
     assert.called(http.get);
     assert.calledWith(http.get, {
+      headers  : { "User-Agent" : "nopar/0.0.0-test" },
       hostname : "u.url",
-      port     : undefined,
+      port     : "8888",
       path     : "/the/path/fwdpkg"
+    });
+  },
+
+  "should get full package JSON from forwarder via proxy": function () {
+    fs.existsSync.withArgs("/path/fwdpkg").returns(false);
+    this.stub(http, "get").returns({on : this.spy()});
+    this.server.set("forwarder", {
+      registry    : "http://u.url:8888/the/path/",
+      proxy       : "http://localhost:8080",
+      autoForward : true,
+      userAgent   : "nopar/0.0.0-test"
+    });
+
+    this.call.callbacks[0]({
+      params : {
+        packagename : "fwdpkg",
+        version     : "0.0.1"
+      }
+    }, this.res);
+
+    assert.called(http.get);
+    assert.calledWith(http.get, {
+      headers  : {
+        host         : "u.url",
+        "User-Agent" : "nopar/0.0.0-test"
+      },
+      hostname : "localhost",
+      port     : "8080",
+      path     : "http://u.url:8888/the/path/fwdpkg"
+    });
+  },
+
+  "should not get package from forwarder": function () {
+    fs.existsSync.withArgs("/path/fwdpkg").returns(false);
+    this.stub(http, "get").returns({on : this.spy()});
+    this.server.set("forwarder", {
+      registry    : "http://u.url/the/path/",
+      autoForward : false
+    });
+
+    this.call.callbacks[0]({
+      params : {
+        packagename : "fwdpkg",
+        version     : "0.0.1"
+      }
+    }, this.res);
+
+    refute.called(http.get);
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 404, {
+      "error"  : "not_found",
+      "reason" : "document not found"
     });
   },
 
   "should rewrite attachment urls and create fwd url map": function () {
     fs.existsSync.withArgs("/path/fwdpkg").returns(false);
     this.stub(http, "get").returns({on : this.spy()});
-    this.server.set("forwarder", {registry : "http://u.url/the/path/"});
+    this.server.set("forwarder", {
+      registry    : "http://u.url/the/path/",
+      autoForward : true
+    });
     var on = this.stub();
     var pkgMeta = {
       name     : "fwdpkg",
