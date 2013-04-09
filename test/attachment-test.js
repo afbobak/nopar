@@ -8,6 +8,7 @@ var assert = buster.assertions.assert;
 var refute = buster.assertions.refute;
 var fs     = require("fs");
 var http   = require("http");
+var https  = require("https");
 var path   = require("path");
 
 var registry = require("../lib/registry");
@@ -142,6 +143,52 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
     assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
     assert.called(http.get);
     assert.calledWith(http.get, "http://fwd.url/pkg.tgz");
+  },
+
+  "should download attachment from forwarder via proxy": function () {
+    this.stub(http, "get");
+    this.stub(https, "get");
+    fs.existsSync.returns(false);
+    this.server.set("forwarder", {
+      proxy       : "https://localhost:8080",
+      autoForward : true,
+      userAgent   : "nopar/0.0.0-test"
+    });
+    var pkgMeta = {
+      "name" : "test",
+      "dist-tags" : {
+        "latest" : "0.0.1-dev"
+      },
+      "versions" : {
+        "0.0.1-dev" : {
+          "dist" : {
+            "tarball" : "test-0.0.1-dev.tgz"
+          }
+        }
+      },
+      "_fwd-dists" : { "test-0.0.1-dev.tgz" : "http://fwd.url/pkg.tgz" }
+    };
+    registry.getPackage.returns(pkgMeta);
+
+    this.call.callbacks[0]({
+      params : {
+        packagename : "test",
+        attachment : "test-0.0.1-dev.tgz"
+      }
+    }, this.res);
+
+    assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
+    refute.called(http.get);
+    assert.called(https.get);
+    assert.calledWith(https.get, {
+      headers  : {
+        host         : "fwd.url",
+        "User-Agent" : "nopar/0.0.0-test"
+      },
+      hostname : "localhost",
+      port     : "8080",
+      path     : "http://fwd.url/pkg.tgz"
+    });
   }
 });
 
