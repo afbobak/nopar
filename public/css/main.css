@@ -1,9 +1,19 @@
 body {
   margin-top: 60px;
 }
-.brand small {
+.navbar .navbar-inner {
+  padding-left: 40px;
+  padding-right: 10px;
+}
+.navbar .brand {
+  padding-bottom: 0;
+}
+.navbar .brand small {
   margin-left: 4px;
   font-size: 12px;
+}
+.navbar-form .input-append {
+  margin-bottom: 0;
 }
 ul.packages {
   margin-left: 0;
@@ -73,6 +83,12 @@ ul.packages > li .accordion-body ul.versions {
 @media (max-width: 799px) {
   body {
     margin-top: 0;
+  }
+  .navbar .navbar-inner {
+    padding: 0 10px;
+  }
+  .navbar .brand {
+    padding-left: 0px;
   }
   #footer .navbar-inner {
     padding-top: 0;
