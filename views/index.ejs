@@ -21,15 +21,19 @@
         <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
     <![endif]-->
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
-        <div class="container">
-          <a class="brand" href="/">NOPAR /<small><%= version %></small></a>
-          <form class="navbar-form pull-right" action="/">
-            <input class="span2" type="text" name="q" placeholder="Search" value="<%= query %>">
+        <a class="brand" href="/">NOPAR /<small><%= version %></small></a>
+        <ul class="nav">
+          <li class="active"><a href="/">Packages</a></li>
+          <li><a href="/-/settings"><i class="icon-cog"></i> Settings</a></li>
+        </ul>
+        <form class="navbar-form pull-right" action="/">
+          <div class="input-append">
+            <input type="text" name="q" placeholder="Search" value="">
             <button type="submit" class="btn"><i class="icon-search"></i></button>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
 

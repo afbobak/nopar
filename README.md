@@ -76,6 +76,8 @@ are available:
 If the environment variable ``NOPAR_RUNAS_USER`` is set, the service will run
 as a daemon.
 
+You can override the environment variables from within the Settings page inside
+NOPAR.
 
 Upstart Configuration
 ---------------------
