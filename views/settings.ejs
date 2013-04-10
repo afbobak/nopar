@@ -47,21 +47,25 @@
 
       <h3>Settings</h3>
       <form class="form-horizontal" method="POST" action="/-/settings">
-        <!-- div class="control-group">
-          <label class="control-label" for="settings-registry">Registry Path</label>
+        <div class="control-group">
+          <label class="control-label" for="settings-registry">Parent Registry</label>
           <div class="controls">
             <input class="span4"
               id="settings-registry"
-              name="registryPath"
+              name="registry"
               type="text"
-              placeholder="<%= defaults.registryPath %>"
-              value="<%= settings.registryPath || '' %>" />
+              placeholder="<%= defaults.forwarder.registry %>"
+              value="<%= settings.forwarder.registry || '' %>" />
+            <label class="checkbox">
+              <input name="autoForward" type="checkbox" <%= settings.forwarder.autoForward ? 'checked="checked" ' : '' %>value="true" />
+              Forward requests
+            </label>
           </div>
-        </div -->
+        </div>
         <div class="control-group">
           <label class="control-label" for="settings-hostname">Hostname</label>
           <div class="controls">
-            <input class="span3"
+            <input class="span4"
               id="settings-hostname"
               name="hostname"
               type="text"
@@ -72,7 +76,7 @@
         <div class="control-group">
           <label class="control-label" for="settings-port">Port</label>
           <div class="controls">
-            <input class="span1"
+            <input class="span2"
               id="settings-port"
               name="port"
               type="text"
@@ -83,7 +87,7 @@
         <div class="control-group">
           <label class="control-label" for="settings-proxy">Proxy</label>
           <div class="controls">
-            <input class="span3"
+            <input class="span4"
               id="settings-proxy"
               name="proxy"
               type="text"
@@ -94,7 +98,7 @@
         <div class="control-group">
           <label class="control-label" for="settings-userAgent">User-Agent</label>
           <div class="controls">
-            <input class="span3"
+            <input class="span4"
               id="settings-userAgent"
               name="userAgent"
               type="text"
