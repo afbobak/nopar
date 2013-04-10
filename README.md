@@ -4,6 +4,7 @@ NOPAR - The Node PAckage Registry & proxy
 Provides a local NPM registry that also proxies and caches unknown node packages
 from the original npm registry at <http://registry.npmjs.org>.
 
+[![Build Status](https://travis-ci.org/afbobak/nopar.png)](https://travis-ci.org/afbobak/nopar)
 
 Install the server
 ------------------
