@@ -2,9 +2,24 @@ body {
   margin-top : 60px;
 }
 
-.brand small {
-  margin-left : 4px;
-  font-size   : 12px;
+.navbar {
+  .navbar-inner {
+    padding-left : 40px;
+    padding-right : 10px;
+  }
+
+  .brand {
+    padding-bottom : 0;
+
+    small {
+      margin-left : 4px;
+      font-size   : 12px;
+    }
+  }
+}
+
+.navbar-form .input-append {
+  margin-bottom : 0;
 }
 
 ul.packages {
@@ -98,6 +113,16 @@ ul.packages {
 @media (max-width: 799px) {
   body {
     margin-top : 0;
+  }
+
+  .navbar {
+    .navbar-inner {
+      padding : 0 10px;
+    }
+
+    .brand {
+      padding-left: 0px;
+    }
   }
 
   #footer .navbar-inner {
