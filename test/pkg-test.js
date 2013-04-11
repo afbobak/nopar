@@ -9,6 +9,7 @@ var refute = buster.assertions.refute;
 var fs     = require("fs");
 var http   = require("http");
 var path   = require("path");
+var sinon  = require("../node_modules/buster/node_modules/sinon");
 
 var registry = require("../lib/registry");
 
@@ -473,6 +474,63 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
     assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
+  }
+});
+
+
+// ==== Test Case
+
+buster.testCase("pkg-test - PUT /:packagename/:tagname", {
+  setUp: function () {
+    this.server = require("../lib/server");
+    this.server.set("registry", registry);
+    initRegistry(this);
+    this.call = findCall(this.server.routes.put, "/:packagename/:tagname");
+    this.res = {
+      json : this.stub()
+    };
+  },
+
+  tearDown: function () {
+    registry.destroy();
+  },
+
+  "should have route": function () {
+    assert.equals(this.call.path, "/:packagename/:tagname");
+  },
+
+  "should add tag and return 201 latest package json": function () {
+    /*jslint nomen: true*/
+    fs.existsSync.withArgs("/path/test/test.json").returns(true);
+    var pkgMeta = {
+      name     : "test",
+      "_rev"   : 1,
+      versions : {
+        "0.1.0" : {}
+      },
+      "dist-tags" : {
+        latest : "0.1.0"
+      }
+    };
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify(pkgMeta));
+
+    this.call.callbacks[0]({
+      headers     : { "content-type" : "application/json" },
+      params      : {
+        packagename : pkgMeta.name,
+        tagname     : "release"
+      },
+      body        : "0.1.0",
+      originalUrl : "/test/0.0.1-dev/tag/release"
+    }, this.res);
+
+    pkgMeta._rev = 2;
+    pkgMeta["dist-tags"].release = "0.1.0";
+
+    assert.calledOnce(fs.writeFileSync);
+    assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 201, pkgMeta);
   }
 });
 
