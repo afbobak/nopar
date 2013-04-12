@@ -21,15 +21,16 @@ whole shebang into ``/usr/local/nopar`` with an install script
 Usage
 -----
 
-A start script should be installed into your path If you installed NOPAR via
-``npm install` -g nopar`.
+If you installed NOPAR via ``npm install` -g nopar`, then a start script is be
+installed into your path and you can simply run:
 
 Run:
 
     nopar
 
-and your registry is available at <http://localhost:5984/>. Point your browser
-at it and you should see an empty registry.
+With the default configuration, the registry is available at
+<http://localhost:5984/>. Point your browser at it and you should see an empty
+registry.
 
 Fill your local registry by configuring the
 [npm command](https://npmjs.org/doc/config.html) to use it:
@@ -42,7 +43,7 @@ Sometimes npm seems confused with cached packages from other repositories,
 clearing the cache remedies those issues.
 
 The login is required for npm to work but NOPAR doesn't implement any user
-management and currently accepts everything.
+management and currently accepts everyone.
 
 Install packages with ``npm install PACKAGE`` and NOPAR will automatically proxy
 and cache the packages and dependencies into your private NOPAR.
@@ -58,27 +59,38 @@ below.
 Default Environment Variables
 -----------------------------
 
-The service is configured via environment variables. The following parameters
-are available:
+The service's defaults are configured via environment variables. The following
+parameters are available:
 
-* NOPAR_HOSTNAME=localhost
-* NOPAR_PORT=5984
-* NOPAR_AUTO_FORWARD=yes
-* NOPAR_FORWARDER_URL="https://registry.npmjs.org"
-* NOPAR_PROXY_URL=
-* NOPAR_USER_AGENT=nopar/0.0.0
-* NOPAR_LOGFILE=
-* NOPAR_LOGLEVEL=info
-* NOPAR_REGISTRY_PATH=
-* NOPAR_HOME=
-* NOPAR_RUN_PATH=
-* NOPAR_RUNAS_USER=
+* NOPAR_HOSTNAME - Hostname that the service is bound to (default="localhost")
+* NOPAR_PORT - TCP port the service is running on (default=5984)
+* NOPAR_AUTO_FORWARD - "yes" if NOPAR should automatically forward requests for
+  unknown packages to the forwarder registry, "no" if you really just want a
+  local registry without the auto-caching facility (default="yes")
+* NOPAR_FORWARDER_URL - The URL of the registry NOPAR forwards requests for
+  unknown packages to (default="https://registry.npmjs.org")
+* NOPAR_PROXY_URL - The URL of a proxy to use, empty for not using a proxy
+  (default="")
+* NOPAR_USER_AGENT - The user agent to use to make the requests as
+  (default=nopar/<nopar-version>)
+* NOPAR_LOGFILE - Location of the logfile if we spawn, empty for console
+  (default="")
+* NOPAR_LOGLEVEL - Loglevel to use (default="info")
+* NOPAR_REGISTRY_PATH - Location of the registry, leaving this empty will put
+  the registry in a folder "registry" inside the nopar folder (default="")
+* NOPAR_HOME - Homefolder to change to before running, empty for installation
+  location (default="")
+* NOPAR_RUN_PATH - Location for runtime files, primarily the PID file if running
+  as a daemon (default="")
+* NOPAR_RUNAS_USER - The user to run as if running as a daemon, empty for not
+  running as a daemon (default="")
 
 If the environment variable ``NOPAR_RUNAS_USER`` is set, the service will run
 as a daemon.
 
-You can override the environment variables from within the Settings page inside
-NOPAR.
+You can override some of those settings from within NOPAR on the Settings page.
+Everything that is set in the Settings page takes priority over the environment
+variables.
 
 Upstart Configuration
 ---------------------
