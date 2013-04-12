@@ -28,32 +28,101 @@
         </ul>
       </header>
       <section>
-        <h3>Welcome to GitHub Pages.</h3>
+        <h1>NOPAR - The Node PAckage Registry &amp; proxy</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>Provides a local NPM registry that also proxies and caches unknown node packages
+from the original npm registry at <a href="http://registry.npmjs.org">http://registry.npmjs.org</a>.</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<p><a href="https://travis-ci.org/afbobak/nopar"><img src="https://travis-ci.org/afbobak/nopar.png" alt="Build Status"></a></p>
+
+<h2>Install the server</h2>
+
+<p>It's available from the official NPM registry, so all you need is:</p>
+
+<pre><code>npm install -g nopar
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>On my build server I create an archive (see <code>scripts/package</code>) and extract the
+whole shebang into <code>/usr/local/nopar</code> with an install script
+(see <code>scripts/install-nopar.sh</code>).</p>
 
-<h3>Designer Templates</h3>
+<h2>Usage</h2>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>A start script should be installed into your path If you installed NOPAR via
+`<code>npm install</code> -g nopar`.</p>
 
-<h3>Rather Drive Stick?</h3>
+<p>Run:</p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<pre><code>nopar
+</code></pre>
 
-<h3>Authors and Contributors</h3>
+<p>and your registry is available at <a href="http://localhost:5984/">http://localhost:5984/</a>. Point your browser
+at it and you should see an empty registry.</p>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>Fill your local registry by configuring the
+<a href="https://npmjs.org/doc/config.html">npm command</a> to use it:</p>
 
-<h3>Support or Contact</h3>
+<pre><code>npm config set registry http://localhost:5984/
+npm cache clear
+npm login
+</code></pre>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>Sometimes npm seems confused with cached packages from other repositories,
+clearing the cache remedies those issues.</p>
+
+<p>The login is required for npm to work but NOPAR doesn't implement any user
+management and currently accepts everything.</p>
+
+<p>Install packages with <code>npm install PACKAGE</code> and NOPAR will automatically proxy
+and cache the packages and dependencies into your private NOPAR.</p>
+
+<p>Of course you can also publish to NOPAR. Those packages won't get promoted to
+the official <a href="http://registry.npmjs.org/">registry</a> by NOPAR and will be marked
+with a green "local" tag in the browser interface.</p>
+
+<p>For configuring the registry, see the section "Default Environment Variables"
+below.</p>
+
+<h2>Default Environment Variables</h2>
+
+<p>The service is configured via environment variables. The following parameters
+are available:</p>
+
+<ul>
+<li>NOPAR_HOSTNAME=localhost</li>
+<li>NOPAR_PORT=5984</li>
+<li>NOPAR_AUTO_FORWARD=yes</li>
+<li>NOPAR_FORWARDER_URL="<a href="https://registry.npmjs.org">https://registry.npmjs.org</a>"</li>
+<li>NOPAR_PROXY_URL=</li>
+<li>NOPAR_USER_AGENT=nopar/0.0.0</li>
+<li>NOPAR_LOGFILE=</li>
+<li>NOPAR_LOGLEVEL=info</li>
+<li>NOPAR_REGISTRY_PATH=</li>
+<li>NOPAR_HOME=</li>
+<li>NOPAR_RUN_PATH=</li>
+<li>NOPAR_RUNAS_USER=</li>
+</ul><p>If the environment variable <code>NOPAR_RUNAS_USER</code> is set, the service will run
+as a daemon.</p>
+
+<p>You can override the environment variables from within the Settings page inside
+NOPAR.</p>
+
+<h2>Upstart Configuration</h2>
+
+<p>There's an example <a href="http://upstart.ubuntu.com">upstart</a> configuration file that
+you can use and adapt for your own purpose:</p>
+
+<p><code>scripts/nopar.conf</code></p>
+
+<h2>Known Issues</h2>
+
+<ul>
+<li>Missing user management. Welcome to the "Admin Party"!</li>
+<li>Once a package meta is cached, it doesn't get updated from the
+<a href="http://registry.npmjs.org">upstream registry</a> automatically. The workaround
+for now is to delete the cached package via the browser interface and do a
+fresh <code>npm install</code> of said package.</li>
+</ul>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/afbobak">afbobak</a></p>
