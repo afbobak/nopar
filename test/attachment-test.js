@@ -17,6 +17,10 @@ var findCall = require("./helpers").findCall;
 
 function initRegistry(self) {
   self.server.set("registryPath", "/path");
+  self.server.set("forwarder", {
+    registry    : "https://registry.bla.org",
+    autoForward : true
+  });
 
   self.stub(fs, "existsSync");
   self.stub(fs, "readFileSync");
@@ -114,7 +118,7 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
     });
   },
 
-  "// FAILS RANDOMLY should download attachment from forwarder": function () {
+  "should download attachment from forwarder": function () {
     this.stub(http, "get");
     fs.existsSync.returns(false);
     var pkgMeta = {
@@ -141,6 +145,7 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
     }, this.res);
 
     assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
+    refute.called(this.res.json);
     assert.called(http.get);
     assert.calledWith(http.get, "http://fwd.url/pkg.tgz");
   },
