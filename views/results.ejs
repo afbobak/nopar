@@ -1,49 +1,12 @@
-<!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Abstrakt Node Package Registry and Proxy / <%= title %></title>
-    <meta name="description" content="Abstrakt Node Package Registry and Proxy - your npm registry for in-house deployment">
-    <meta name="viewport" content="width=device-width">
-
-    <link rel="stylesheet" href="/-/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/-/css/bootstrap-responsive.css">
-    <link rel="stylesheet" href="/-/css/main.css" />
-
-    <script src="/-/js/vendor/modernizr-2.6.2.min.js"></script>
-  </head>
+<!DOCTYPE html><% var active_page = "results"; %>
+<% include snippets/html_head %>
   <body>
-    <!--[if lt IE 7]>
-        <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-    <![endif]-->
-
-    <div class="navbar navbar-fixed-top">
-      <div class="navbar-inner">
-        <a class="brand" href="/">NOPAR /<small><%= version %></small></a>
-        <ul class="nav">
-          <li class="active"><a href="/">Packages</a></li>
-          <li><a href="/-/settings"><i class="icon-cog"></i> Settings</a></li>
-        </ul>
-        <form class="navbar-form pull-right" action="/">
-          <div class="input-append">
-            <input type="text" name="q" placeholder="Search" value="">
-            <button type="submit" class="btn"><i class="icon-search"></i></button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <% include snippets/chromeframe %>
+    <% include snippets/navbar %>
 
     <div id="content" class="container">
-      <% if (message) {%>
-        <div class="alert alert-success">
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-          <%- message %>
-        </div>
-      <%}%>
+      <% include snippets/alert %>
+
       <ul id="accordion-packages" class="packages accordion">
       <% var packages = Object.keys(registry).sort();
          for (var i = 0; i < packages.length; i++) {
@@ -69,7 +32,11 @@
            </h2>
            <div id="<%= pkgName.replace(/\./g, "-") %>-versions" class="accordion-body collapse<% if (packages.length === 1) { %> in<% } %>">
              <div class="actions btn-group pull-right">
-               <a class="btn btn-small btn-link action-delete" href="/-delete/<%= pkgName %>">
+               <% if (pkg["_proxied"]) { %>
+               <a class="btn btn-small btn-link action-refresh" onclick="refreshPackage('<%= pkgName %>');" href="#">
+                 <i class="icon-refresh"></i> Refresh
+               </a><% } %>
+               <a class="btn btn-small btn-link action-delete" onclick="deletePackage('<%= pkgName %>');" href="#">
                  <i class="icon-trash"></i> Delete Package
                </a>
              </div>
@@ -83,16 +50,20 @@
                  <tr>
                    <th>Versions</th>
                    <td>
-                     <ul class="versions"><% for (var j = 0; j < versions.length; j++) {
+                     <ul class="versions"><%
+                            for (var j = 0; j < versions.length; j++) {
                               var version = versions[j];
+                              var cached = false;
                               var pkgUrl;
                               if (pkg.versions[version].dist) {
                                 pkgUrl = pkg.versions[version].dist.tarball;
+                                var attachment  = pkgUrl.substr(pkgUrl.lastIndexOf("/") + 1);
+                                cached = pkg["_attachments"][attachment].cached;
                               } else {
                                 version += " (no dist tag)";
                               }
                                %>
-                        <li class="version">
+                        <li class="version label<% if (cached) {%><%= pkg["_local"] ? ' label-success' : ' label-warning' %><% } %>">
                           <div class=""><%= version %></div>
                           <!-- span class="label label-success">available</span>
                           <span class="label">not cached</span>
@@ -124,9 +95,29 @@
       </div>
     </div>
 
-    <!-- JavaScript includes -->
-    <script type="text/javascript"src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-    <script type="text/javascript" >window.jQuery || document.write('<script type="text/javascript" src="/-/js/vendor/jquery-1.8.2.min.js"><\/script>')</script>
-    <script type="text/javascript" src="/-/js/bootstrap.min.js"></script>
+    <% include snippets/js %>
+    <script>
+        function deletePackage(packageName) {
+          bootbox.dialog(
+            "<p class=''>You are going to delete the following package</p>" +
+            "<p class='well'>" + packageName + "</p>" +
+            "<p class=''>and <strong>ALL</strong> its attachments from the registry.</p>" +
+            "<p class=''>Are you really sure?</p>", [{
+                "label" : "Delete Package",
+                "class" : "btn-danger",
+                "callback": function() {
+                  window.location = "/-delete/" + packageName + "?q=<%= query %>";
+                }
+            },
+            {
+                "label" : "Keep it",
+                "class" : "btn"
+            }]
+          );
+        }
+        function refreshPackage(packageName) {
+          window.location = "/-refresh/" + packageName + "?q=<%= query %>";
+        }
+    </script>
   </body>
 </html>

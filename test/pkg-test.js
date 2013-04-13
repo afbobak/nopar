@@ -9,7 +9,6 @@ var refute = buster.assertions.refute;
 var fs     = require("fs");
 var http   = require("http");
 var path   = require("path");
-var sinon  = require("../node_modules/buster/node_modules/sinon");
 
 var registry = require("../lib/registry");
 
@@ -207,6 +206,7 @@ buster.testCase("pkg-test - GET /:packagename", {
   },
 
   "should rewrite attachment urls and create fwd url map": function () {
+    /*jslint nomen: true*/
     fs.existsSync.withArgs("/path/fwdpkg").returns(false);
     this.stub(http, "get").returns({on : this.spy()});
     this.server.set("forwarder", {
@@ -216,6 +216,7 @@ buster.testCase("pkg-test - GET /:packagename", {
     var on = this.stub();
     var pkgMeta = {
       name     : "fwdpkg",
+      _proxied : true,
       versions : {
         "0.0.1" : {
           name    : "fwdpkg",
@@ -247,8 +248,11 @@ buster.testCase("pkg-test - GET /:packagename", {
 
     pkgMeta.versions["0.0.1"].dist.tarball =
       "http://localhost:5984/fwdpkg/-/fwdpkg-0.0.1.tgz";
-    pkgMeta["_fwd-dists"] = {
-      "fwdpkg-0.0.1.tgz" : "http://registry.npmjs.org/fwdpkg/-/fwdpkg-0.0.1.tgz"
+    pkgMeta._attachments = {
+      "fwdpkg-0.0.1.tgz" : {
+        "cached"     : true,
+        "forwardUrl" : "http://registry.npmjs.org/fwdpkg/-/fwdpkg-0.0.1.tgz"
+      }
     };
 
     assert.calledOnceWith(fs.writeFileSync, "/path/fwdpkg/fwdpkg.json",
@@ -262,6 +266,7 @@ buster.testCase("pkg-test - GET /:packagename", {
 buster.testCase("pkg-test - PUT /:packagename", {
   setUp: function () {
     this.server = require("../lib/server");
+    this.stub(require("../lib/attachment"), "refreshMeta");
     this.server.set("registry", registry);
     initRegistry(this);
     this.call = findCall(this.server.routes.put, "/:packagename");
@@ -308,9 +313,10 @@ buster.testCase("pkg-test - PUT /:packagename", {
     }, this.res);
 
     var pkgMeta = {
-      "_id"  : "test",
-      "name" : "test",
-      "_rev" : 0
+      "_id"      : "test",
+      "name"     : "test",
+      "_rev"     : 0,
+      "_proxied" : false
     };
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok" : true});
@@ -389,6 +395,7 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
   setUp: function () {
     this.server = require("../lib/server");
     this.server.set("registry", registry);
+    this.stub(require("../lib/attachment"), "refreshMeta");
     initRegistry(this);
     this.call = findCall(this.server.routes.put, "/:packagename/:version/-tag?/:tagname?");
     this.res = {
@@ -421,9 +428,10 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
   "should create new package and bounce revision": function () {
     /*jslint nomen: true*/
     var pkgMeta = {
-      name     : "test",
-      "_rev"   : 1,
-      versions : {
+      name       : "test",
+      "_rev"     : 1,
+      "_proxied" : false,
+      versions   : {
         "0.0.1-dev" : {}
       }
     };
@@ -460,14 +468,15 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
     }, this.res);
 
     var pkgMeta = {
-      name     : "test",
-      "_rev"   : 1,
-      versions : {
+      name       : "test",
+      "_rev"     : 1,
+      versions   : {
         "0.0.1-dev" : {}
       },
       "dist-tags" : {
         latest : "0.0.1-dev"
-      }
+      },
+      "_proxied" : false
     };
 
     assert.calledOnce(fs.writeFileSync);

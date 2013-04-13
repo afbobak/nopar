@@ -1,5 +1,4 @@
 /node_modules
 /registry
-/.DS_Store
-/public/.DS_Store
 /.latest.id
+.DS_Store
