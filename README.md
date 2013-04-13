@@ -105,6 +105,6 @@ Known Issues
 
 * Missing user management. Welcome to the "Admin Party"!
 * Once a package meta is cached, it doesn't get updated from the
-  [upstream registry](http://registry.npmjs.org) automatically. The workaround
-  for now is to delete the cached package via the browser interface and do a
-  fresh ``npm install`` of said package.
+  [upstream registry](http://registry.npmjs.org) automatically. You can refresh
+  the package meta from the [upstream registry](http://registry.npmjs.org) by
+  clicking on the "Refresh" link for that package in the user interface.

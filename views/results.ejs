@@ -1,4 +1,4 @@
-<!DOCTYPE html><% var active_page = "packages"; %>
+<!DOCTYPE html><% var active_page = "results"; %>
 <% include snippets/html_head %>
   <body>
     <% include snippets/chromeframe %>
@@ -32,7 +32,11 @@
            </h2>
            <div id="<%= pkgName.replace(/\./g, "-") %>-versions" class="accordion-body collapse<% if (packages.length === 1) { %> in<% } %>">
              <div class="actions btn-group pull-right">
-               <a class="btn btn-small btn-link action-delete" href="/-delete/<%= pkgName %>">
+               <% if (pkg["_proxied"]) { %>
+               <a class="btn btn-small btn-link action-refresh" onclick="refreshPackage('<%= pkgName %>');" href="#">
+                 <i class="icon-refresh"></i> Refresh
+               </a><% } %>
+               <a class="btn btn-small btn-link action-delete" onclick="deletePackage('<%= pkgName %>');" href="#">
                  <i class="icon-trash"></i> Delete Package
                </a>
              </div>
@@ -46,16 +50,20 @@
                  <tr>
                    <th>Versions</th>
                    <td>
-                     <ul class="versions"><% for (var j = 0; j < versions.length; j++) {
+                     <ul class="versions"><%
+                            for (var j = 0; j < versions.length; j++) {
                               var version = versions[j];
+                              var cached = false;
                               var pkgUrl;
                               if (pkg.versions[version].dist) {
                                 pkgUrl = pkg.versions[version].dist.tarball;
+                                var attachment  = pkgUrl.substr(pkgUrl.lastIndexOf("/") + 1);
+                                cached = pkg["_attachments"][attachment].cached;
                               } else {
                                 version += " (no dist tag)";
                               }
                                %>
-                        <li class="version">
+                        <li class="version label<% if (cached) {%><%= pkg["_local"] ? ' label-success' : ' label-warning' %><% } %>">
                           <div class=""><%= version %></div>
                           <!-- span class="label label-success">available</span>
                           <span class="label">not cached</span>
@@ -88,5 +96,28 @@
     </div>
 
     <% include snippets/js %>
+    <script>
+        function deletePackage(packageName) {
+          bootbox.dialog(
+            "<p class=''>You are going to delete the following package</p>" +
+            "<p class='well'>" + packageName + "</p>" +
+            "<p class=''>and <strong>ALL</strong> its attachments from the registry.</p>" +
+            "<p class=''>Are you really sure?</p>", [{
+                "label" : "Delete Package",
+                "class" : "btn-danger",
+                "callback": function() {
+                  window.location = "/-delete/" + packageName + "?q=<%= query %>";
+                }
+            },
+            {
+                "label" : "Keep it",
+                "class" : "btn"
+            }]
+          );
+        }
+        function refreshPackage(packageName) {
+          window.location = "/-refresh/" + packageName + "?q=<%= query %>";
+        }
+    </script>
   </body>
 </html>

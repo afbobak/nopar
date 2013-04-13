@@ -27,6 +27,7 @@ buster.testCase("server-test - GET /", {
       local   : 1,
       proxied : 0
     }));
+    this.stub(registry, "refreshMeta");
     this.server = require("../lib/server");
     this.server.set("registry", registry);
     registry.init("/path");

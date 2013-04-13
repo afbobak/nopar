@@ -1,6 +1,6 @@
 {
   "name": "nopar",
-  "version": "0.1.8-dev",
+  "version": "0.2.0-dev",
   "description": "Abstrakt Node Package Registry & Proxy",
   "bin" : { "nopar" : "bin/nopar" },
   "main": "lib/server.js",
@@ -26,6 +26,7 @@
     "marked": "~0.2.8",
     "mustache": "~0.7.2",
     "winston": "~0.6.2",
+    "semver": "~1.1.4",
     "stylus": "~0.32.1"
   },
   "devDependencies": {

@@ -32,6 +32,7 @@ buster.testCase("registry-test - init", {
     this.stub(fs, "readFileSync").returns("{}");
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
+    this.stub(fs, "readdirSync").returns([]);
   },
 
   tearDown: function () {
@@ -94,10 +95,30 @@ buster.testCase("registry-test - init", {
       JSON.stringify(OLD_META.pkg));
     assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json",
       JSON.stringify({
+        version : metaVersion
+      }));
+  },
+
+  "should converted meta info <0.1.8": function () {
+    fs.existsSync.returns(true);
+    var meta = {
+      "version"  : "0.1.6-dev",
+      "count"    : 95,
+      "local"    : 3,
+      "proxied"  : 92,
+      "settings" : {
+        "hostname" : "localhost"
+      }
+    };
+    fs.readFileSync.returns(JSON.stringify(meta));
+    registry.init(REGISTRY_PATH);
+
+    assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json",
+      JSON.stringify({
         version : metaVersion,
-        count   : 1,
-        local   : 1,
-        proxied : 0
+        "settings": {
+          "hostname": "localhost"
+        }
       }));
   }
 });
@@ -108,6 +129,7 @@ buster.testCase("registry-test - get pkg", {
   setUp: function () {
     this.stub(fs, "existsSync");
     this.stub(fs, "readFileSync");
+    this.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -165,6 +187,7 @@ buster.testCase("registry-test - get pkg version", {
     this.stub(fs, "readFileSync");
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
+    this.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -210,6 +233,7 @@ buster.testCase("registry-test - write pkg", {
     this.stub(fs, "readFileSync");
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
+    this.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -285,6 +309,7 @@ buster.testCase("registry-test - delete pkg", {
     this.stub(fs, "readFileSync");
     this.stub(fs, "writeFileSync");
     this.stub(fs, "unlinkSync");
+    this.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -323,7 +348,7 @@ buster.testCase("registry-test - delete pkg", {
 
   "should unlink package meta": function () {
     fs.existsSync.returns(true);
-    this.stub(registry, "getPackage").returns({"_fwd-dists" : {}});
+    this.stub(registry, "getPackage").returns({"_proxied" : true});
 
     registry.removePackage("pkg");
 
