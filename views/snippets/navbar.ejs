@@ -1,0 +1,19 @@
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <a class="brand" href="/">NOPAR /<small><%= version %></small></a>
+    <ul class="nav">
+      <li<%- active_page === "packages" ? ' class="active"' : '' %>>
+        <a href="/">Packages</a>
+      </li>
+      <li<%- active_page === "settings" ? ' class="active"' : '' %>>
+        <a href="/-/settings"><i class="icon-cog"></i> Settings</a>
+      </li>
+    </ul>
+    <form class="navbar-form pull-right" action="/">
+      <div class="input-append">
+        <input type="text" name="q" placeholder="Search" value="<%= query %>">
+        <button type="submit" class="btn"><i class="icon-search"></i></button>
+      </div>
+    </form>
+  </div>
+</div>
