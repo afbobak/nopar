@@ -349,6 +349,31 @@ buster.testCase("pkg-test - PUT /:packagename", {
     });
   },
 
+  "should bounce with 409 if document revision doesn't match": function () {
+    var pkgMeta = {
+      "_id"  : "test",
+      "_rev" : 2,
+      "name" : "test"
+    };
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify(pkgMeta));
+
+    this.call.callbacks[0]({
+      headers     : { "content-type" : "application/json" },
+      params      : { packagename : "test", revision: 1 },
+      originalUrl : "/test",
+      body        : {
+        "_id"  : "test",
+        "name" : "test"
+      }
+    }, this.res);
+
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 409, {
+      "error"  : "conflict",
+      "reason" : "revision does not match one in document"
+    });
+  },
+
   "should update package and persist registry": function () {
     var pkgMeta = {
       "_id"  : "test",
