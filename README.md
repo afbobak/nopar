@@ -21,10 +21,8 @@ whole shebang into ``/usr/local/nopar`` with an install script
 Usage
 -----
 
-If you installed NOPAR via ``npm install` -g nopar`, then a start script is be
+If you installed NOPAR via ``npm install -g nopar``, then a start script is be
 installed into your path and you can simply run:
-
-Run:
 
     nopar
 
