@@ -13,7 +13,7 @@
            var idx;
            var pkgName = packages[i];
            var pkg = registry[pkgName];
-           var versions = Object.keys(pkg.versions).sort();
+           var versions = pkg._versions;
            var latest = pkg.versions[pkg["dist-tags"].latest]; %>
          <li class="package accordion-group">
            <h2 class="accordion-heading">
