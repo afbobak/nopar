@@ -22,7 +22,7 @@
   "license": "BSD",
   "dependencies": {
     "ejs": "~0.8.3",
-    "express": "~3.0.1",
+    "express": "~3.2.0",
     "marked": "~0.2.8",
     "mustache": "~0.7.2",
     "winston": "~0.6.2",
