@@ -479,6 +479,33 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
     assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
   },
 
+  "should reset revision if it's a checksum": function () {
+    /*jslint nomen: true*/
+    var pkgMeta = {
+      name       : "test",
+      "_rev"     : "011f2254e3def8ab3023052072195e1a",
+      "_proxied" : false,
+      versions   : {
+        "0.0.1-dev" : {}
+      }
+    };
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify(pkgMeta));
+
+    this.call.callbacks[0]({
+      headers     : { "content-type" : "application/json" },
+      params      : {
+        packagename : "test",
+        version     : "0.0.1-dev"
+      },
+      originalUrl : "/test/0.0.1-dev"
+    }, this.res);
+
+    pkgMeta._rev = 0;
+
+    assert.calledOnce(fs.writeFileSync);
+    assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
+  },
+
   "should add tag and return latest version number in body": function () {
     fs.existsSync.withArgs("/path/test/test.json").returns(false);
 
