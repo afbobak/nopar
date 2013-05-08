@@ -315,7 +315,7 @@ buster.testCase("pkg-test - PUT /:packagename", {
     var pkgMeta = {
       "_id"      : "test",
       "name"     : "test",
-      "_rev"     : 0,
+      "_rev"     : 1,
       "_proxied" : false
     };
     assert.called(this.res.json);
@@ -379,6 +379,32 @@ buster.testCase("pkg-test - PUT /:packagename", {
       "_id"  : "test",
       "name" : "test",
       "_rev" : 2,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {}
+      }
+    };
+    fs.readFileSync.withArgs("/path/test/test.json").returns(JSON.stringify(pkgMeta));
+    delete pkgMeta.versions["0.0.1"];
+
+    this.callRev.callbacks[0]({
+      headers     : { "content-type" : "application/json" },
+      params      : { packagename : "test", revision : 2 },
+      originalUrl : "/test",
+      body        : pkgMeta
+    }, this.res);
+
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 200, {"ok" : true});
+    assert.called(fs.writeFileSync);
+    assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
+  },
+
+  "should update package and persist registry if revision is same but different type": function () {
+    var pkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : "2",
       "versions" : {
         "0.0.1" : {},
         "0.0.2" : {}
@@ -500,7 +526,7 @@ buster.testCase("pkg-test - PUT /:packagename/:version", {
       originalUrl : "/test/0.0.1-dev"
     }, this.res);
 
-    pkgMeta._rev = 0;
+    pkgMeta._rev = 1;
 
     assert.calledOnce(fs.writeFileSync);
     assert.calledWith(fs.writeFileSync, "/path/test/test.json", JSON.stringify(pkgMeta));
