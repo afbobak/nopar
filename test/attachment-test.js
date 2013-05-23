@@ -11,55 +11,32 @@ var http   = require("http");
 var https  = require("https");
 var path   = require("path");
 
-var registry = require("../lib/registry");
-
-var findCall = require("./helpers").findCall;
-
-function initRegistry(self) {
-  self.server.set("registryPath", "/path");
-  self.server.set("forwarder", {
-    registry    : "https://registry.bla.org",
-    autoForward : true
-  });
-
-  self.stub(fs, "existsSync");
-  self.stub(fs, "readFileSync");
-  self.stub(fs, "mkdirSync");
-  self.stub(fs, "writeFileSync");
-
-  fs.existsSync.returns(true); // default to true
-
-  self.stub(registry, "init");
-  self.stub(registry, "getPackage");
-  self.stub(registry, "setPackage");
-}
+var attachment = require("../lib/attachment");
 
 // ==== Test Case
 
-buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
-  setUp: function () {
-    this.server = require("../lib/server");
-    this.server.set("registry", registry);
-    initRegistry(this);
-    this.call = findCall(this.server.routes.get, "/:packagename/-/:attachment");
-    this.res = {
-      json     : this.stub(),
-      download : this.stub()
+buster.testCase("attachment-test - download", {
+  setUp : function () {
+    this.app = {
+      get : this.stub()
     };
+    this.res = {
+      download : this.stub(),
+      json     : this.stub()
+    };
+    this.downloadFn = attachment.download(this.app);
   },
 
-  tearDown: function () {
-    registry.destroy();
-  },
-
-  "should have route": function () {
-    assert.equals(this.call.path, "/:packagename/-/:attachment");
+  "should have function": function () {
+    assert.isFunction(attachment.download);
   },
 
   "should return package not found": function () {
-    fs.existsSync.withArgs("/path/non-existant").returns(false);
+    this.app.get.withArgs("registry").returns({
+      getPackage : this.stub().returns(null)
+    });
 
-    this.call.callbacks[0]({
+    this.downloadFn({
       params : { packagename : "non-existant" }
     }, this.res);
 
@@ -84,9 +61,15 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
         }
       }
     };
-    registry.getPackage.returns(pkgMeta);
+    this.app.get.withArgs("registry").returns({
+      getPackage : this.stub().returns(pkgMeta)
+    });
+    this.app.get.withArgs("settings").returns({
+      get : this.stub().returns("/registryPath")
+    });
+    this.stub(fs, "existsSync").returns(true);
 
-    this.call.callbacks[0]({
+    this.downloadFn({
       params : {
         packagename : "test",
         attachment : "test-0.0.1-dev.tgz"
@@ -96,14 +79,16 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
     assert.calledOnce(this.res.download);
     assert.calledWith(
       this.res.download,
-      path.join(this.server.get("registryPath"), "test", "test-0.0.1-dev.tgz"),
+      path.join("/registryPath", "test", "test-0.0.1-dev.tgz"),
       "test-0.0.1-dev.tgz"
     );
   },
 
   "should not return invalid files": function () {
+    this.stub(fs, "existsSync");
+
     // http://localhost:5984/abstrakt-npm-proxy/-/..%2Fregistry.json
-    this.call.callbacks[0]({
+    this.downloadFn({
       params : {
         packagename : "test",
         attachment : "../invalidFile.json"
@@ -120,8 +105,6 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
 
   "should download attachment from forwarder and mark as cached": function () {
     /*jslint nomen: true */
-    this.stub(http, "get");
-    fs.existsSync.returns(false);
     var pkgMeta = {
       "name" : "test",
       "dist-tags" : {
@@ -140,9 +123,21 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
         }
       }
     };
-    registry.getPackage.returns(pkgMeta);
+    this.app.get.withArgs("registry").returns({
+      getPackage : this.stub().returns(pkgMeta)
+    });
+    var settings = {
+      get : this.stub()
+    };
+    settings.get.withArgs("registryPath").returns("/path");
+    this.app.get.withArgs("settings").returns(settings);
+    this.stub(http, "get").returns({
+      on : this.spy()
+    });
+    this.stub(fs, "existsSync").returns(false);
+    fs.existsSync.withArgs("/path/test").returns(true);
 
-    this.call.callbacks[0]({
+    this.downloadFn({
       params : {
         packagename : "test",
         attachment : "test-0.0.1-dev.tgz"
@@ -158,14 +153,6 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
   },
 
   "should download attachment from forwarder via proxy": function () {
-    this.stub(http, "get");
-    this.stub(https, "get");
-    fs.existsSync.returns(false);
-    this.server.set("forwarder", {
-      proxy       : "https://localhost:8080",
-      autoForward : true,
-      userAgent   : "nopar/0.0.0-test"
-    });
     var pkgMeta = {
       "name" : "test",
       "dist-tags" : {
@@ -184,9 +171,25 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
         }
       }
     };
-    registry.getPackage.returns(pkgMeta);
+    this.app.get.withArgs("registry").returns({
+      getPackage : this.stub().returns(pkgMeta)
+    });
+    var settings = {
+      get : this.stub()
+    };
+    settings.get.withArgs("registryPath").returns("/path");
+    settings.get.withArgs("forwarder.proxy").returns("https://localhost:8080");
+    settings.get.withArgs("forwarder.autoForward").returns(true);
+    settings.get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
+    this.app.get.withArgs("settings").returns(settings);
+    this.stub(http, "get");
+    this.stub(https, "get").returns({
+      on : this.spy()
+    });
+    this.stub(fs, "existsSync").returns(false);
+    fs.existsSync.withArgs("/path/test").returns(true);
 
-    this.call.callbacks[0]({
+    this.downloadFn({
       params : {
         packagename : "test",
         attachment : "test-0.0.1-dev.tgz"
@@ -205,21 +208,68 @@ buster.testCase("attachment-test - GET /:packagename/-/:attachment", {
       port     : "8080",
       path     : "http://fwd.url/pkg.tgz"
     });
+  },
+
+  "should catch error events from http": function () {
+    var pkgMeta = {
+      "name" : "test",
+      "dist-tags" : {
+        "latest" : "0.0.1-dev"
+      },
+      "versions" : {
+        "0.0.1-dev" : {
+          "dist" : {
+            "tarball" : "test-0.0.1-dev.tgz"
+          }
+        }
+      },
+      "_attachments" : {
+        "test-0.0.1-dev.tgz" : {
+          forwardUrl: "http://fwd.url/pkg.tgz"
+        }
+      }
+    };
+    this.app.get.withArgs("registry").returns({
+      getPackage : this.stub().returns(pkgMeta)
+    });
+    var settings = {
+      get : this.stub()
+    };
+    settings.get.withArgs("registryPath").returns("/path");
+    settings.get.withArgs("forwarder.proxy").returns("http://localhost:8080");
+    settings.get.withArgs("forwarder.autoForward").returns(true);
+    settings.get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
+    this.app.get.withArgs("settings").returns(settings);
+    var spy = this.spy();
+    this.stub(http, "get").returns({
+      on : spy
+    });
+    this.stub(fs, "existsSync").returns(false);
+    fs.existsSync.withArgs("/path/test").returns(true);
+
+    this.downloadFn({
+      params : {
+        packagename : "test",
+        attachment : "test-0.0.1-dev.tgz"
+      }
+    }, this.res);
+
+    assert.calledOnce(http.get);
+    assert.calledOnce(spy);
+    assert.calledWith(spy, "error");
   }
 });
 
 
 // ==== Test Case
 
-buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
+buster.testCase("attachment-test - attach", {
   setUp: function () {
     this.stub(fs, "createWriteStream");
 
-    this.server = require("../lib/server");
-    this.server.set("registry", registry);
-    initRegistry(this);
-    this.call = findCall(this.server.routes.put,
-      "/:packagename/-/:attachment/-rev?/:revision?");
+    this.app = {
+      get : this.stub()
+    };
     this.req = {
       headers     : {
         "content-type" : "application/octet-stream"
@@ -235,18 +285,25 @@ buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
     this.res = {
       json : this.stub()
     };
+
+    var settings = {
+      get : this.stub()
+    };
+    settings.get.withArgs("registryPath").returns("/path");
+    this.app.get.withArgs("settings").returns(settings);
+    this.app.get.withArgs("registry").returns({
+      getPackage : this.stub()
+    });
+
+    this.attachFn = attachment.attach(this.app);
   },
 
-  tearDown: function () {
-    registry.destroy();
-  },
-
-  "should have route": function () {
-    assert.equals(this.call.path, "/:packagename/-/:attachment/-rev?/:revision?");
+  "should have function": function () {
+    assert.isFunction(attachment.attach);
   },
 
   "should require content-type application/json": function () {
-    this.call.callbacks[0]({
+    this.attachFn({
       headers     : {},
       params      : { packagename : "test" },
       originalUrl : "/test"
@@ -260,34 +317,28 @@ buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
   },
 
   "should create path if it doesn't exist": function () {
-    fs.existsSync.returns(false);
+    this.stub(fs, "existsSync").returns(false);
+    this.stub(fs, "mkdirSync");
 
-    this.call.callbacks[0](this.req, this.res);
+    this.attachFn(this.req, this.res);
     this.req.on.yields();
 
-    assert.called(fs.existsSync);
-    assert.calledWith(
-      fs.existsSync,
-      path.join(this.server.get("registryPath"), "test")
-    );
+    assert.called(fs.mkdirSync);
+    assert.calledWith(fs.mkdirSync, "/path/test");
   },
 
   "should create write stream and pipe to it": function () {
-    fs.existsSync.returns(true);
+    this.stub(fs, "existsSync").returns(true);
     fs.createWriteStream.returns("MY_FD");
 
-    this.call.callbacks[0](this.req, this.res);
+    this.attachFn(this.req, this.res);
 
     assert.called(fs.createWriteStream);
-    assert.calledWith(
-      fs.createWriteStream,
-      path.join(this.server.get("registryPath"), "test", "test.tgz"),
-      {
-        flags    : "w",
-        encoding : null,
-        mode     : "0660"
-      }
-    );
+    assert.calledWith(fs.createWriteStream, "/path/test/test.tgz", {
+      flags    : "w",
+      encoding : null,
+      mode     : "0660"
+    });
     assert.called(this.req.pipe);
     assert.calledWith(this.req.pipe, "MY_FD");
   }
@@ -295,27 +346,13 @@ buster.testCase("attachment-test - PUT /:packagename/-/:attachment", {
 
 // ==== Test Case
 
-buster.testCase("attachment-test - DELETE /:packagename/-/:attachment", {
+buster.testCase("attachment-test - detach", {
   setUp: function () {
     this.stub(fs, "unlinkSync");
 
-    this.server = require("../lib/server");
-    this.server.set("registry", registry);
-    initRegistry(this);
-
-    registry.getPackage.withArgs("test").returns({
-      "name" : "test",
-      "versions" : {
-        "0.0.1-dev" : {
-          "dist" : {
-            "tarball" : "http://localhost:5984/test/-/test-0.0.1-dev.tgz"
-          }
-        }
-      }
-    });
-
-    this.call = findCall(this.server.routes["delete"],
-      "/:packagename/-/:attachment/-rev?/:revision?");
+    this.app = {
+      get : this.stub()
+    };
     this.req = {
       params      : {
         packagename : "test",
@@ -326,32 +363,48 @@ buster.testCase("attachment-test - DELETE /:packagename/-/:attachment", {
     this.res = {
       json : this.stub()
     };
+
+    var settings = {
+      get : this.stub()
+    };
+    settings.get.withArgs("registryPath").returns("/path");
+    this.app.get.withArgs("settings").returns(settings);
+    this.app.get.withArgs("registry").returns({
+      setPackage : this.stub(),
+      getPackage : this.stub().returns({
+        "name" : "test",
+        "versions" : {
+          "0.0.1-dev" : {
+            "dist" : {
+              "tarball" : "http://localhost:5984/test/-/test-0.0.1-dev.tgz"
+            }
+          }
+        }
+      })
+    });
+
+    this.detachFn = attachment.detach(this.app);
   },
 
-  tearDown: function () {
-    registry.destroy();
-  },
-
-  "should have route": function () {
-    assert.equals(this.call.path, "/:packagename/-/:attachment/-rev?/:revision?");
+  "should have function": function () {
+    assert.isFunction(attachment.detach);
   },
 
   "should delete attachment": function () {
-    this.call.callbacks[0](this.req, this.res);
+    this.stub(fs, "existsSync").returns(true);
+
+    this.detachFn(this.req, this.res);
 
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok"  : true});
     assert.called(fs.unlinkSync);
-    assert.calledWith(
-      fs.unlinkSync,
-      path.join(this.server.get("registryPath"), "test", "test-0.0.1-dev.tgz")
-    );
+    assert.calledWith(fs.unlinkSync, "/path/test/test-0.0.1-dev.tgz");
   },
 
   "should not allow '/' in attachment name": function () {
     this.req.params.attachment = "..%2Ftest-0.0.1-dev.tgz";
 
-    this.call.callbacks[0](this.req, this.res);
+    this.detachFn(this.req, this.res);
 
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 404, {
