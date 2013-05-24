@@ -16,7 +16,7 @@
               id="settings-registry"
               name="registry"
               type="text"
-              placeholder="<%= defaults.forwarder.registry %>"
+              placeholder="<%= defaults["forwarder.registry"] %>"
               value="<%= settings.forwarder.registry || '' %>" />
             <label class="checkbox">
               <input name="autoForward" type="checkbox" <%= settings.forwarder.autoForward ? 'checked="checked" ' : '' %>value="true" />
@@ -53,7 +53,7 @@
               id="settings-proxy"
               name="proxy"
               type="text"
-              placeholder="<%= defaults.forwarder.proxy || '' %>"
+              placeholder="<%= defaults["forwarder.proxy"] || '' %>"
               value="<%= settings.forwarder.proxy || '' %>" />
           </div>
         </div>
@@ -64,7 +64,7 @@
               id="settings-userAgent"
               name="userAgent"
               type="text"
-              placeholder="<%= defaults.forwarder.userAgent %>"
+              placeholder="<%= defaults["forwarder.userAgent"] %>"
               value="<%= settings.forwarder.userAgent || '' %>" />
           </div>
         </div>
