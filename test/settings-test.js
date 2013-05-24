@@ -3,11 +3,12 @@
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
-var buster  = require("buster");
-var assert  = buster.assertions.assert;
-var refute  = buster.assertions.refute;
-var sinon   = require("../node_modules/buster/node_modules/sinon");
-var winston = require("winston");
+var buster     = require("buster");
+var assert     = buster.assertions.assert;
+var refute     = buster.assertions.refute;
+var sinon      = require("../node_modules/buster/node_modules/sinon");
+var winston    = require("winston");
+var attachment = require("../lib/attachment");
 
 var settings = require("../lib/settings");
 
@@ -37,7 +38,15 @@ buster.testCase("settings-test - init", {
     var s = settings.init(this.registry);
 
     var defaults = settings.defaults;
-    assert.equals(s.defaults, defaults);
+    assert.equals(s.defaults, {
+      "forwarder.autoForward" : true,
+      "forwarder.registry"    : "https://registry.npmjs.org",
+      "forwarder.userAgent"   : "nopar/0.2.2-dev",
+      hostname                : "localhost",
+      logfile                 : "",
+      port                    : 5984,
+      registryPath            : "/Local Files/bobak/Development/Osares/nopar/registry"
+    });
     assert.equals(s.data["forwarder.registry"], defaults["forwarder.registry"]);
     assert.equals(s.data["forwarder.proxy"], defaults["forwarder.proxy"]);
     assert.equals(s.data["forwarder.autoForward"], defaults["forwarder.autoForward"]);
@@ -151,8 +160,10 @@ buster.testCase("settings-test - render", {
 buster.testCase("settings-test - save", {
   setUp: function () {
     this.registry = {
-      getMeta: this.stub().returns({}),
-      writeMeta: this.spy()
+      getMeta         : this.stub().returns({}),
+      writeMeta       : this.spy(),
+      iteratePackages : this.stub(),
+      setPackage      : this.stub()
     };
     this.settings = {
       get      : this.stub(),
@@ -176,12 +187,14 @@ buster.testCase("settings-test - save", {
   },
 
   "should set new settings": function () {
+    this.stub(attachment, "refreshMeta");
+
     this.saveFn({
       body : {
         hostname     : "localhost",
         port         : "3333",
         registry    : "http://some.registry/",
-        proxy       : "http://a.proxy:8080",
+        proxy       : "",
         autoForward : null,
         userAgent   : "bla"
       }
@@ -192,10 +205,43 @@ buster.testCase("settings-test - save", {
     assert.calledWith(this.settings.set, "port", 3333);
     assert.calledWith(this.settings.set, "forwarder.registry",
       "http://some.registry/");
-    assert.calledWith(this.settings.set, "forwarder.proxy",
-      "http://a.proxy:8080");
+    assert.calledWith(this.settings.set, "forwarder.proxy", undefined);
     assert.calledWith(this.settings.set, "forwarder.autoForward", false);
     assert.calledWith(this.settings.set, "forwarder.userAgent", "bla");
+  },
+
+  "should NOT refresh attachment meta if same hostname/port": function () {
+    this.settings.get.withArgs("hostname").returns("localhost");
+    this.settings.get.withArgs("port").returns(3333);
+
+    this.saveFn({
+      body : {
+        hostname     : "localhost",
+        port         : "3333"
+      }
+    }, {render: this.spy()});
+
+    refute.called(this.registry.iteratePackages);
+  },
+
+  "should refresh attachment meta if different hostname/port": function () {
+    this.stub(attachment, "refreshMeta");
+    this.settings.get.withArgs("hostname").returns("localhost");
+    this.settings.get.withArgs("port").returns(3333);
+
+    this.saveFn({
+      body : {
+        hostname     : "new.host",
+        port         : "3333"
+      }
+    }, {render: this.spy()});
+    this.registry.iteratePackages["yield"]("pkgname", "testdata");
+
+    assert.calledOnce(this.registry.iteratePackages);
+    assert.calledOnce(attachment.refreshMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, "testdata");
+    assert.calledOnce(this.registry.setPackage);
+    assert.calledWith(this.registry.setPackage, "testdata");
   },
 
   "should write new meta": function () {
