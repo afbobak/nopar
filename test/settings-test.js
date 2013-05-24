@@ -39,13 +39,13 @@ buster.testCase("settings-test - init", {
 
     var defaults = settings.defaults;
     assert.equals(s.defaults, {
-      "forwarder.autoForward" : true,
-      "forwarder.registry"    : "https://registry.npmjs.org",
-      "forwarder.userAgent"   : "nopar/0.2.2-dev",
-      hostname                : "localhost",
-      logfile                 : "",
-      port                    : 5984,
-      registryPath            : "/Local Files/bobak/Development/Osares/nopar/registry"
+      "forwarder.autoForward" : defaults["forwarder.autoForward"],
+      "forwarder.registry"    : defaults["forwarder.registry"],
+      "forwarder.userAgent"   : defaults["forwarder.userAgent"],
+      hostname                : defaults.hostname,
+      logfile                 : defaults.logfile,
+      port                    : defaults.port,
+      registryPath            : defaults.registryPath
     });
     assert.equals(s.data["forwarder.registry"], defaults["forwarder.registry"]);
     assert.equals(s.data["forwarder.proxy"], defaults["forwarder.proxy"]);
