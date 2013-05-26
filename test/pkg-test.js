@@ -699,3 +699,62 @@ buster.testCase("pkg-test - unpublish", {
     assert.calledWith(fs.rmdirSync, "/path/test");
   }
 });
+
+// ==== Test Case
+
+buster.testCase("pkg-test - refresh", {
+
+  setUp: function () {
+    this.stub(http, "get").returns({on : this.spy()});
+    this.stub(attachment, "refreshMeta");
+    this.app = {
+      get : this.stub()
+    };
+    this.res = {
+      json : this.stub()
+    };
+    this.getPackageStub = this.stub();
+    this.app.get.withArgs("registry").returns({
+      setPackage : this.stub(),
+      getPackage : this.getPackageStub
+    });
+    this.getSetting = this.stub();
+    this.getSetting.withArgs("forwarder.registry").
+      returns("http://u.url:8888/the/path/");
+    this.getSetting.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
+    this.app.get.withArgs("settings").returns({
+      get : this.getSetting
+    });
+    this.refreshFn = pkg.refresh(this.app);
+  },
+
+  "should have function": function () {
+    assert.isFunction(pkg.refresh);
+  },
+
+  "should return document not found": function () {
+    this.getPackageStub.returns(null);
+
+    this.refreshFn({params: {packagename: "fwdpkg"}}, this.res);
+
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 404, {
+      "error"  : "not_found",
+      "reason" : "document not found"
+    });
+  },
+
+  "should refresh full package JSON from forwarder": function () {
+    this.getPackageStub.returns({});
+
+    this.refreshFn({params: {packagename: "fwdpkg"}}, this.res);
+
+    assert.called(http.get);
+    assert.calledWith(http.get, {
+      headers  : { "User-Agent" : "nopar/0.0.0-test" },
+      hostname : "u.url",
+      port     : "8888",
+      path     : "/the/path/fwdpkg"
+    });
+  }
+});
