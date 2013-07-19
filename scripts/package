@@ -10,15 +10,8 @@ echo "==== Packaging ${PKG_NAME}@${PKG_VERSION} ===="
 rm -fr nopar*.tgz .latest.id node_modules
 npm install --production
 
-GNU_TAR=`tar --version | grep GNU`
-if [ "${GNU_TAR}" = "" ]; then
-  TAR="tar -c -s ,^,${PKG}/,"
-else
-  TAR="tar -c --transform s,^,${PKG}/,"
-fi
-
 echo ${PKG} > .latest.id
-$TAR --owner=root --group=root -z -f ${PKG}.tgz \
+tar -c --owner=root --group=root -z -f ${PKG}.tgz \
  bin \
  lib \
  node_modules \
@@ -27,5 +20,13 @@ $TAR --owner=root --group=root -z -f ${PKG}.tgz \
  views \
  package.json \
  README.md
+
+mkdir ${PKG}
+cd ${PKG}
+tar -x -f ../${PKG}.tgz
+cd ..
+rm -f ${PKG}.tgz
+tar -c --owner=root --group=root -z -f ${PKG}.tgz ${PKG}
+rm -fr ${PKG}
 
 echo "==== Packaged ${PKG}.tgz ===="
