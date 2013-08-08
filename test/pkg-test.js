@@ -148,6 +148,7 @@ buster.testCase("pkg-test - getPackage proxied", {
 
   "should get full package JSON from forwarder": function () {
     this.getSetting.withArgs("forwarder.autoForward").returns(true);
+    this.getSetting.withArgs("forwarder.ignoreCert").returns(true);
 
     this.getFn({
       params : {
@@ -161,12 +162,14 @@ buster.testCase("pkg-test - getPackage proxied", {
       headers  : { "User-Agent" : "nopar/0.0.0-test" },
       hostname : "u.url",
       port     : "8888",
-      path     : "/the/path/fwdpkg"
+      path     : "/the/path/fwdpkg",
+      rejectUnauthorized : false
     });
   },
 
   "should get full package JSON from forwarder via proxy": function () {
     this.getSetting.withArgs("forwarder.autoForward").returns(true);
+    this.getSetting.withArgs("forwarder.ignoreCert").returns(false);
     this.getSetting.withArgs("forwarder.proxy").returns("http://localhost:8080");
 
     this.getFn({
@@ -184,7 +187,8 @@ buster.testCase("pkg-test - getPackage proxied", {
       },
       hostname : "localhost",
       port     : "8080",
-      path     : "http://u.url:8888/the/path/fwdpkg"
+      path     : "http://u.url:8888/the/path/fwdpkg",
+      rejectUnauthorized : true
     });
   },
 
@@ -754,7 +758,8 @@ buster.testCase("pkg-test - refresh", {
       headers  : { "User-Agent" : "nopar/0.0.0-test" },
       hostname : "u.url",
       port     : "8888",
-      path     : "/the/path/fwdpkg"
+      path     : "/the/path/fwdpkg",
+      rejectUnauthorized : true
     });
   }
 });

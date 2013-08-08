@@ -180,6 +180,7 @@ buster.testCase("attachment-test - download", {
     settings.get.withArgs("registryPath").returns("/path");
     settings.get.withArgs("forwarder.proxy").returns("https://localhost:8080");
     settings.get.withArgs("forwarder.autoForward").returns(true);
+    settings.get.withArgs("forwarder.ignoreCert").returns(true);
     settings.get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
     this.app.get.withArgs("settings").returns(settings);
     this.stub(http, "get");
@@ -206,7 +207,8 @@ buster.testCase("attachment-test - download", {
       },
       hostname : "localhost",
       port     : "8080",
-      path     : "http://fwd.url/pkg.tgz"
+      path     : "http://fwd.url/pkg.tgz",
+      rejectUnauthorized : false
     });
   },
 
@@ -238,6 +240,7 @@ buster.testCase("attachment-test - download", {
     settings.get.withArgs("registryPath").returns("/path");
     settings.get.withArgs("forwarder.proxy").returns("http://localhost:8080");
     settings.get.withArgs("forwarder.autoForward").returns(true);
+    settings.get.withArgs("forwarder.ignoreCert").returns(false);
     settings.get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
     this.app.get.withArgs("settings").returns(settings);
     var spy = this.spy();

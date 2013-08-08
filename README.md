@@ -65,6 +65,9 @@ parameters are available:
 * NOPAR_AUTO_FORWARD - "yes" if NOPAR should automatically forward requests for
   unknown packages to the forwarder registry, "no" if you really just want a
   local registry without the auto-caching facility (default="yes")
+* NOPAR_IGNORE_CERT - "yes" if NOPAR should ignore invalid SSL certificates for
+  the forwarder server, "no" if NOPAR should not make requests to servers
+  presenting an invalid SSL certificate (default="no")
 * NOPAR_FORWARDER_URL - The URL of the registry NOPAR forwards requests for
   unknown packages to (default="https://registry.npmjs.org")
 * NOPAR_PROXY_URL - The URL of a proxy to use, empty for not using a proxy

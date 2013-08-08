@@ -40,6 +40,7 @@ buster.testCase("settings-test - init", {
     var defaults = settings.defaults;
     assert.equals(s.defaults, {
       "forwarder.autoForward" : defaults["forwarder.autoForward"],
+      "forwarder.ignoreCert"  : defaults["forwarder.ignoreCert"],
       "forwarder.registry"    : defaults["forwarder.registry"],
       "forwarder.userAgent"   : defaults["forwarder.userAgent"],
       hostname                : defaults.hostname,
@@ -50,6 +51,7 @@ buster.testCase("settings-test - init", {
     assert.equals(s.data["forwarder.registry"], defaults["forwarder.registry"]);
     assert.equals(s.data["forwarder.proxy"], defaults["forwarder.proxy"]);
     assert.equals(s.data["forwarder.autoForward"], defaults["forwarder.autoForward"]);
+    assert.equals(s.data["forwarder.ignoreCert"], defaults["forwarder.ignoreCert"]);
     assert.equals(s.data["forwarder.userAgent"], defaults["forwarder.userAgent"]);
     assert.equals(s.data.hostname, defaults.hostname);
     assert.equals(s.data.port, defaults.port);
@@ -64,6 +66,17 @@ buster.testCase("settings-test - init", {
 
     var defaults = settings.defaults;
     assert.equals(s.data["forwarder.autoForward"], defaults["forwarder.autoForward"]);
+  },
+
+  "should set ignoreCert to default if null": function () {
+    this.registry.getMeta.returns({settings: {
+      "forwarder.ignoreCert" : null
+    }});
+
+    var s = settings.init(this.registry);
+
+    var defaults = settings.defaults;
+    assert.equals(s.data["forwarder.ignoreCert"], defaults["forwarder.ignoreCert"]);
   }
 });
 
@@ -196,6 +209,7 @@ buster.testCase("settings-test - save", {
         registry    : "http://some.registry/",
         proxy       : "",
         autoForward : null,
+        ignoreCert  : true,
         userAgent   : "bla"
       }
     }, {render: this.spy()});
@@ -207,6 +221,7 @@ buster.testCase("settings-test - save", {
       "http://some.registry/");
     assert.calledWith(this.settings.set, "forwarder.proxy", undefined);
     assert.calledWith(this.settings.set, "forwarder.autoForward", false);
+    assert.calledWith(this.settings.set, "forwarder.ignoreCert", true);
     assert.calledWith(this.settings.set, "forwarder.userAgent", "bla");
   },
 
