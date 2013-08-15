@@ -22,6 +22,10 @@
               <input name="autoForward" type="checkbox" <%= settings.forwarder.autoForward ? 'checked="checked" ' : '' %>value="true" />
               Forward requests
             </label>
+            <label class="checkbox">
+              <input name="ignoreCert" type="checkbox" <%= settings.forwarder.ignoreCert ? 'checked="checked" ' : '' %>value="true" />
+              Ignore invalid SSL certificates
+            </label>
           </div>
         </div>
         <div class="control-group">
