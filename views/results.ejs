@@ -52,19 +52,19 @@
                    <td>
                      <ul class="versions"><%
                             for (var j = 0; j < versions.length; j++) {
-                              var version = versions[j];
+                              var vers = versions[j];
                               var cached = false;
                               var pkgUrl;
-                              if (pkg.versions[version].dist) {
-                                pkgUrl = pkg.versions[version].dist.tarball;
+                              if (pkg.versions[vers].dist) {
+                                pkgUrl = pkg.versions[vers].dist.tarball;
                                 var attachment  = pkgUrl.substr(pkgUrl.lastIndexOf("/") + 1);
                                 cached = pkg["_attachments"][attachment].cached;
                               } else {
-                                version += " (no dist tag)";
+                                vers += " (no dist tag)";
                               }
                                %>
                         <li class="version label<% if (cached) {%><%= pkg["_local"] ? ' label-success' : ' label-warning' %><% } %>">
-                          <div class=""><%= version %></div>
+                          <div class=""><%= vers %></div>
                           <!-- span class="label label-success">available</span>
                           <span class="label">not cached</span>
                           <div class="btn-group">
