@@ -62,6 +62,8 @@ parameters are available:
 
 * NOPAR_HOSTNAME - Hostname that the service is bound to (default="localhost")
 * NOPAR_PORT - TCP port the service is running on (default=5984)
+* NOPAR_BASE_URL - Used to override base url if hosted behind a reverse proxy
+  (default="")
 * NOPAR_AUTO_FORWARD - "yes" if NOPAR should automatically forward requests for
   unknown packages to the forwarder registry, "no" if you really just want a
   local registry without the auto-caching facility (default="yes")

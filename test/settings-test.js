@@ -44,6 +44,7 @@ buster.testCase("settings-test - init", {
       "forwarder.registry"    : defaults["forwarder.registry"],
       "forwarder.userAgent"   : defaults["forwarder.userAgent"],
       hostname                : defaults.hostname,
+      base_url                : defaults.base_url,
       logfile                 : defaults.logfile,
       port                    : defaults.port,
       registryPath            : defaults.registryPath
@@ -55,6 +56,7 @@ buster.testCase("settings-test - init", {
     assert.equals(s.data["forwarder.userAgent"], defaults["forwarder.userAgent"]);
     assert.equals(s.data.hostname, defaults.hostname);
     assert.equals(s.data.port, defaults.port);
+    assert.equals(s.data.base_url, defaults.base_url);
   },
 
   "should set autoForward to default if null": function () {
