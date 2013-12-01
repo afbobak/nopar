@@ -4,8 +4,8 @@
 "use strict";
 
 var buster     = require("buster");
-var assert     = buster.assertions.assert;
-var refute     = buster.assertions.refute;
+var assert     = buster.referee.assert;
+var refute     = buster.referee.refute;
 var fs         = require("fs");
 var http       = require("http");
 var path       = require("path");

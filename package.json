@@ -21,16 +21,16 @@
   "author": "Andreas F. Bobak (bobak@abstrakt.ch)",
   "license": "BSD",
   "dependencies": {
-    "ejs": "~0.8.3",
+    "ejs": "~0.8.5",
     "express": "~3.3.4",
-    "marked": "~0.2.9",
-    "mustache": "~0.7.2",
+    "marked": "~0.2.10",
+    "mustache": "~0.7.3",
     "winston": "~0.7.2",
-    "semver": "~2.0.10",
-    "stylus": "~0.34.1"
+    "semver": "~2.2.1",
+    "stylus": "~0.41.0"
   },
   "devDependencies": {
-    "buster": "~0.6.12",
+    "buster": "~0.7.8",
     "buster-lint": "~0.3.1"
   },
   "engines": {
