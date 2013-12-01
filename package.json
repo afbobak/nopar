@@ -18,7 +18,9 @@
     "registry",
     "proxy"
   ],
-  "author": "Andreas F. Bobak (bobak@abstrakt.ch)",
+  "homepage": "https://github.com/afbobak/nopar/",
+  "bugs": "https://github.com/afbobak/nopar/issues/",
+  "author": "Andreas F. Bobak <bobak@abstrakt.ch>",
   "license": "BSD",
   "dependencies": {
     "ejs": "~0.8.5",
