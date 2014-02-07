@@ -397,13 +397,34 @@ buster.testCase("pkg-test - publishFull", {
       headers     : { "content-type" : "application/json" },
       params      : { packagename : "test", revision : 2 },
       originalUrl : "/test",
-      body        : pkgMeta
+      body        : {
+        "_id"  : "test",
+        "name" : "test",
+        "_rev" : 2,
+        "versions" : {
+          "0.0.1" : {},
+          "0.0.2" : {},
+          "0.0.3" : {}
+        }
+      }
     }, this.res);
 
+    var newPkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 3,
+      "_proxied": false,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {},
+        "0.0.3" : {}
+      }
+    };
+
     assert.called(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, undefined, pkgMeta);
+    assert.calledWith(attachment.refreshMeta, undefined, newPkgMeta);
     assert.called(this.setPackageStub);
-    assert.calledWith(this.setPackageStub, pkgMeta);
+    assert.calledWith(this.setPackageStub, newPkgMeta);
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok" : true});
   },
@@ -424,13 +445,34 @@ buster.testCase("pkg-test - publishFull", {
       headers     : { "content-type" : "application/json" },
       params      : { packagename : "test", revision : 2 },
       originalUrl : "/test",
-      body        : pkgMeta
+      body        : {
+        "_id"  : "test",
+        "name" : "test",
+        "_rev" : 2,
+        "versions" : {
+          "0.0.1" : {},
+          "0.0.2" : {},
+          "0.0.3" : {}
+        }
+      }
     }, this.res);
 
+    var newPkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 3,
+      "_proxied": false,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {},
+        "0.0.3" : {}
+      }
+    };
+
     assert.called(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, undefined, pkgMeta);
+    assert.calledWith(attachment.refreshMeta, undefined, newPkgMeta);
     assert.called(this.setPackageStub);
-    assert.calledWith(this.setPackageStub, pkgMeta);
+    assert.calledWith(this.setPackageStub, newPkgMeta);
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok" : true});
   },
