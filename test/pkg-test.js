@@ -4,8 +4,8 @@
 "use strict";
 
 var buster     = require("buster");
-var assert     = buster.assertions.assert;
-var refute     = buster.assertions.refute;
+var assert     = buster.referee.assert;
+var refute     = buster.referee.refute;
 var fs         = require("fs");
 var http       = require("http");
 var path       = require("path");
@@ -271,9 +271,16 @@ buster.testCase("pkg-test - getPackage proxied", {
 buster.testCase("pkg-test - publishFull", {
   setUp: function () {
     this.stub(attachment, "refreshMeta");
+    this.stub(attachment, "skimTarballs", function (settings, pkgMeta, cb) {
+      delete pkgMeta["_attachments"];
+      cb();
+    });
+
     this.app = {
       get : this.stub()
     };
+    this.settings = {};
+    this.app.get.withArgs("settings").returns(this.settings);
     this.setPackageStub = this.stub();
     this.getPackageStub = this.stub();
     this.app.get.withArgs("registry").returns({
@@ -354,6 +361,32 @@ buster.testCase("pkg-test - publishFull", {
     });
   },
 
+  "should bounce with 409 if inline document revision doesn't match": function () {
+    var pkgMeta = {
+      "_id"  : "test",
+      "_rev" : 2,
+      "name" : "test"
+    };
+    this.getPackageStub.returns(pkgMeta);
+
+    this.publishFullFn({
+      headers     : { "content-type" : "application/json" },
+      params      : { packagename : "test" },
+      originalUrl : "/test",
+      body        : {
+        "_id"  : "test",
+        "name" : "test",
+        "_rev" : 1
+      }
+    }, this.res);
+
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 409, {
+      "error"  : "conflict",
+      "reason" : "revision does not match one in document"
+    });
+  },
+
   "should add package and persist registry for new package": function () {
     this.getPackageStub.returns(null);
 
@@ -374,9 +407,51 @@ buster.testCase("pkg-test - publishFull", {
       "_proxied" : false
     };
     assert.called(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, undefined, pkgMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, pkgMeta);
     assert.called(this.setPackageStub);
     assert.calledWith(this.setPackageStub, pkgMeta);
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 200, {"ok" : true});
+  },
+
+  "should skim off attachment and persist for new package": function () {
+    this.getPackageStub.returns(null);
+
+    var tarballBytes = new Buffer("I'm a tarball");
+    var tarballBase64 = tarballBytes.toString('base64');
+
+    var pkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_attachments": {
+        "test-0.0.1.tgz": {
+          "content-type": "application/octet-stream",
+          "data": tarballBase64,
+          "length": tarballBytes.byteLength
+        }
+      }
+    };
+
+    this.publishFullFn({
+      headers     : { "content-type" : "application/json" },
+      params      : { packagename : "test" },
+      originalUrl : "/test",
+      body        : pkgMeta
+    }, this.res);
+
+    assert.called(attachment.skimTarballs);
+    assert.calledWith(attachment.skimTarballs, this.settings, pkgMeta);
+
+    var newPkgMeta = {
+      "_id"      : "test",
+      "name"     : "test",
+      "_rev"     : 1,
+      "_proxied" : false
+    };
+    assert.called(attachment.refreshMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
+    assert.called(this.setPackageStub);
+    assert.calledWith(this.setPackageStub, newPkgMeta);
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok" : true});
   },
@@ -397,13 +472,34 @@ buster.testCase("pkg-test - publishFull", {
       headers     : { "content-type" : "application/json" },
       params      : { packagename : "test", revision : 2 },
       originalUrl : "/test",
-      body        : pkgMeta
+      body        : {
+        "_id"  : "test",
+        "name" : "test",
+        "_rev" : 2,
+        "versions" : {
+          "0.0.1" : {},
+          "0.0.2" : {},
+          "0.0.3" : {}
+        }
+      }
     }, this.res);
 
+    var newPkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 3,
+      "_proxied": false,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {},
+        "0.0.3" : {}
+      }
+    };
+
     assert.called(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, undefined, pkgMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
     assert.called(this.setPackageStub);
-    assert.calledWith(this.setPackageStub, pkgMeta);
+    assert.calledWith(this.setPackageStub, newPkgMeta);
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok" : true});
   },
@@ -424,13 +520,143 @@ buster.testCase("pkg-test - publishFull", {
       headers     : { "content-type" : "application/json" },
       params      : { packagename : "test", revision : 2 },
       originalUrl : "/test",
-      body        : pkgMeta
+      body        : {
+        "_id"  : "test",
+        "name" : "test",
+        "_rev" : 2,
+        "versions" : {
+          "0.0.1" : {},
+          "0.0.2" : {},
+          "0.0.3" : {}
+        }
+      }
     }, this.res);
 
+    var newPkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 3,
+      "_proxied": false,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {},
+        "0.0.3" : {}
+      }
+    };
+
     assert.called(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, undefined, pkgMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
     assert.called(this.setPackageStub);
-    assert.calledWith(this.setPackageStub, pkgMeta);
+    assert.calledWith(this.setPackageStub, newPkgMeta);
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 200, {"ok" : true});
+  },
+
+  "should update and persist if _rev is same inside document": function () {
+    var pkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 2,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {}
+      }
+    };
+    this.getPackageStub.returns(pkgMeta);
+
+    this.publishFullFn({
+      headers     : { "content-type" : "application/json" },
+      params      : { packagename : "test" },
+      originalUrl : "/test",
+      body        : {
+        "_id"  : "test",
+        "name" : "test",
+        "_rev" : 2,
+        "versions" : {
+          "0.0.1" : {},
+          "0.0.2" : {},
+          "0.0.3" : {}
+        }
+      }
+    }, this.res);
+
+    var newPkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 3,
+      "_proxied": false,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {},
+        "0.0.3" : {}
+      }
+    };
+
+    assert.called(attachment.refreshMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
+    assert.called(this.setPackageStub);
+    assert.calledWith(this.setPackageStub, newPkgMeta);
+    assert.called(this.res.json);
+    assert.calledWith(this.res.json, 200, {"ok" : true});
+  },
+
+  "should skim attachments, update and persist for existing pkg": function () {
+    var pkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 2,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {}
+      }
+    };
+    this.getPackageStub.returns(pkgMeta);
+
+    var tarballBytes = new Buffer("I'm a tarball");
+    var tarballBase64 = tarballBytes.toString('base64');
+
+    var payload = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 2,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {}
+      },
+      "_attachments": {
+        "test-0.0.2.tgz": {
+          "content-type": "application/octet-stream",
+          "data": tarballBase64,
+          "length": tarballBytes.byteLength
+        }
+      }
+    };
+
+    this.publishFullFn({
+      headers     : { "content-type" : "application/json" },
+      params      : { packagename : "test" },
+      originalUrl : "/test",
+      body        : payload
+    }, this.res);
+
+    assert.called(attachment.skimTarballs);
+    assert.calledWith(attachment.skimTarballs, this.settings, payload);
+
+    var newPkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "_rev" : 3,
+      "_proxied": false,
+      "versions" : {
+        "0.0.1" : {},
+        "0.0.2" : {}
+      }
+    };
+
+    assert.called(attachment.refreshMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
+    assert.called(this.setPackageStub);
+    assert.calledWith(this.setPackageStub, newPkgMeta);
     assert.called(this.res.json);
     assert.calledWith(this.res.json, 200, {"ok" : true});
   },
@@ -512,7 +738,7 @@ buster.testCase("pkg-test - publish", {
     pkgMeta._rev++;
 
     assert.called(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, undefined, pkgMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, pkgMeta);
     assert.called(this.setPackageStub);
     assert.calledWith(this.setPackageStub, pkgMeta);
     assert.called(this.res.json);
@@ -543,7 +769,7 @@ buster.testCase("pkg-test - publish", {
     pkgMeta._rev = 1;
 
     assert.called(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, undefined, pkgMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, pkgMeta);
     assert.called(this.setPackageStub);
     assert.calledWith(this.setPackageStub, pkgMeta);
     assert.called(this.res.json);
@@ -574,7 +800,7 @@ buster.testCase("pkg-test - publish", {
     };
 
     assert.called(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, undefined, pkgMeta);
+    assert.calledWith(attachment.refreshMeta, this.settings, pkgMeta);
     assert.called(this.setPackageStub);
     assert.calledWith(this.setPackageStub, pkgMeta);
     assert.called(this.res.json);

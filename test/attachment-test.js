@@ -4,8 +4,8 @@
 "use strict";
 
 var buster = require("buster");
-var assert = buster.assertions.assert;
-var refute = buster.assertions.refute;
+var assert = buster.referee.assert;
+var refute = buster.referee.refute;
 var fs     = require("fs");
 var http   = require("http");
 var https  = require("https");
@@ -305,7 +305,7 @@ buster.testCase("attachment-test - attach", {
     assert.isFunction(attachment.attach);
   },
 
-  "should require content-type application/json": function () {
+  "should require content-type application/octet-stream": function () {
     this.attachFn({
       headers     : {},
       params      : { packagename : "test" },
@@ -344,6 +344,89 @@ buster.testCase("attachment-test - attach", {
     });
     assert.called(this.req.pipe);
     assert.calledWith(this.req.pipe, "MY_FD");
+  }
+});
+
+
+// ==== Test Case
+
+buster.testCase("attachment-test - skimTarballs", {
+  setUp: function () {
+    this.stub(fs, "writeFile").yields();
+
+    var tarball = new Buffer("I'm a tarball");
+    this.tarballBase64 = tarball.toString('base64');
+
+    this.pkgMeta = {
+      "_id"  : "test",
+      "name" : "test",
+      "versions": {
+        "0.0.1": {
+          "dist": {
+            "shasum": "0dd79a57eae458d4b9cf7adc59813cdf812deef9",
+            "tarball": "http://localhost:5984/test/-/test-0.0.1.tgz"
+          }
+        }
+      },
+      "_attachments": {
+        "test-0.0.1.tgz": {
+          "content-type": "application/octet-stream",
+          "data": this.tarballBase64,
+          "length": tarball.byteLength
+        }
+      }
+    };
+
+    this.settings = {
+      get : this.stub()
+    };
+    this.settings.get.withArgs("registryPath").returns("/path");
+  },
+
+  "should have function": function () {
+    assert.isFunction(attachment.skimTarballs);
+  },
+
+  "does nothing with no attachments": function () {
+    var callback = this.spy();
+
+    attachment.skimTarballs(this.settings, {}, callback);
+
+    refute.called(fs.writeFile);
+    assert.called(callback);
+  },
+
+  "should create path if it doesn't exist": function () {
+    this.stub(fs, "existsSync").returns(false);
+    this.stub(fs, "mkdirSync");
+
+    var callback = this.spy();
+
+    attachment.skimTarballs(this.settings, this.pkgMeta, callback);
+
+    assert.called(fs.mkdirSync);
+    assert.calledWith(fs.mkdirSync, "/path/test");
+
+    assert.called(callback);
+  },
+
+  "should write tarball to disk": function () {
+    this.stub(fs, "existsSync").returns(true);
+
+    var callback = this.spy();
+
+    attachment.skimTarballs(this.settings, this.pkgMeta, callback);
+
+    assert.called(fs.writeFile);
+    assert.calledWith(fs.writeFile,
+      "/path/test/test-0.0.1.tgz", this.tarballBase64,
+      {
+        flags    : "w",
+        encoding : 'base64',
+        mode     : "0660"
+      });
+
+    assert.called(callback);
   }
 });
 

@@ -4,8 +4,8 @@
 "use strict";
 
 var buster     = require("buster");
-var assert     = buster.assertions.assert;
-var refute     = buster.assertions.refute;
+var assert     = buster.referee.assert;
+var refute     = buster.referee.refute;
 var sinon      = require("../node_modules/buster/node_modules/sinon");
 var winston    = require("winston");
 var attachment = require("../lib/attachment");
