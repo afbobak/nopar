@@ -24,12 +24,12 @@
   "license": "BSD",
   "dependencies": {
     "ejs": "~0.8.5",
-    "express": "~3.3.4",
-    "marked": "~0.2.10",
-    "mustache": "~0.7.3",
+    "express": "~3.4.8",
+    "marked": "~0.3.2",
+    "mustache": "~0.8.1",
     "winston": "~0.7.2",
     "semver": "~2.2.1",
-    "stylus": "~0.41.0"
+    "stylus": "~0.42.3"
   },
   "devDependencies": {
     "buster": "~0.7.8",
