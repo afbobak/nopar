@@ -427,6 +427,18 @@ buster.testCase("attachment-test - skimTarballs", {
       });
 
     assert.called(callback);
+  },
+
+  "should not write tarballs that have no attached data": function () {
+    /*jslint nomen: true */
+    this.stub(fs, "existsSync").returns(true);
+    var callback = this.spy();
+    delete this.pkgMeta._attachments["test-0.0.1.tgz"].data;
+
+    attachment.skimTarballs(this.settings, this.pkgMeta, callback);
+
+    refute.called(fs.writeFile);
+    assert.called(callback);
   }
 });
 
