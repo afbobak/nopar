@@ -44,6 +44,7 @@ buster.testCase("settings-test - init", {
       "forwarder.registry"    : defaults["forwarder.registry"],
       "forwarder.userAgent"   : defaults["forwarder.userAgent"],
       hostname                : defaults.hostname,
+      baseUrl                 : defaults.baseUrl,
       logfile                 : defaults.logfile,
       port                    : defaults.port,
       registryPath            : defaults.registryPath
@@ -55,6 +56,7 @@ buster.testCase("settings-test - init", {
     assert.equals(s.data["forwarder.userAgent"], defaults["forwarder.userAgent"]);
     assert.equals(s.data.hostname, defaults.hostname);
     assert.equals(s.data.port, defaults.port);
+    assert.equals(s.data.baseUrl, defaults.baseUrl);
   },
 
   "should set autoForward to default if null": function () {
@@ -237,26 +239,6 @@ buster.testCase("settings-test - save", {
     }, {render: this.spy()});
 
     refute.called(this.registry.iteratePackages);
-  },
-
-  "should refresh attachment meta if different hostname/port": function () {
-    this.stub(attachment, "refreshMeta");
-    this.settings.get.withArgs("hostname").returns("localhost");
-    this.settings.get.withArgs("port").returns(3333);
-
-    this.saveFn({
-      body : {
-        hostname     : "new.host",
-        port         : "3333"
-      }
-    }, {render: this.spy()});
-    this.registry.iteratePackages["yield"]("pkgname", "testdata");
-
-    assert.calledOnce(this.registry.iteratePackages);
-    assert.calledOnce(attachment.refreshMeta);
-    assert.calledWith(attachment.refreshMeta, this.settings, "testdata");
-    assert.calledOnce(this.registry.setPackage);
-    assert.calledWith(this.registry.setPackage, "testdata");
   },
 
   "should write new meta": function () {

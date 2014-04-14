@@ -51,6 +51,17 @@
           </div>
         </div>
         <div class="control-group">
+          <label class="control-label" for="settings-baseUrl">Base URL</label>
+          <div class="controls">
+            <input class="span2"
+              id="settings-baseUrl"
+              name="baseUrl"
+              type="text"
+              placeholder="<%= defaults.baseUrl %>"
+              value="<%= settings.baseUrl || '' %>" />
+          </div>
+        </div>
+        <div class="control-group">
           <label class="control-label" for="settings-proxy">Proxy</label>
           <div class="controls">
             <input class="span4"
