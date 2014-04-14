@@ -270,9 +270,10 @@ buster.testCase("pkg-test - getPackage proxied", {
 
 buster.testCase("pkg-test - publishFull", {
   setUp: function () {
+    /*jslint nomen: true*/
     this.stub(attachment, "refreshMeta");
     this.stub(attachment, "skimTarballs", function (settings, pkgMeta, cb) {
-      delete pkgMeta["_attachments"];
+      delete pkgMeta._attachments;
       cb();
     });
 
