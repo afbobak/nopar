@@ -1,7 +1,6 @@
-/node_modules
-/registry
-/.DS_Store
-/public/.DS_Store
+.DS_Store
+*.tgz
 /.latest.id
 /.travis.yml
-/*.tgz
+/node_modules
+/registry
