@@ -8,30 +8,30 @@
       <% include snippets/alert %>
 
       <h3>Settings</h3>
-      <form class="form-horizontal" method="POST" action="/-/settings">
-        <div class="control-group">
-          <label class="control-label" for="settings-registry">Parent Registry</label>
-          <div class="controls">
-            <input class="span4"
+      <form class="form-horizontal" role="form" method="POST" action="/-/settings">
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="settings-registry">Parent Registry</label>
+          <div class="col-sm-4 controls">
+            <input class="form-control"
               id="settings-registry"
               name="registry"
               type="text"
               placeholder="<%= defaults["forwarder.registry"] %>"
               value="<%= settings.forwarder.registry || '' %>" />
-            <label class="checkbox">
+            <div class="checkbox"><label>
               <input name="autoForward" type="checkbox" <%= settings.forwarder.autoForward ? 'checked="checked" ' : '' %>value="true" />
               Forward requests
-            </label>
-            <label class="checkbox">
+            </label></div>
+            <div class="checkbox"><label>
               <input name="ignoreCert" type="checkbox" <%= settings.forwarder.ignoreCert ? 'checked="checked" ' : '' %>value="true" />
               Ignore invalid SSL certificates
-            </label>
+            </label></div>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="settings-hostname">Hostname</label>
-          <div class="controls">
-            <input class="span4"
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="settings-hostname">Hostname</label>
+          <div class="col-sm-4 controls">
+            <input class="form-control"
               id="settings-hostname"
               name="hostname"
               type="text"
@@ -39,10 +39,10 @@
               value="<%= settings.hostname || '' %>" />
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="settings-port">Port</label>
-          <div class="controls">
-            <input class="span2"
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="settings-port">Port</label>
+          <div class="col-sm-2 controls">
+            <input class="form-control"
               id="settings-port"
               name="port"
               type="text"
@@ -50,10 +50,10 @@
               value="<%= settings.port || '' %>" />
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="settings-baseUrl">Base URL</label>
-          <div class="controls">
-            <input class="span2"
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="settings-baseUrl">Base URL</label>
+          <div class="col-sm-4 controls">
+            <input class="form-control"
               id="settings-baseUrl"
               name="baseUrl"
               type="text"
@@ -61,10 +61,10 @@
               value="<%= settings.baseUrl || '' %>" />
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="settings-proxy">Proxy</label>
-          <div class="controls">
-            <input class="span4"
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="settings-proxy">Proxy</label>
+          <div class="col-sm-4 controls">
+            <input class="form-control"
               id="settings-proxy"
               name="proxy"
               type="text"
@@ -72,10 +72,10 @@
               value="<%= settings.forwarder.proxy || '' %>" />
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="settings-userAgent">User-Agent</label>
-          <div class="controls">
-            <input class="span4"
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for="settings-userAgent">User-Agent</label>
+          <div class="col-sm-4 controls">
+            <input class="form-control"
               id="settings-userAgent"
               name="userAgent"
               type="text"
@@ -83,11 +83,11 @@
               value="<%= settings.forwarder.userAgent || '' %>" />
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <button type="submit" class="btn">Save</button>
+        <div class="form-group">
+          <div class="col-sm-offset-3 col-sm-4 controls">
+            <button type="submit" class="btn btn-primary">Save</button>
           </div>
-      </form>
+      </div></form>
 
     </div>
 
