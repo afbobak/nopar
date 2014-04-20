@@ -5,10 +5,10 @@ body {
   padding-left: 40px;
   padding-right: 10px;
 }
-.navbar .brand {
+.navbar .navbar-brand {
   padding-bottom: 0;
 }
-.navbar .brand small {
+.navbar .navbar-brand small {
   margin-left: 4px;
   font-size: 12px;
 }
@@ -22,53 +22,56 @@ ul.packages {
 ul.packages > li {
   margin-bottom: 20px;
 }
-ul.packages > li h2.accordion-heading {
+ul.packages > li h2.panel-heading {
   margin: 0;
   padding: 0;
 }
-ul.packages > li h2.accordion-heading .accordion-toggle {
+ul.packages > li h2.panel-heading .panel-toggle {
   padding-top: 0;
   padding-bottom: 0;
 }
-ul.packages > li h2.accordion-heading .accordion-toggle:hover {
+ul.packages > li h2.panel-heading .panel-toggle:hover {
   background: #f7f7f9;
   text-decoration: none;
 }
-ul.packages > li h2.accordion-heading small {
+ul.packages > li h2.panel-heading small {
   position: relative;
   top: -2px;
 }
-ul.packages > li h2.accordion-heading .actions {
+ul.packages > li h2.panel-heading .actions {
   float: right;
   position: relative;
   top: 3px;
   right: 7px;
 }
-ul.packages > li h2.accordion-heading .tags {
+ul.packages > li h2.panel-heading .tags {
   float: right;
   position: relative;
   top: -7px;
   right: 20px;
 }
-ul.packages > li .accordion-body .actions {
+ul.packages > li .panel-body .actions {
   float: right;
   position: relative;
   top: 5px;
   right: 0px;
 }
-ul.packages > li .accordion-body .details table th {
+ul.packages > li .panel-body .details table th {
   padding-left: 0;
   width: 100px;
 }
-ul.packages > li .accordion-body ul.versions {
+ul.packages > li .panel-body ul.versions {
   margin: 0;
   list-style: none;
 }
-ul.packages > li .accordion-body ul.versions .version {
+ul.packages > li .panel-body ul.versions .version {
   float: left;
   margin-right: 5px;
   margin-bottom: 5px;
-  min-width: 50px;
+}
+ul.packages > li .panel-body ul.versions .version .label {
+  display: block;
+  min-width: 64px;
   text-align: center;
 }
 #content {
