@@ -50,7 +50,7 @@ buster.testCase("pkg-test - getPackage", {
   },
 
   "should return full package": function () {
-    var pkgMeta = { a : "b" };
+    var pkgMeta = { a : "b", "_mtime": new Date() };
     this.app.get.withArgs("registry").returns({
       getPackage : this.stub().returns(pkgMeta)
     });

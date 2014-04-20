@@ -187,6 +187,7 @@ buster.testCase("registry-test - get pkg version", {
     this.stub(fs, "readFileSync");
     this.stub(fs, "mkdirSync");
     this.stub(fs, "writeFileSync");
+    this.stub(fs, "statSync").returns({ mtime : new Date() });
     this.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
@@ -209,7 +210,7 @@ buster.testCase("registry-test - get pkg version", {
     var result = registry.getPackage("pkg");
 
     assert.calledWith(fs.readFileSync, "/some/path/registry/pkg/pkg.json");
-    assert.equals(result, OLD_META.pkg);
+    assert.equals(result.versions, OLD_META.pkg.versions);
   },
 
   "should return null if package version does not exist": function () {

@@ -87,6 +87,8 @@ parameters are available:
   as a daemon (default="")
 * NOPAR_RUNAS_USER - The user to run as if running as a daemon, empty for not
   running as a daemon (default="")
+* NOPAR_META_TTL - The time in seconds until attempting to refresh metadata from
+  "upstream registry" (default=21600)
 
 If the environment variable ``NOPAR_RUNAS_USER`` is set, the service will run
 as a daemon.
@@ -107,7 +109,3 @@ Known Issues
 ------------
 
 * Missing user management. Welcome to the "Admin Party"!
-* Once a package meta is cached, it doesn't get updated from the
-  [upstream registry](http://registry.npmjs.org) automatically. You can refresh
-  the package meta from the [upstream registry](http://registry.npmjs.org) by
-  clicking on the "Refresh" link for that package in the user interface.
