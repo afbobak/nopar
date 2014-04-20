@@ -9,7 +9,9 @@ var refute = buster.referee.refute;
 var fs     = require("fs");
 var path   = require("path");
 
-var findCall = require("./helpers").findCall;
+var helpers    = require("./helpers");
+var findRoute  = helpers.findRoute;
+var findHandle = helpers.findHandle;
 
 // ==== Test Case
 
@@ -33,15 +35,16 @@ buster.testCase("server-test - GET /", {
       render : this.stub()
     };
 
-    this.call = findCall(this.server.routes.get, "/");
+    this.route = findRoute(this.server, "/");
   },
 
   "should have route": function () {
-    assert.equals(this.call.path, "/");
+    assert.equals(this.route.path, "/");
   },
 
   "should render index": function () {
-    this.call.callbacks[0]({
+    var get = findHandle(this.route, "get");
+    get({
       query : {}
     }, this.res);
 
@@ -51,8 +54,9 @@ buster.testCase("server-test - GET /", {
 
   "should render query results": function () {
     this.stub(fs, "readdirSync").returns([]);
+    var get = findHandle(this.route, "get");
 
-    this.call.callbacks[0]({
+    get({
       query : { q: "bla" }
     }, this.res);
 
