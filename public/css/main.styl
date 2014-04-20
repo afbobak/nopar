@@ -8,7 +8,7 @@ body {
     padding-right : 10px;
   }
 
-  .brand {
+  .navbar-brand {
     padding-bottom : 0;
 
     small {
@@ -18,56 +18,56 @@ body {
   }
 }
 
+.navbar-form.pull-right {
+  padding-right : 0;
+}
+
 .navbar-form .input-append {
   margin-bottom : 0;
 }
 
 ul.packages {
   margin-left : 0;
+  padding-left : 0;
   list-style  : none;
 
   > li {
     margin-bottom : 20px;
 
-    h2.accordion-heading {
-      margin  : 0;
-      padding : 0;
+    .panel-heading {
+      .panel-toggle {
+        text-decoration : none;
 
-      .accordion-toggle {
-        padding-top    : 0;
-        padding-bottom : 0;
-
-        &:hover {
-          background      : #f7f7f9;
-          text-decoration : none;
+        .glyphicon {
+          position : relative;
+          top : -1px;
+          left : -4px;
+          margin : 0 8px 0 0;
+          padding : 0;
         }
-      }
 
-      small {
-        position : relative;
-        top      : -2px;
-      }
+        > .glyphicon-zoom-in {
+          display : none;
+        }
+        > .glyphicon-zoom-out {
+          display : block;
+        }
 
-      .actions {
-        float    : right;
-        position : relative;
-        top      : 3px;
-        right    : 7px;
-      }
-
-      .tags {
-        float    : right;
-        position : relative;
-        top      : -7px;
-        right    : 20px;
+        &.collapsed {
+          > .glyphicon-zoom-in {
+            display : block;
+          }
+          > .glyphicon-zoom-out {
+            display : none;
+          }
+        }
       }
     }
 
-    .accordion-body {
+    .panel-body {
       .actions {
         float    : right;
         position : relative;
-        top      : 5px;
         right    : 0px;
       }
 
@@ -87,11 +87,14 @@ ul.packages {
         list-style : none;
 
         .version {
-          float         : left;
-          margin-right  : 5px;
-          margin-bottom : 5px;
-          min-width     : 50px;
-          text-align    : center;
+          margin  : 0;
+          padding : 0;
+
+          .label {
+            display    : block;
+            min-width  : 64px;
+            text-align : center;
+          }
         }
       }
     }
