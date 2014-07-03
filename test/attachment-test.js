@@ -3,51 +3,58 @@
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
-var buster = require("buster");
-var assert = buster.referee.assert;
-var refute = buster.referee.refute;
+var assert = require("chai").assert;
 var fs     = require("fs");
 var http   = require("http");
 var https  = require("https");
 var path   = require("path");
+var sinon  = require("sinon");
 
 var attachment = require("../lib/attachment");
 
 // ==== Test Case
 
-buster.testCase("attachment-test - download", {
-  setUp : function () {
+describe("attachment-test - download", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
     this.app = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     this.res = {
-      download : this.stub(),
-      json     : this.stub()
+      download : sandbox.stub(),
+      json     : sandbox.stub()
     };
     this.downloadFn = attachment.download(this.app);
-  },
+  });
 
-  "should have function": function () {
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it("should have function", function () {
     assert.isFunction(attachment.download);
-  },
+  });
 
-  "should return package not found": function () {
+  it("should return package not found", function () {
     this.app.get.withArgs("registry").returns({
-      getPackage : this.stub().returns(null)
+      getPackage : sandbox.stub().returns(null)
     });
 
     this.downloadFn({
       params : { packagename : "non-existant" }
     }, this.res);
 
-    assert.called(this.res.json);
-    assert.calledWith(this.res.json, 404, {
+    sinon.assert.called(this.res.json);
+    sinon.assert.calledWith(this.res.json, 404, {
       "error"  : "not_found",
       "reason" : "package not found"
     });
-  },
+  });
 
-  "should return package": function () {
+  it("should return package", function () {
     var pkgMeta = {
       "name" : "test",
       "dist-tags" : {
@@ -62,12 +69,12 @@ buster.testCase("attachment-test - download", {
       }
     };
     this.app.get.withArgs("registry").returns({
-      getPackage : this.stub().returns(pkgMeta)
+      getPackage : sandbox.stub().returns(pkgMeta)
     });
     this.app.get.withArgs("settings").returns({
-      get : this.stub().returns("/registryPath")
+      get : sandbox.stub().returns("/registryPath")
     });
-    this.stub(fs, "existsSync").returns(true);
+    sandbox.stub(fs, "existsSync").returns(true);
 
     this.downloadFn({
       params : {
@@ -76,16 +83,16 @@ buster.testCase("attachment-test - download", {
       }
     }, this.res);
 
-    assert.calledOnce(this.res.download);
-    assert.calledWith(
+    sinon.assert.calledOnce(this.res.download);
+    sinon.assert.calledWith(
       this.res.download,
       path.join("/registryPath", "test", "test-0.0.1-dev.tgz"),
       "test-0.0.1-dev.tgz"
     );
-  },
+  });
 
-  "should not return invalid files": function () {
-    this.stub(fs, "existsSync");
+  it("should not return invalid files", function () {
+    sandbox.stub(fs, "existsSync");
 
     // http://localhost:5984/abstrakt-npm-proxy/-/..%2Fregistry.json
     this.downloadFn({
@@ -95,15 +102,15 @@ buster.testCase("attachment-test - download", {
       }
     }, this.res);
 
-    refute.calledWith(fs.existsSync, "/path/invalidFile.json");
-    assert.called(this.res.json);
-    assert.calledWith(this.res.json, 404, {
+    sinon.assert.neverCalledWith(fs.existsSync, "/path/invalidFile.json");
+    sinon.assert.called(this.res.json);
+    sinon.assert.calledWith(this.res.json, 404, {
       "error"  : "not_found",
       "reason" : "attachment not found"
     });
-  },
+  });
 
-  "should download attachment from forwarder and mark as cached": function () {
+  it("should download attachment from forwarder and mark as cached", function () {
     /*jslint nomen: true */
     var pkgMeta = {
       "name" : "test",
@@ -124,17 +131,17 @@ buster.testCase("attachment-test - download", {
       }
     };
     this.app.get.withArgs("registry").returns({
-      getPackage : this.stub().returns(pkgMeta)
+      getPackage : sandbox.stub().returns(pkgMeta)
     });
     var settings = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     settings.get.withArgs("registryPath").returns("/path");
     this.app.get.withArgs("settings").returns(settings);
-    this.stub(http, "get").returns({
-      on : this.spy()
+    sandbox.stub(http, "get").returns({
+      on : sandbox.spy()
     });
-    this.stub(fs, "existsSync").returns(false);
+    sandbox.stub(fs, "existsSync").returns(false);
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
@@ -144,15 +151,15 @@ buster.testCase("attachment-test - download", {
       }
     }, this.res);
 
-    assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
-    refute.called(this.res.json);
-    assert.called(http.get);
-    assert.calledWith(http.get, "http://fwd.url/pkg.tgz");
+    sinon.assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
+    sinon.assert.notCalled(this.res.json);
+    sinon.assert.called(http.get);
+    sinon.assert.calledWith(http.get, "http://fwd.url/pkg.tgz");
     //TODO pkgMeta._attachments["test-0.0.1-dev.tgz"].cached = true;
-    //assert.calledWith(registry.setPackage, pkgMeta);
-  },
+    //sinon.assert.calledWith(registry.setPackage, pkgMeta);
+  });
 
-  "should download attachment from forwarder via proxy": function () {
+  it("should download attachment from forwarder via proxy", function () {
     var pkgMeta = {
       "name" : "test",
       "dist-tags" : {
@@ -172,10 +179,10 @@ buster.testCase("attachment-test - download", {
       }
     };
     this.app.get.withArgs("registry").returns({
-      getPackage : this.stub().returns(pkgMeta)
+      getPackage : sandbox.stub().returns(pkgMeta)
     });
     var settings = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     settings.get.withArgs("registryPath").returns("/path");
     settings.get.withArgs("forwarder.proxy").returns("https://localhost:8080");
@@ -183,11 +190,11 @@ buster.testCase("attachment-test - download", {
     settings.get.withArgs("forwarder.ignoreCert").returns(true);
     settings.get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
     this.app.get.withArgs("settings").returns(settings);
-    this.stub(http, "get");
-    this.stub(https, "get").returns({
-      on : this.spy()
+    sandbox.stub(http, "get");
+    sandbox.stub(https, "get").returns({
+      on : sandbox.spy()
     });
-    this.stub(fs, "existsSync").returns(false);
+    sandbox.stub(fs, "existsSync").returns(false);
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
@@ -197,10 +204,10 @@ buster.testCase("attachment-test - download", {
       }
     }, this.res);
 
-    assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
-    refute.called(http.get);
-    assert.called(https.get);
-    assert.calledWith(https.get, {
+    sinon.assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
+    sinon.assert.notCalled(http.get);
+    sinon.assert.called(https.get);
+    sinon.assert.calledWith(https.get, {
       headers  : {
         host         : "fwd.url",
         "User-Agent" : "nopar/0.0.0-test"
@@ -210,9 +217,9 @@ buster.testCase("attachment-test - download", {
       path     : "http://fwd.url/pkg.tgz",
       rejectUnauthorized : false
     });
-  },
+  });
 
-  "should catch error events from http": function () {
+  it("should catch error events from http", function () {
     var pkgMeta = {
       "name" : "test",
       "dist-tags" : {
@@ -232,10 +239,10 @@ buster.testCase("attachment-test - download", {
       }
     };
     this.app.get.withArgs("registry").returns({
-      getPackage : this.stub().returns(pkgMeta)
+      getPackage : sandbox.stub().returns(pkgMeta)
     });
     var settings = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     settings.get.withArgs("registryPath").returns("/path");
     settings.get.withArgs("forwarder.proxy").returns("http://localhost:8080");
@@ -243,11 +250,11 @@ buster.testCase("attachment-test - download", {
     settings.get.withArgs("forwarder.ignoreCert").returns(false);
     settings.get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
     this.app.get.withArgs("settings").returns(settings);
-    var spy = this.spy();
-    this.stub(http, "get").returns({
+    var spy = sandbox.spy();
+    sandbox.stub(http, "get").returns({
       on : spy
     });
-    this.stub(fs, "existsSync").returns(false);
+    sandbox.stub(fs, "existsSync").returns(false);
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
@@ -257,21 +264,25 @@ buster.testCase("attachment-test - download", {
       }
     }, this.res);
 
-    assert.calledOnce(http.get);
-    assert.calledOnce(spy);
-    assert.calledWith(spy, "error");
-  }
+    sinon.assert.calledOnce(http.get);
+    sinon.assert.calledOnce(spy);
+    sinon.assert.calledWith(spy, "error");
+  });
 });
 
 
 // ==== Test Case
 
-buster.testCase("attachment-test - attach", {
-  setUp: function () {
-    this.stub(fs, "createWriteStream");
+describe("attachment-test - attach", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(fs, "createWriteStream");
 
     this.app = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     this.req = {
       headers     : {
@@ -282,77 +293,85 @@ buster.testCase("attachment-test - attach", {
         attachment : "test.tgz"
       },
       originalUrl : "/test",
-      pipe        : this.stub(),
-      on          : this.stub()
+      pipe        : sandbox.stub(),
+      on          : sandbox.stub()
     };
     this.res = {
-      json : this.stub()
+      json : sandbox.stub()
     };
 
     var settings = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     settings.get.withArgs("registryPath").returns("/path");
     this.app.get.withArgs("settings").returns(settings);
     this.app.get.withArgs("registry").returns({
-      getPackage : this.stub()
+      getPackage : sandbox.stub()
     });
 
     this.attachFn = attachment.attach(this.app);
-  },
+  });
 
-  "should have function": function () {
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it("should have function", function () {
     assert.isFunction(attachment.attach);
-  },
+  });
 
-  "should require content-type application/octet-stream": function () {
+  it("should require content-type application/octet-stream", function () {
     this.attachFn({
       headers     : {},
       params      : { packagename : "test" },
       originalUrl : "/test"
     }, this.res);
 
-    assert.called(this.res.json);
-    assert.calledWith(this.res.json, 400, {
+    sinon.assert.called(this.res.json);
+    sinon.assert.calledWith(this.res.json, 400, {
       "error"  : "wrong_content",
       "reason" : "content-type MUST be application/octet-stream"
     });
-  },
+  });
 
-  "should create path if it doesn't exist": function () {
-    this.stub(fs, "existsSync").returns(false);
-    this.stub(fs, "mkdirSync");
+  it("should create path if it doesn't exist", function () {
+    sandbox.stub(fs, "existsSync").returns(false);
+    sandbox.stub(fs, "mkdirSync");
 
     this.attachFn(this.req, this.res);
     this.req.on.yields();
 
-    assert.called(fs.mkdirSync);
-    assert.calledWith(fs.mkdirSync, "/path/test");
-  },
+    sinon.assert.called(fs.mkdirSync);
+    sinon.assert.calledWith(fs.mkdirSync, "/path/test");
+  });
 
-  "should create write stream and pipe to it": function () {
-    this.stub(fs, "existsSync").returns(true);
+  it("should create write stream and pipe to it", function () {
+    sandbox.stub(fs, "existsSync").returns(true);
     fs.createWriteStream.returns("MY_FD");
 
     this.attachFn(this.req, this.res);
 
-    assert.called(fs.createWriteStream);
-    assert.calledWith(fs.createWriteStream, "/path/test/test.tgz", {
+    sinon.assert.called(fs.createWriteStream);
+    sinon.assert.calledWith(fs.createWriteStream, "/path/test/test.tgz", {
       flags    : "w",
       encoding : null,
       mode     : "0660"
     });
-    assert.called(this.req.pipe);
-    assert.calledWith(this.req.pipe, "MY_FD");
-  }
+    sinon.assert.called(this.req.pipe);
+    sinon.assert.calledWith(this.req.pipe, "MY_FD");
+  });
 });
 
 
 // ==== Test Case
 
-buster.testCase("attachment-test - skimTarballs", {
-  setUp: function () {
-    this.stub(fs, "writeFile").yields();
+describe("attachment-test - skimTarballs", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(fs, "writeFile").yields();
 
     var tarball = new Buffer("I'm a tarball");
     this.tarballBase64 = tarball.toString('base64');
@@ -378,47 +397,51 @@ buster.testCase("attachment-test - skimTarballs", {
     };
 
     this.settings = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     this.settings.get.withArgs("registryPath").returns("/path");
-  },
+  });
 
-  "should have function": function () {
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it("should have function", function () {
     assert.isFunction(attachment.skimTarballs);
-  },
+  });
 
-  "does nothing with no attachments": function () {
-    var callback = this.spy();
+  it("should do nothing with no attachments", function () {
+    var callback = sandbox.spy();
 
     attachment.skimTarballs(this.settings, {}, callback);
 
-    refute.called(fs.writeFile);
-    assert.called(callback);
-  },
+    sinon.assert.notCalled(fs.writeFile);
+    sinon.assert.called(callback);
+  });
 
-  "should create path if it doesn't exist": function () {
-    this.stub(fs, "existsSync").returns(false);
-    this.stub(fs, "mkdirSync");
+  it("should create path if it doesn't exist", function () {
+    sandbox.stub(fs, "existsSync").returns(false);
+    sandbox.stub(fs, "mkdirSync");
 
-    var callback = this.spy();
-
-    attachment.skimTarballs(this.settings, this.pkgMeta, callback);
-
-    assert.called(fs.mkdirSync);
-    assert.calledWith(fs.mkdirSync, "/path/test");
-
-    assert.called(callback);
-  },
-
-  "should write tarball to disk": function () {
-    this.stub(fs, "existsSync").returns(true);
-
-    var callback = this.spy();
+    var callback = sandbox.spy();
 
     attachment.skimTarballs(this.settings, this.pkgMeta, callback);
 
-    assert.called(fs.writeFile);
-    assert.calledWith(fs.writeFile,
+    sinon.assert.called(fs.mkdirSync);
+    sinon.assert.calledWith(fs.mkdirSync, "/path/test");
+
+    sinon.assert.called(callback);
+  });
+
+  it("should write tarball to disk", function () {
+    sandbox.stub(fs, "existsSync").returns(true);
+
+    var callback = sandbox.spy();
+
+    attachment.skimTarballs(this.settings, this.pkgMeta, callback);
+
+    sinon.assert.called(fs.writeFile);
+    sinon.assert.calledWith(fs.writeFile,
       "/path/test/test-0.0.1.tgz", this.tarballBase64,
       {
         flags    : "w",
@@ -426,30 +449,34 @@ buster.testCase("attachment-test - skimTarballs", {
         mode     : "0660"
       });
 
-    assert.called(callback);
-  },
+    sinon.assert.called(callback);
+  });
 
-  "should not write tarballs that have no attached data": function () {
+  it("should not write tarballs that have no attached data", function () {
     /*jslint nomen: true */
-    this.stub(fs, "existsSync").returns(true);
-    var callback = this.spy();
+    sandbox.stub(fs, "existsSync").returns(true);
+    var callback = sandbox.spy();
     delete this.pkgMeta._attachments["test-0.0.1.tgz"].data;
 
     attachment.skimTarballs(this.settings, this.pkgMeta, callback);
 
-    refute.called(fs.writeFile);
-    assert.called(callback);
-  }
+    sinon.assert.notCalled(fs.writeFile);
+    sinon.assert.called(callback);
+  });
 });
 
 // ==== Test Case
 
-buster.testCase("attachment-test - detach", {
-  setUp: function () {
-    this.stub(fs, "unlinkSync");
+describe("attachment-test - detach", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(fs, "unlinkSync");
 
     this.app = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     this.req = {
       params      : {
@@ -459,17 +486,17 @@ buster.testCase("attachment-test - detach", {
       originalUrl : "/test"
     };
     this.res = {
-      json : this.stub()
+      json : sandbox.stub()
     };
 
     var settings = {
-      get : this.stub()
+      get : sandbox.stub()
     };
     settings.get.withArgs("registryPath").returns("/path");
     this.app.get.withArgs("settings").returns(settings);
     this.app.get.withArgs("registry").returns({
-      setPackage : this.stub(),
-      getPackage : this.stub().returns({
+      setPackage : sandbox.stub(),
+      getPackage : sandbox.stub().returns({
         "name" : "test",
         "versions" : {
           "0.0.1-dev" : {
@@ -482,32 +509,36 @@ buster.testCase("attachment-test - detach", {
     });
 
     this.detachFn = attachment.detach(this.app);
-  },
+  });
 
-  "should have function": function () {
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it("should have function", function () {
     assert.isFunction(attachment.detach);
-  },
+  });
 
-  "should delete attachment": function () {
-    this.stub(fs, "existsSync").returns(true);
+  it("should delete attachment", function () {
+    sandbox.stub(fs, "existsSync").returns(true);
 
     this.detachFn(this.req, this.res);
 
-    assert.called(this.res.json);
-    assert.calledWith(this.res.json, 200, {"ok"  : true});
-    assert.called(fs.unlinkSync);
-    assert.calledWith(fs.unlinkSync, "/path/test/test-0.0.1-dev.tgz");
-  },
+    sinon.assert.called(this.res.json);
+    sinon.assert.calledWith(this.res.json, 200, {"ok"  : true});
+    sinon.assert.called(fs.unlinkSync);
+    sinon.assert.calledWith(fs.unlinkSync, "/path/test/test-0.0.1-dev.tgz");
+  });
 
-  "should not allow '/' in attachment name": function () {
+  it("should not allow '/' in attachment name", function () {
     this.req.params.attachment = "..%2Ftest-0.0.1-dev.tgz";
 
     this.detachFn(this.req, this.res);
 
-    assert.called(this.res.json);
-    assert.calledWith(this.res.json, 404, {
+    sinon.assert.called(this.res.json);
+    sinon.assert.calledWith(this.res.json, 404, {
       "error"  : "not_found",
       "reason" : "attachment not found"
     });
-  }
+  });
 });
