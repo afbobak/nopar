@@ -778,12 +778,11 @@ describe("pkg-test - publish", function () {
   it("should reset revision if it's a checksum", function () {
     /*jslint nomen: true*/
     var pkgMeta = {
-      name       : "test",
-      "_rev"     : "011f2254e3def8ab3023052072195e1a",
-      "_proxied" : false,
-      versions   : {
-        "0.0.1-dev" : {}
-      }
+      name        : "test",
+      "_rev"      : "011f2254e3def8ab3023052072195e1a",
+      "_proxied"  : false,
+      "dist-tags" : { latest : "0.0.1-dev" },
+      versions    : { "0.0.1-dev" : {} }
     };
     this.getPackageStub.returns(pkgMeta);
 
@@ -834,6 +833,38 @@ describe("pkg-test - publish", function () {
     sinon.assert.called(this.setPackageStub);
     sinon.assert.calledWith(this.setPackageStub, pkgMeta);
     sinon.assert.called(this.res.json);
+    sinon.assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
+  });
+
+  it("should keep latest if version<latest", function () {
+    /*jslint nomen: true*/
+    var pkgMeta = {
+      name        : "test",
+      "_rev"      : 0,
+      "_proxied"  : false,
+      "dist-tags" : { latest : "0.0.2" },
+      versions    : { "0.0.2" : {} }
+    };
+    this.getPackageStub.returns(pkgMeta);
+
+    this.publishFn({
+      headers     : { "content-type" : "application/json" },
+      params      : {
+        packagename : "test",
+        version     : "0.0.1-dev",
+        tagname     : "latest"
+      },
+      originalUrl : "/test/0.0.1-dev/-tag/latest"
+    }, this.res);
+
+    pkgMeta = {
+      name        : "test",
+      "_rev"      : 1,
+      "_proxied"  : false,
+      "dist-tags" : { latest : "0.0.2" },
+      versions    : { "0.0.2" : {}, "0.0.1-dev": {} }
+    };
+    sinon.assert.calledWith(this.setPackageStub, pkgMeta);
     sinon.assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
   });
 });
