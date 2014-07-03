@@ -3,11 +3,10 @@
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
-var buster = require("buster");
-var assert = buster.referee.assert;
-var refute = buster.referee.refute;
+var assert = require("chai").assert;
 var fs     = require("fs");
 var path   = require("path");
+var sinon  = require("sinon");
 
 var registry = require("../lib/registry");
 
@@ -26,80 +25,85 @@ var metaVersion = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package
 
 // ==== Test Case
 
-buster.testCase("registry-test - init", {
-  setUp: function () {
-    this.stub(fs, "existsSync");
-    this.stub(fs, "readFileSync").returns("{}");
-    this.stub(fs, "mkdirSync");
-    this.stub(fs, "writeFileSync");
-    this.stub(fs, "readdirSync").returns([]);
-  },
+describe("registry-test - init", function () {
+  var sandbox;
 
-  tearDown: function () {
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(fs, "existsSync");
+    sandbox.stub(fs, "readFileSync").returns("{}");
+    sandbox.stub(fs, "mkdirSync");
+    sandbox.stub(fs, "writeFileSync");
+    sandbox.stub(fs, "readdirSync").returns([]);
+  });
+
+  afterEach(function () {
+    sandbox.restore();
     registry.destroy();
-  },
+  });
 
-  "should have function": function () {
+  it("should have function", function () {
     assert.isFunction(registry.init);
-  },
+  });
 
-  "should check registryPath": function () {
+  it("should check registryPath", function () {
     fs.existsSync.returns(true);
 
     registry.init(REGISTRY_PATH);
 
-    assert.calledWith(fs.existsSync, "/some/path/registry");
-  },
+    sinon.assert.calledWith(fs.existsSync, "/some/path/registry");
+  });
 
-  "should throw error with path not found": function () {
+  it("should throw error with path not found", function () {
     fs.existsSync.returns(false);
 
-    assert.exception(function () {
+    assert.throws(function () {
       registry.init(REGISTRY_PATH);
-    }, "Error");
-  },
+    }, "Registry path does not exist: /some/path/registry");
+  });
 
-  "should check for meta info": function () {
+  it("should check for meta info", function () {
     fs.existsSync.returns(true);
 
     registry.init(REGISTRY_PATH);
 
-    assert.calledWith(fs.existsSync, "/some/path/registry/registry.json");
-  },
+    sinon.assert.calledWith(fs.existsSync, "/some/path/registry/registry.json");
+  });
 
-  "should read meta info": function () {
+  it("should read meta info", function () {
     fs.existsSync.returns(true);
 
     registry.init(REGISTRY_PATH);
 
-    assert.calledOnceWith(fs.readFileSync, "/some/path/registry/registry.json");
-  },
+    sinon.assert.calledWith(fs.readFileSync, "/some/path/registry/registry.json");
+  });
 
-  "should create path for converted meta info": function () {
+  it("should create path for converted meta info", function () {
     fs.existsSync.returns(true);
     fs.readFileSync.returns(JSON.stringify(OLD_META));
     fs.existsSync.withArgs("/some/path/registry/pkg").returns(false);
 
     registry.init(REGISTRY_PATH);
 
-    assert.calledWith(fs.existsSync, "/some/path/registry/pkg");
-    assert.calledOnceWith(fs.mkdirSync, "/some/path/registry/pkg");
-  },
+    sinon.assert.calledWith(fs.existsSync, "/some/path/registry/pkg");
+    sinon.assert.calledWith(fs.mkdirSync, "/some/path/registry/pkg");
+  });
 
-  "should write converted meta info": function () {
+  it("should write converted meta info", function () {
     fs.existsSync.returns(true);
     fs.readFileSync.returns(JSON.stringify(OLD_META));
     registry.init(REGISTRY_PATH);
 
-    assert.calledWith(fs.writeFileSync, "/some/path/registry/pkg/pkg.json",
+    sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/pkg/pkg.json",
       JSON.stringify(OLD_META.pkg));
-    assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json",
+    sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json",
       JSON.stringify({
         version : metaVersion
       }));
-  },
+  });
 
-  "should converted meta info <0.1.8": function () {
+  it("should converted meta info <0.1.8", function () {
     fs.existsSync.returns(true);
     var meta = {
       "version"  : "0.1.6-dev",
@@ -113,82 +117,91 @@ buster.testCase("registry-test - init", {
     fs.readFileSync.returns(JSON.stringify(meta));
     registry.init(REGISTRY_PATH);
 
-    assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json",
+    sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json",
       JSON.stringify({
         version : metaVersion,
         "settings": {
           "hostname": "localhost"
         }
       }));
-  }
+  });
 });
 
 // ==== Test Case
 
-buster.testCase("registry-test - get pkg", {
-  setUp: function () {
-    this.stub(fs, "existsSync");
-    this.stub(fs, "readFileSync");
-    this.stub(registry, "refreshMeta");
+describe("registry-test - get pkg", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(fs, "existsSync");
+    sandbox.stub(fs, "readFileSync");
+    sandbox.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
     fs.readFileSync.withArgs("/some/path/registry/registry.json").
       returns(JSON.stringify({version: "1.0.0"}));
-  },
+  });
 
-  tearDown: function () {
+  afterEach(function () {
+    sandbox.restore();
     registry.destroy();
-  },
+  });
 
-  "should have function": function () {
+  it("should have function", function () {
     assert.isFunction(registry.getPackage);
-  },
+  });
 
-  "should require package name": function () {
-    assert.exception(function () {
+  it("should require package name", function () {
+    assert.throws(function () {
       registry.getPackage();
-    }, "TypeError");
-  },
+    }, "Argument 'pkgName' must be of type string");
+  });
 
-  "should require registry to be initialized": function () {
-    assert.exception(function () {
+  it("should require registry to be initialized", function () {
+    assert.throws(function () {
       registry.getPackage("pkg");
-    }, "Error");
-  },
+    }, "Registry is not initialized properly. Did you call registry.init()?");
+  });
 
-  "should check if package folder exists and return null if not": function () {
+  it("should check if package folder exists and return null if not", function () {
     registry.init(REGISTRY_PATH);
     fs.existsSync.withArgs("/some/path/registry/pkg").returns(false);
 
     var result = registry.getPackage("pkg");
 
-    assert.calledWith(fs.existsSync, "/some/path/registry/pkg");
-    refute(result);
-  },
+    sinon.assert.calledWith(fs.existsSync, "/some/path/registry/pkg");
+    assert(!result);
+  });
 
-  "should check if package meta exists and return null if not": function () {
+  it("should check if package meta exists and return null if not", function () {
     registry.init(REGISTRY_PATH);
     fs.existsSync.withArgs("/some/path/registry/pkg").returns(true);
     fs.existsSync.withArgs("/some/path/registry/pkg/pkg.json").returns(false);
 
     var result = registry.getPackage("pkg");
 
-    assert.calledWith(fs.existsSync, "/some/path/registry/pkg/pkg.json");
-    refute(result);
-  }
+    sinon.assert.calledWith(fs.existsSync, "/some/path/registry/pkg/pkg.json");
+    assert(!result);
+  });
 });
 
 // ==== Test Case
 
-buster.testCase("registry-test - get pkg version", {
-  setUp: function () {
-    this.stub(fs, "existsSync");
-    this.stub(fs, "readFileSync");
-    this.stub(fs, "mkdirSync");
-    this.stub(fs, "writeFileSync");
-    this.stub(fs, "statSync").returns({ mtime : new Date() });
-    this.stub(registry, "refreshMeta");
+describe("registry-test - get pkg version", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(fs, "existsSync");
+    sandbox.stub(fs, "readFileSync");
+    sandbox.stub(fs, "mkdirSync");
+    sandbox.stub(fs, "writeFileSync");
+    sandbox.stub(fs, "statSync").returns({ mtime : new Date() });
+    sandbox.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -200,41 +213,46 @@ buster.testCase("registry-test - get pkg version", {
     fs.existsSync.withArgs("/some/path/registry/pkg/pkg.json").returns(true);
     fs.readFileSync.withArgs("/some/path/registry/pkg/pkg.json").
       returns(JSON.stringify(OLD_META.pkg));
-  },
+  });
 
-  tearDown: function () {
+  afterEach(function () {
+    sandbox.restore();
     registry.destroy();
-  },
+  });
 
-  "should read package meta return it": function () {
+  it("should read package meta return it", function () {
     var result = registry.getPackage("pkg");
 
-    assert.calledWith(fs.readFileSync, "/some/path/registry/pkg/pkg.json");
-    assert.equals(result.versions, OLD_META.pkg.versions);
-  },
+    sinon.assert.calledWith(fs.readFileSync, "/some/path/registry/pkg/pkg.json");
+    assert.deepEqual(result.versions, OLD_META.pkg.versions);
+  });
 
-  "should return null if package version does not exist": function () {
+  it("should return null if package version does not exist", function () {
     var result = registry.getPackage("pkg", "0.0.2");
 
-    refute(result);
-  },
+    assert(!result);
+  });
 
-  "should return pkg info if package version does exist": function () {
+  it("should return pkg info if package version does exist", function () {
     var result = registry.getPackage("pkg", "0.0.1");
 
-    assert.equals(result, OLD_META.pkg.versions["0.0.1"]);
-  }
+    assert.deepEqual(result, OLD_META.pkg.versions["0.0.1"]);
+  });
 });
 
 // ==== Test Case
 
-buster.testCase("registry-test - write pkg", {
-  setUp: function () {
-    this.stub(fs, "existsSync");
-    this.stub(fs, "readFileSync");
-    this.stub(fs, "mkdirSync");
-    this.stub(fs, "writeFileSync");
-    this.stub(registry, "refreshMeta");
+describe("registry-test - write pkg", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(fs, "existsSync");
+    sandbox.stub(fs, "readFileSync");
+    sandbox.stub(fs, "mkdirSync");
+    sandbox.stub(fs, "writeFileSync");
+    sandbox.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -244,46 +262,47 @@ buster.testCase("registry-test - write pkg", {
     registry.init(REGISTRY_PATH);
     fs.existsSync.withArgs("/some/path/registry/pkg").returns(true);
     fs.writeFileSync.withArgs("/some/path/registry/pkg/pkg.json");
-  },
+  });
 
-  tearDown: function () {
+  afterEach(function () {
+    sandbox.restore();
     registry.destroy();
-  },
+  });
 
-  "should have function": function () {
+  it("should have function", function () {
     assert.isFunction(registry.setPackage);
-  },
+  });
 
-  "should require package meta": function () {
-    assert.exception(function () {
+  it("should require package meta", function () {
+    assert.throws(function () {
       registry.setPackage();
-    }, "TypeError");
-  },
+    }, "Argument 'pkgMeta' must be given and of type object");
+  });
 
-  "should require registry to be initialized": function () {
+  it("should require registry to be initialized", function () {
     registry.destroy();
 
-    assert.exception(function () {
+    assert.throws(function () {
       registry.setPackage(OLD_META.pkg);
-    }, "Error");
-  },
+    }, "Registry is not initialized properly. Did you call registry.init()?");
+  });
 
-  "should require package meta to have a name": function () {
-    assert.exception(function () {
+  it("should require package meta to have a name", function () {
+    assert.throws(function () {
       registry.setPackage(OLD_META.pkg);
-    }, "Error");
-  },
+    }, "Expected pkgMeta to have property name");
+  });
 
-  "should create package path": function () {
+  it("should create package path", function () {
     var pkg = { name : "pkg" };
     fs.existsSync.withArgs("/some/path/registry/pkg").returns(false);
 
     registry.setPackage(pkg);
 
-    assert.calledOnceWith(fs.mkdirSync, "/some/path/registry/pkg");
-  },
+    sinon.assert.calledWith(fs.mkdirSync, "/some/path/registry/pkg");
+  });
 
-  "should write new package meta": function () {
+  it("should write new package meta", function () {
     var pkg = {
       name    : "pkg",
       versions : {
@@ -296,21 +315,25 @@ buster.testCase("registry-test - write pkg", {
 
     registry.setPackage(pkg);
 
-    refute.called(fs.mkdirSync, "/some/path/registry/pkg");
-    assert.calledOnceWith(fs.writeFileSync, "/some/path/registry/pkg/pkg.json",
+    sinon.assert.notCalled(fs.mkdirSync, "/some/path/registry/pkg");
+    sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/pkg/pkg.json",
       JSON.stringify(pkg));
-  }
+  });
 });
 
 // ==== Test Case
 
-buster.testCase("registry-test - delete pkg", {
-  setUp: function () {
-    this.stub(fs, "existsSync");
-    this.stub(fs, "readFileSync");
-    this.stub(fs, "writeFileSync");
-    this.stub(fs, "unlinkSync");
-    this.stub(registry, "refreshMeta");
+describe("registry-test - delete pkg", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(fs, "existsSync");
+    sandbox.stub(fs, "readFileSync");
+    sandbox.stub(fs, "writeFileSync");
+    sandbox.stub(fs, "unlinkSync");
+    sandbox.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -323,44 +346,45 @@ buster.testCase("registry-test - delete pkg", {
       }));
 
     registry.init(REGISTRY_PATH);
-  },
+  });
 
-  tearDown: function () {
+  afterEach(function () {
+    sandbox.restore();
     registry.destroy();
-  },
+  });
 
-  "should have function": function () {
+  it("should have function", function () {
     assert.isFunction(registry.removePackage);
-  },
+  });
 
-  "should require package name": function () {
-    assert.exception(function () {
+  it("should require package name", function () {
+    assert.throws(function () {
       registry.removePackage();
-    }, "TypeError");
-  },
+    }, "Argument 'pkgName' must be of type string");
+  });
 
-  "should require registry to be initialized": function () {
+  it("should require registry to be initialized", function () {
     registry.destroy();
 
-    assert.exception(function () {
+    assert.throws(function () {
       registry.removePackage("pkg");
-    }, "Error");
-  },
+    }, "Registry is not initialized properly. Did you call registry.init()?");
+  });
 
-  "should unlink package meta": function () {
+  it("should unlink package meta", function () {
     fs.existsSync.returns(true);
-    this.stub(registry, "getPackage").returns({"_proxied" : true});
+    sandbox.stub(registry, "getPackage").returns({"_proxied" : true});
 
     registry.removePackage("pkg");
 
-    assert.calledOnce(registry.getPackage);
-    assert.callOrder(registry.getPackage, fs.unlinkSync);
-    assert.calledOnceWith(fs.unlinkSync, "/some/path/registry/pkg/pkg.json");
-    assert.calledOnceWith(fs.writeFileSync, "/some/path/registry/registry.json", JSON.stringify({
+    sinon.assert.calledOnce(registry.getPackage);
+    sinon.assert.callOrder(registry.getPackage, fs.unlinkSync);
+    sinon.assert.calledWith(fs.unlinkSync, "/some/path/registry/pkg/pkg.json");
+    sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json", JSON.stringify({
       version : "1.0.0",
       count   : 4,
       local   : 3,
       proxied : 1
     }));
-  }
+  });
 });

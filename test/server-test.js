@@ -3,11 +3,10 @@
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
-var buster = require("buster");
-var assert = buster.referee.assert;
-var refute = buster.referee.refute;
+var assert = require("chai").assert;
 var fs     = require("fs");
 var path   = require("path");
+var sinon  = require("sinon");
 
 var helpers    = require("./helpers");
 var findRoute  = helpers.findRoute;
@@ -15,52 +14,60 @@ var findHandle = helpers.findHandle;
 
 // ==== Test Case
 
-buster.testCase("server-test - GET /", {
-  setUp: function () {
+describe("server-test - GET /", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
     var registry = require("../lib/registry");
-    this.stub(registry, "init");
-    this.stub(registry, "refreshMeta");
-    this.stub(registry, "getMeta").returns({});
+    sandbox.stub(registry, "init");
+    sandbox.stub(registry, "refreshMeta");
+    sandbox.stub(registry, "getMeta").returns({});
     var settings = require("../lib/settings");
-    this.stub(settings, "init");
-    this.stub(settings, "render").returns(this.stub());
-    this.stub(settings, "save").returns(this.stub());
+    sandbox.stub(settings, "init");
+    sandbox.stub(settings, "render").returns(sandbox.stub());
+    sandbox.stub(settings, "save").returns(sandbox.stub());
     this.server = require("../lib/server");
-    this.stub(this.server, "get");
+    sandbox.stub(this.server, "get");
     this.server.get.withArgs("registry").returns({
-      getMeta : this.stub().returns({}),
-      query   : this.stub()
+      getMeta : sandbox.stub().returns({}),
+      query   : sandbox.stub()
     });
     this.res = {
-      render : this.stub()
+      render : sandbox.stub()
     };
 
     this.route = findRoute(this.server, "/");
-  },
+  });
 
-  "should have route": function () {
-    assert.equals(this.route.path, "/");
-  },
+  afterEach(function () {
+    sandbox.restore();
+  });
 
-  "should render index": function () {
+  it("should have route", function () {
+    assert.equal(this.route.path, "/");
+  });
+
+  it("should render index", function () {
     var get = findHandle(this.route, "get");
     get({
       query : {}
     }, this.res);
 
-    assert.called(this.res.render);
-    assert.calledWith(this.res.render, "index");
-  },
+    sinon.assert.called(this.res.render);
+    sinon.assert.calledWith(this.res.render, "index");
+  });
 
-  "should render query results": function () {
-    this.stub(fs, "readdirSync").returns([]);
+  it("should render query results", function () {
+    sandbox.stub(fs, "readdirSync").returns([]);
     var get = findHandle(this.route, "get");
 
     get({
       query : { q: "bla" }
     }, this.res);
 
-    assert.called(this.res.render);
-    assert.calledWith(this.res.render, "results");
-  }
+    sinon.assert.called(this.res.render);
+    sinon.assert.calledWith(this.res.render, "results");
+  });
 });

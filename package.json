@@ -2,11 +2,13 @@
   "name": "nopar",
   "version": "0.4.1-dev",
   "description": "Abstrakt Node Package Registry & Proxy",
-  "bin" : { "nopar" : "bin/nopar" },
+  "bin": {
+    "nopar": "bin/nopar"
+  },
   "main": "lib/server.js",
   "scripts": {
     "start": "./bin/nopar",
-    "test": "buster-test --color none",
+    "test": "mocha -R spec test/*-test.js",
     "package": "scripts/package"
   },
   "repository": {
@@ -23,25 +25,26 @@
   "author": "Andreas F. Bobak <bobak@abstrakt.ch>",
   "license": "BSD",
   "dependencies": {
-    "body-parser": "~1.0.2",
-    "cookie-parser": "~1.0.1",
-    "ejs": "~1.0.0",
-    "errorhandler": "~1.0.0",
-    "express": "~4.0.0",
-    "express-session": "~1.0.2",
-    "marked": "~0.3.2",
-    "morgan": "~1.0.0",
-    "mustache": "~0.8.1",
-    "semver": "~2.2.1",
-    "static-favicon": "~1.0.2",
-    "stylus": "~0.43.1",
-    "winston": "~0.7.2"
+    "body-parser": "^1.0",
+    "cookie-parser": "^1.0",
+    "ejs": "^1.0",
+    "errorhandler": "^1.0",
+    "express": "^4.0",
+    "express-session": "^1.0",
+    "marked": "^0.3",
+    "morgan": "^1.0",
+    "mustache": "^0.8",
+    "semver": "^2.2",
+    "static-favicon": "^1.0",
+    "stylus": "^0.43",
+    "winston": "^0.7"
   },
   "devDependencies": {
-    "buster": "~0.7.8",
-    "buster-lint": "~0.3.1"
+    "chai": "^1.9",
+    "mocha": "^1.20",
+    "sinon": "^1.10"
   },
   "engines": {
-    "node": ">=0.8"
+    "node": ">=0.10.25"
   }
 }
