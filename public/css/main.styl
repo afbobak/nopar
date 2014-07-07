@@ -2,6 +2,10 @@ body {
   margin-top : 60px;
 }
 
+.label {
+  padding : .3em .6em;
+}
+
 .navbar {
   .navbar-inner {
     padding-left : 40px;
@@ -39,25 +43,26 @@ ul.packages {
         text-decoration : none;
 
         .glyphicon {
-          position : relative;
-          top : -1px;
-          left : -4px;
-          margin : 0 8px 0 0;
-          padding : 0;
+          position  : relative;
+          top       : -3px;
+          left      : -4px;
+          margin    : 0 8px 0 0;
+          padding   : 0;
+          font-size : 21px;
         }
 
-        > .glyphicon-zoom-in {
+        > .glyphicon-collapse-down {
           display : none;
         }
-        > .glyphicon-zoom-out {
+        > .glyphicon-collapse-up {
           display : block;
         }
 
         &.collapsed {
-          > .glyphicon-zoom-in {
+          > .glyphicon-collapse-down {
             display : block;
           }
-          > .glyphicon-zoom-out {
+          > .glyphicon-collapse-up {
             display : none;
           }
         }

@@ -23,8 +23,8 @@
             </div>
             <h2 class="panel-title">
               <a href="#<%= pkgName.replace(/\./g, "-") %>-versions" class="panel-toggle<% if (packages.length !== 1) { %> collapsed<% } %>" data-toggle="collapse" data-parent="#accordion">
-                <span class="pull-left btn btn-link btn-lg glyphicon glyphicon-zoom-in"></span>
-                <span class="pull-left btn btn-link btn-lg glyphicon glyphicon-zoom-out"></span>
+                <span class="pull-left btn btn-link btn-lg glyphicon glyphicon-collapse-down"></span>
+                <span class="pull-left btn btn-link btn-lg glyphicon glyphicon-collapse-up"></span>
                 <%= pkgName %>
                 <span class="text-muted">@<%= latest.version %></span>
                 <div class="tags pull-right">
