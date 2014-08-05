@@ -9,6 +9,7 @@
   "scripts": {
     "start": "./bin/nopar",
     "test": "mocha -R spec test/*-test.js",
+    "watch": "mocha -w -R spec test/*-test.js",
     "package": "scripts/package"
   },
   "repository": {
