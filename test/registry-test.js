@@ -388,3 +388,90 @@ describe("registry-test - delete pkg", function () {
     }));
   });
 });
+
+// ==== Test Case
+
+describe("registry-test - dependents", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it("should have function", function () {
+    assert.isFunction(registry.getDependents);
+  });
+
+  it("should walk packages", function () {
+    sandbox.stub(registry, "iteratePackages");
+
+    registry.getDependents("nopar");
+
+    sinon.assert.calledOnce(registry.iteratePackages);
+  });
+
+  describe("walk", function () {
+    var iteratePackagesFn, pkgs = [];
+
+    beforeEach(function () {
+      iteratePackagesFn = registry.iteratePackages;
+      registry.iteratePackages = function (fn) {
+        for (var i = pkgs.length - 1; i >= 0; i--) {
+          var pkg = pkgs[i];
+          fn(pkg.name, pkg);
+        }
+      };
+    });
+
+    afterEach(function () {
+      registry.iteratePackages = iteratePackagesFn;
+    });
+
+    it("should return dependencies", function () {
+      pkgs = [{
+        name : "dep1",
+        "dist-tags" : { "latest" : "0.9.0" },
+        "versions"  : {
+          "0.9.0" : {
+            dependencies : { "nopar" : "0.1.0" }
+          }
+        }
+      }];
+
+      var deps = registry.getDependents("nopar");
+
+      assert.deepEqual(deps, {
+        "dep1" : {
+          version : "0.1.0",
+          type    : "runtime"
+        }
+      });
+    });
+
+    it("should return devDependencies", function () {
+      pkgs = [{
+        name : "dep1",
+        "dist-tags" : { "latest" : "0.9.0" },
+        "versions"  : {
+          "0.9.0" : {
+            devDependencies : { "nopar" : "0.1.0" }
+          }
+        }
+      }];
+
+      var deps = registry.getDependents("nopar");
+
+      assert.deepEqual(deps, {
+        "dep1" : {
+          version : "0.1.0",
+          type    : "dev"
+        }
+      });
+    });
+  });
+
+});

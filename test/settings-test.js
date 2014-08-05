@@ -11,7 +11,7 @@ var attachment = require("../lib/attachment");
 var settings   = require("../lib/settings");
 
 // Ignore logging
-winston.remove(winston.transports.Console);
+winston.clear();
 
 // ==== Test Case
 
