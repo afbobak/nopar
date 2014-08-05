@@ -23,8 +23,8 @@
             </div>
             <h2 class="panel-title">
               <a href="#<%= pkgName.replace(/\./g, "-") %>-versions" class="panel-toggle<% if (packages.length !== 1) { %> collapsed<% } %>" data-toggle="collapse" data-parent="#accordion">
-                <span class="pull-left btn btn-link btn-lg glyphicon glyphicon-zoom-in"></span>
-                <span class="pull-left btn btn-link btn-lg glyphicon glyphicon-zoom-out"></span>
+                <span class="pull-left btn btn-link btn-lg glyphicon glyphicon-collapse-down"></span>
+                <span class="pull-left btn btn-link btn-lg glyphicon glyphicon-collapse-up"></span>
                 <%= pkgName %>
                 <span class="text-muted">@<%= latest.version %></span>
                 <div class="tags pull-right">
@@ -52,6 +52,14 @@
                    <% if (pkg.users) { var users = Object.keys(pkg.users).sort(); %><tr><th>Users</th><td><% for (idx = 0; idx < users.length; idx++) { %><%= users[idx] %> <% }%></td></tr><% } %>
                    <% if (pkg.repository) { %><tr><th>Repository</th><td><a href="<%= pkg.repository.href || pkg.repository.url %>"><%= pkg.repository.url %> <span class="glyphicon glyphicon-share"></span></a> (<%= pkg.repository.type %>)</td></tr><% } %>
                    <% if (latest.dependencies) { %><tr><th>Dependencies</th><td><% var deps = Object.keys(latest.dependencies).sort(); for (idx = 0; idx < deps.length; idx++) { %><a href="/?q=<%= deps[idx] %>"><%= deps[idx] %></a> <% } %></td></tr><% } %>
+                   <% if (pkg["_dependents"]) {
+                      %><tr><th>Dependents</th><td><%
+                    var deps = Object.keys(pkg["_dependents"]).sort();
+                    for (idx = 0; idx < deps.length; idx++) {
+                      var n = deps[idx];
+                      %><a href="/?q=<%= n %>"><%= n %>:<%= pkg["_dependents"][n].version %></a> <%
+                    } %></td></tr><%
+                   } %>
                    <tr>
                      <th>Versions</th>
                      <td>

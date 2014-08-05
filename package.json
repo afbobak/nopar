@@ -1,6 +1,6 @@
 {
   "name": "nopar",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Abstrakt Node Package Registry & Proxy",
   "bin": {
     "nopar": "bin/nopar"
@@ -9,6 +9,7 @@
   "scripts": {
     "start": "./bin/nopar",
     "test": "mocha -R spec test/*-test.js",
+    "watch": "mocha -w -R spec test/*-test.js",
     "package": "scripts/package"
   },
   "repository": {

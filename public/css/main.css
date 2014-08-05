@@ -1,6 +1,9 @@
 body {
   margin-top: 60px;
 }
+.label {
+  padding: 0.3em 0.6em;
+}
 .navbar .navbar-inner {
   padding-left: 40px;
   padding-right: 10px;
@@ -31,21 +34,22 @@ ul.packages > li .panel-heading .panel-toggle {
 }
 ul.packages > li .panel-heading .panel-toggle .glyphicon {
   position: relative;
-  top: -1px;
+  top: -3px;
   left: -4px;
   margin: 0 8px 0 0;
   padding: 0;
+  font-size: 21px;
 }
-ul.packages > li .panel-heading .panel-toggle > .glyphicon-zoom-in {
+ul.packages > li .panel-heading .panel-toggle > .glyphicon-collapse-down {
   display: none;
 }
-ul.packages > li .panel-heading .panel-toggle > .glyphicon-zoom-out {
+ul.packages > li .panel-heading .panel-toggle > .glyphicon-collapse-up {
   display: block;
 }
-ul.packages > li .panel-heading .panel-toggle.collapsed > .glyphicon-zoom-in {
+ul.packages > li .panel-heading .panel-toggle.collapsed > .glyphicon-collapse-down {
   display: block;
 }
-ul.packages > li .panel-heading .panel-toggle.collapsed > .glyphicon-zoom-out {
+ul.packages > li .panel-heading .panel-toggle.collapsed > .glyphicon-collapse-up {
   display: none;
 }
 ul.packages > li .panel-body .actions {
