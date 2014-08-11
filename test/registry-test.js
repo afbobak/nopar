@@ -8,7 +8,8 @@ var fs     = require("fs");
 var path   = require("path");
 var sinon  = require("sinon");
 
-var registry = require("../lib/registry");
+var attachment = require("../lib/attachment");
+var registry   = require("../lib/registry");
 
 var REGISTRY_PATH = "/some/path/registry";
 var OLD_META = {
@@ -197,6 +198,7 @@ describe("registry-test - get pkg version", function () {
     sandbox.stub(fs, "writeFileSync");
     sandbox.stub(fs, "statSync").returns({ mtime : new Date() });
     sandbox.stub(registry, "refreshMeta");
+    sandbox.stub(attachment, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -414,7 +416,7 @@ describe("registry-test - dependents", function () {
 
     beforeEach(function () {
       iteratePackagesFn = registry.iteratePackages;
-      registry.iteratePackages = function (fn) {
+      registry.iteratePackages = function (settings, fn) {
         for (var i = pkgs.length - 1; i >= 0; i--) {
           var pkg = pkgs[i];
           fn(pkg.name, pkg);
