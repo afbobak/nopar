@@ -1,0 +1,17 @@
+#!/bin/sh -e
+
+update-rc.d nopar defaults
+
+addgroup --quiet --system nopar
+adduser --quiet --system --home /nopar --shell /bin/false --no-create-home --disabled-password --disabled-login nopar
+
+mkdir -p /var/log/nopar
+chown nopar.nopar /var/log/nopar
+
+if [ -x "/usr/sbin/invoke-rc.d" ]; then
+  invoke-rc.d nopar restart
+elif [ -x "/usr/sbin/service" ]; then
+  service nopar restart
+else
+  /etc/init.d/nopar restart
+fi

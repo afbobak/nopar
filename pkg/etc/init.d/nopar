@@ -1,0 +1,77 @@
+#!/bin/sh -e
+### BEGIN INIT INFO
+# Provides:          nopar
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: nopar Front-End Application
+# Description:       nopar Front-End Application
+### END INIT INFO
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+APP_NAME=nopar
+
+# Don't modify these lines, change or create /etc/default/nopar.
+NODE_ENV=production
+GROUP=nopar
+APP_PATH=/usr/bin
+APP_BIN="${APP_PATH}/${APP_NAME}"
+LOG_PATH=/var/log/nopar
+RUN_PATH=/var/run/nopar
+OPTIONS=""
+test -f "/etc/default/${APP_NAME}" && . "/etc/default/${APP_NAME}"
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+    log_daemon_msg "Starting nopar service..."
+    # dirs under /var/run can go away on reboots.
+    mkdir -p $RUN_PATH
+    chmod 775 $RUN_PATH
+    chown root:$GROUP $RUN_PATH >/dev/null 2>&1 || true
+
+    mkdir -p $LOG_PATH
+    chmod 775 $LOG_PATH
+    chown root:$GROUP $LOG_PATH >/dev/null 2>&1 || true
+
+    if [ ! -x ${APP_BIN} ]; then
+        log_action_msg "nopar binary missing - not starting"
+        log_end_msg 1
+    fi
+
+    if NODE_ENV=${NODE_ENV} ${APP_BIN} start ${OPTIONS} > /dev/null; then
+      log_end_msg 0
+    else
+      log_end_msg 1
+    fi
+      ;;
+
+  stop)
+    log_daemon_msg "Stopping nopar service..."
+    if NODE_ENV=${NODE_ENV} ${APP_BIN} stop ${OPTIONS} > /dev/null; then
+      log_end_msg 0
+    else
+      log_end_msg 1
+    fi
+    ;;
+
+  restart)
+    $0 stop
+    $0 start
+    ;;
+
+  force-reload)
+    $0 stop
+    $0 start
+    ;;
+
+  status)
+    status_of_proc -p /var/run/nopar/app.pid "${APP_BIN}" "$APP_NAME" && exit 0 || exit $?
+    ;;
+
+    *)
+    log_action_msg "Usage: /etc/init.d/${APP_NAME} {start|stop|restart|force-reload|status}"
+    exit 1
+    ;;
+esac
