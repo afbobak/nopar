@@ -21,6 +21,9 @@ body {
 .navbar-form .input-append {
   margin-bottom: 0;
 }
+#search_results > li h3 {
+  margin-top: 0;
+}
 ul.packages {
   margin-left: 0;
   padding-left: 0;
@@ -28,29 +31,6 @@ ul.packages {
 }
 ul.packages > li {
   margin-bottom: 20px;
-}
-ul.packages > li .panel-heading .panel-toggle {
-  text-decoration: none;
-}
-ul.packages > li .panel-heading .panel-toggle .glyphicon {
-  position: relative;
-  top: -3px;
-  left: -4px;
-  margin: 0 8px 0 0;
-  padding: 0;
-  font-size: 21px;
-}
-ul.packages > li .panel-heading .panel-toggle > .glyphicon-collapse-down {
-  display: none;
-}
-ul.packages > li .panel-heading .panel-toggle > .glyphicon-collapse-up {
-  display: block;
-}
-ul.packages > li .panel-heading .panel-toggle.collapsed > .glyphicon-collapse-down {
-  display: block;
-}
-ul.packages > li .panel-heading .panel-toggle.collapsed > .glyphicon-collapse-up {
-  display: none;
 }
 ul.packages > li .panel-body .actions {
   float: right;
@@ -61,15 +41,15 @@ ul.packages > li .panel-body .details table th {
   padding-left: 0;
   width: 100px;
 }
-ul.packages > li .panel-body ul.versions {
+ul.versions {
   margin: 0;
   list-style: none;
 }
-ul.packages > li .panel-body ul.versions .version {
+ul.versions .version {
   margin: 0;
   padding: 0;
 }
-ul.packages > li .panel-body ul.versions .version .label {
+ul.versions .version .label {
   display: block;
   min-width: 64px;
   text-align: center;
