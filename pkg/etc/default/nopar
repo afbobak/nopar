@@ -1,0 +1,12 @@
+# /etc/default/nopar
+
+NOPAR_HOSTNAME=${$HOSTNAME}
+NOPAR_PORT=5984
+NOPAR_HOME=/usr/local/nopar
+NOPAR_RUN_PATH=/var/run/nopar
+NOPAR_REGISTRY_PATH=/var/lib/nopar
+NOPAR_LOGFILE=/var/log/nopar/nopar.log
+NOPAR_LOGLEVEL=info
+NOPAR_RUNAS_USER=nopar
+
+NODE_ENV=production
