@@ -9,7 +9,6 @@ var http   = require("http");
 var https  = require("https");
 var path   = require("path");
 var sinon  = require("sinon");
-var url    = require("url");
 
 var attachment = require("../lib/attachment");
 
@@ -521,8 +520,6 @@ describe("attachment-test - detach", function () {
   });
 
   it("should delete attachment", function () {
-    sandbox.stub(url, "parse").returns({});
-    sandbox.stub(url, "format").returns("http://local:1234/");
     sandbox.stub(fs, "existsSync").returns(true);
 
     this.detachFn(this.req, this.res);
