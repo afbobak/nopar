@@ -58,6 +58,7 @@ $TAR --owner=root --group=root -z -f ${PKG}.tgz \
  public \
  scripts \
  views \
+ nopar.js \
  package.json \
  README.md
 
