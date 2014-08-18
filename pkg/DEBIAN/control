@@ -1,0 +1,8 @@
+Package: ${PKG_NAME}
+Version: ${PKG_VERSION}
+Section: non-free/web
+Priority: optional
+Architecture: amd64
+Depends: nodejs (>= 0.10.25)
+Maintainer: Andreas F. Bobak <bobak@abstrakt.ch>
+Description: ${PKG_DESCRIPTION}

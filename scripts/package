@@ -1,32 +1,20 @@
 #!/bin/bash
 set -e
 
-PKG_NAME=`node -e 'process.stdout.write(require("./package.json").name);'`
-PKG_VERSION=`node -e 'process.stdout.write(require("./package.json").version);'`
-PKG=${PKG_NAME}-${PKG_VERSION}
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo "==== Packaging ${PKG_NAME}@${PKG_VERSION} ===="
+export PKG_NAME=`node -e 'process.stdout.write(require("./package.json").name);'`
+export PKG_VERSION=`node -e 'process.stdout.write(require("./package.json").version);'`
+export PKG_DESCRIPTION=`node -e 'process.stdout.write(require("./package.json").description);'`
+export PKG=${PKG_NAME}_${PKG_VERSION}
 
-rm -fr nopar*.tgz .latest.id node_modules
-npm install --production
+if [ "${RELEASE_BUILD}" == "yes" ] || [ "${BUILD_NUMBER}" == "" ]; then
+  echo "== This is a RELEASE_BUILD"
+else
+  PKG_VERSION=${PKG_VERSION}-b${BUILD_NUMBER}
+  PKG=${PKG_NAME}_${PKG_VERSION}
+fi
 
-echo ${PKG} > .latest.id
-tar -c --owner=root --group=root -z -f ${PKG}.tgz \
- bin \
- lib \
- node_modules \
- public \
- scripts \
- views \
- package.json \
- README.md
-
-mkdir ${PKG}
-cd ${PKG}
-tar -x -f ../${PKG}.tgz
-cd ..
-rm -f ${PKG}.tgz
-tar -c --owner=root --group=root -z -f ${PKG}.tgz ${PKG}
-rm -fr ${PKG}
-
-echo "==== Packaged ${PKG}.tgz ===="
+$DIR/prepackage
+$DIR/package-tgz
+$DIR/package-deb

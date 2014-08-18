@@ -1,5 +1,15 @@
+*.deb
+*.log
+*.out
+*.pid
+*.tgz
+.DS_Store
+/.cache
+/.latest.id
+/.travis.yml
+/.vagrant
 /node_modules
 /registry
-/.latest.id
-.DS_Store
 npm-debug.log
+npm-shrinkwrap.json
+Vagrantfile

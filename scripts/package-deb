@@ -1,0 +1,55 @@
+#!/bin/bash
+set -e
+
+if [ "$PKG_NAME" == "" ]; then
+  echo "ERROR: PKG_NAME not set"
+  exit 5
+fi
+
+if [ "$PKG_VERSION" == "" ]; then
+  echo "ERROR: PKG_VERSION not set"
+  exit 5
+fi
+
+if [ "$PKG_DESCRIPTION" == "" ]; then
+  echo "ERROR: PKG_DESCRIPTION not set"
+  exit 5
+fi
+
+if [ "$PKG" == "" ]; then
+  echo "ERROR: PKG not set"
+  exit 5
+fi
+
+echo "==== Packaging ${PKG}.deb ===="
+if [ ! -f "${PKG}.tgz" ]; then
+  echo "ERROR: missing ${PKG}.tgz"
+  exit 5
+fi
+
+mkdir -p ${PKG}
+cd ${PKG}
+rm -fr *
+
+rsync -crlptDF ../pkg/ .
+sed -i 's/${PKG_NAME}/'"$PKG_NAME"'/g' DEBIAN/control
+sed -i 's/${PKG_VERSION}/'"$PKG_VERSION"'/g' DEBIAN/control
+sed -i 's/${PKG_DESCRIPTION}/'"$PKG_DESCRIPTION"'/g' DEBIAN/control
+
+mkdir -p usr/lib
+cd usr/lib
+tar xzf ../../../${PKG}.tgz
+chmod 755 ${PKG_NAME}
+cd ../..
+
+mkdir -p usr/bin
+cd usr/bin
+ln -s ../lib/${PKG_NAME}/bin/${PKG_NAME} ${PKG_NAME}
+cd ../..
+
+cd ..
+pwd
+fakeroot dpkg-deb --build ${PKG}
+rm -fr ${PKG}
+
+echo "==== Packaged ${PKG}.deb ===="

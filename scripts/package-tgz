@@ -1,0 +1,65 @@
+#!/bin/bash
+set -e
+
+if [ "$PKG_NAME" == "" ]; then
+  echo "ERROR: PKG_NAME not set"
+  exit 5
+fi
+
+if [ "$PKG_VERSION" == "" ]; then
+  echo "ERROR: PKG_VERSION not set"
+  exit 5
+fi
+
+if [ "$PKG_DESCRIPTION" == "" ]; then
+  echo "ERROR: PKG_DESCRIPTION not set"
+  exit 5
+fi
+
+if [ "$PKG" == "" ]; then
+  echo "ERROR: PKG not set"
+  exit 5
+fi
+
+echo "==== BEGIN packaging ${PKG}.tgz ===="
+
+rm -fr ${PKG_NAME}*.tgz ${PKG_NAME}*.deb .latest.id
+rm -fr node_modules npm-shrinkwrap.json
+npm install --production
+npm dedupe
+npm shrinkwrap
+
+cd node_modules
+find . -name *.as -exec chmod 644 {} \;
+find . -name *.css -exec chmod 644 {} \;
+find . -name *.node -exec chmod 644 {} \;
+find . -name *.dat -exec chmod 644 {} \;
+find . -name *.png -exec chmod 644 {} \;
+find . -name *.eot -exec chmod 644 {} \;
+find . -name *.json -exec chmod 644 {} \;
+find . -perm 0744 -exec chmod 644 {} \;
+find . -name *~ -exec rm -fr {} \;
+find . -name .gitignore -exec rm -fr {} \;
+find . -name .gitmodules -exec rm -fr {} \;
+cd ..
+
+GNU_TAR=`tar --version | grep GNU`
+if [ "${GNU_TAR}" = "" ]; then
+  TAR="tar -c -s ,^,${PKG_NAME}/,"
+else
+  TAR="tar -c --transform s,^,${PKG_NAME}/,"
+fi
+
+echo ${PKG} > .latest.id
+$TAR --owner=root --group=root -z -f ${PKG}.tgz \
+ bin \
+ lib \
+ node_modules \
+ public \
+ scripts \
+ views \
+ nopar.js \
+ package.json \
+ README.md
+
+echo "==== END packaging ${PKG}.tgz ===="
