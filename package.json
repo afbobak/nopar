@@ -9,7 +9,7 @@
 	"scripts": {
 		"start": "./bin/nopar",
 		"test": "mocha -R spec test/*-test.js",
-		"watch": "mocha -w -R spec test/*-test.js",
+		"watch": "mocha -w -G -R spec test/*-test.js",
 		"package": "scripts/package"
 	},
 	"repository": {
@@ -42,7 +42,7 @@
 	},
 	"devDependencies": {
 		"chai": "^1.9",
-		"mocha": "^1.20",
+		"mocha": "^1.21",
 		"sinon": "^1.10"
 	},
 	"engines": {
