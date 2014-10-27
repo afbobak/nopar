@@ -93,7 +93,9 @@
                         if (pkg.versions[vers].dist) {
                           pkgUrl = pkg.versions[vers].dist.tarball;
                           var attachment  = pkgUrl.substr(pkgUrl.lastIndexOf("/") + 1);
-                          cached = pkg["_attachments"][attachment].cached;
+                          if (pkg._attachments[attachment]) {
+                            cached = pkg["_attachments"][attachment].cached;
+                          }
                         } else {
                           vers += " (no dist tag)";
                         }

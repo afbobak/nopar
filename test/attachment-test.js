@@ -31,8 +31,12 @@ describe("attachment-test - download", function () {
 
     this.res = {
       download : sandbox.stub(),
-      json     : sandbox.stub()
+      status   : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
     this.downloadFn = attachment.download();
   });
 
@@ -52,8 +56,10 @@ describe("attachment-test - download", function () {
       params        : { name : "non-existant" }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.called(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "package not found"
     });
@@ -106,8 +112,10 @@ describe("attachment-test - download", function () {
     }, this.res);
 
     sinon.assert.neverCalledWith(fs.existsSync, "/path/invalidFile.json");
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "attachment not found"
     });
@@ -151,7 +159,7 @@ describe("attachment-test - download", function () {
     }, this.res);
 
     sinon.assert.calledWith(fs.existsSync, "/path/test/test-0.0.1-dev.tgz");
-    sinon.assert.notCalled(this.res.json);
+    sinon.assert.notCalled(this.json);
     sinon.assert.called(http.get);
     sinon.assert.calledWith(http.get, "http://fwd.url/pkg.tgz");
     //TODO pkgMeta._attachments["test-0.0.1-dev.tgz"].cached = true;
@@ -294,8 +302,12 @@ describe("attachment-test - attach", function () {
       on          : sandbox.stub()
     };
     this.res = {
-      json : sandbox.stub()
+      status   : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
 
     this.attachFn = attachment.attach(this.app);
   });
@@ -315,8 +327,10 @@ describe("attachment-test - attach", function () {
       originalUrl : "/test"
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 400, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 400);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "wrong_content",
       "reason" : "content-type MUST be application/octet-stream"
     });
@@ -490,8 +504,12 @@ describe("attachment-test - detach", function () {
       originalUrl : "/test"
     };
     this.res = {
-      json : sandbox.stub()
+      status   : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
 
     this.detachFn = attachment.detach(this.app);
   });
@@ -509,8 +527,10 @@ describe("attachment-test - detach", function () {
 
     this.detachFn(this.req, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok"  : true});
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok"  : true});
     sinon.assert.called(fs.unlinkSync);
     sinon.assert.calledWith(fs.unlinkSync, "/path/test/test-0.0.1-dev.tgz");
   });
@@ -520,8 +540,10 @@ describe("attachment-test - detach", function () {
 
     this.detachFn(this.req, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "attachment not found"
     });

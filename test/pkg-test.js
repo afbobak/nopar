@@ -32,8 +32,13 @@ describe("pkg-test - getPackage", function () {
     };
 
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
+
     this.getFn = pkg.getPackage();
   });
 
@@ -54,8 +59,10 @@ describe("pkg-test - getPackage", function () {
       params        : { name : "non-existant" }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.called(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "document not found"
     });
@@ -70,8 +77,10 @@ describe("pkg-test - getPackage", function () {
       params        : { name : "pkg" }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, pkgMeta);
   });
 
   it("should return package version not found", function () {
@@ -94,8 +103,10 @@ describe("pkg-test - getPackage", function () {
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "document not found"
     });
@@ -123,8 +134,10 @@ describe("pkg-test - getPackage", function () {
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, pkgMeta.versions["0.0.1"]);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, pkgMeta.versions["0.0.1"]);
   });
 });
 
@@ -150,8 +163,12 @@ describe("pkg-test - getPackage proxied", function () {
     get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
 
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
 
     this.getFn = pkg.getPackage();
   });
@@ -223,8 +240,10 @@ describe("pkg-test - getPackage proxied", function () {
     }, this.res);
 
     sinon.assert.notCalled(http.get);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "document not found"
     });
@@ -312,8 +331,12 @@ describe("pkg-test - publishFull", function () {
     };
 
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
 
     this.publishFullFn = pkg.publishFull();
   });
@@ -334,8 +357,10 @@ describe("pkg-test - publishFull", function () {
       originalUrl   : "/test"
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 400, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 400);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "wrong_content",
       "reason" : "content-type MUST be application/json"
     });
@@ -360,8 +385,10 @@ describe("pkg-test - publishFull", function () {
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 409, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 409);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "conflict",
       "reason" : "must supply latest _rev to update existing package"
     });
@@ -386,8 +413,10 @@ describe("pkg-test - publishFull", function () {
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 409, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 409);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "conflict",
       "reason" : "revision does not match one in document"
     });
@@ -413,8 +442,10 @@ describe("pkg-test - publishFull", function () {
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 409, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 409);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "conflict",
       "reason" : "revision does not match one in document"
     });
@@ -445,8 +476,10 @@ describe("pkg-test - publishFull", function () {
       pkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should skim off attachment and persist for new package", function () {
@@ -490,8 +523,10 @@ describe("pkg-test - publishFull", function () {
       newPkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should update package and persist registry for existing pkg", function () {
@@ -540,8 +575,10 @@ describe("pkg-test - publishFull", function () {
       newPkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should update and persist pkg if _rev is same but different type", function () {
@@ -590,8 +627,10 @@ describe("pkg-test - publishFull", function () {
       newPkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should update and persist if _rev is same inside document", function () {
@@ -640,8 +679,10 @@ describe("pkg-test - publishFull", function () {
       newPkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should skim attachments, update and persist for existing pkg", function () {
@@ -704,8 +745,10 @@ describe("pkg-test - publishFull", function () {
       newPkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should keep old version", function () {
@@ -742,8 +785,12 @@ describe("pkg-test - publish", function () {
     };
 
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
 
     this.publishFn = pkg.publish();
   });
@@ -764,8 +811,10 @@ describe("pkg-test - publish", function () {
       originalUrl   : "/test"
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 400, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 400);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "wrong_content",
       "reason" : "content-type MUST be application/json"
     });
@@ -800,8 +849,10 @@ describe("pkg-test - publish", function () {
       pkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, "0.0.1-dev");
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, "0.0.1-dev");
   });
 
   it("should reset revision if it's a checksum", function () {
@@ -832,8 +883,10 @@ describe("pkg-test - publish", function () {
       pkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, "0.0.1-dev");
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, "0.0.1-dev");
   });
 
   it("should add tag and return latest version number in body", function () {
@@ -865,8 +918,10 @@ describe("pkg-test - publish", function () {
       pkgMeta);
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, "0.0.1-dev");
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, "0.0.1-dev");
   });
 
   it("should keep latest if version<latest", function () {
@@ -898,8 +953,10 @@ describe("pkg-test - publish", function () {
       "dist-tags" : { latest : "0.0.2" },
       versions    : { "0.0.2" : {}, "0.0.1-dev": {} }
     };
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
     sinon.assert.calledWith(registry.setPackage, pkgMeta);
-      sinon.assert.calledWith(this.res.json, 200, "0.0.1-dev");
+    sinon.assert.calledWith(this.json, "0.0.1-dev");
   });
 });
 
@@ -920,8 +977,12 @@ describe("pkg-test - tag", function () {
     };
 
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
 
     this.tagFn = pkg.tag();
   });
@@ -963,8 +1024,10 @@ describe("pkg-test - tag", function () {
 
     sinon.assert.called(registry.setPackage);
     sinon.assert.calledWith(registry.setPackage, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 201, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 201);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, pkgMeta);
   });
 });
 
@@ -988,8 +1051,13 @@ describe("pkg-test - unpublish", function () {
     };
 
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
+
     this.unpublishFn = pkg.unpublish();
   });
 
@@ -1048,8 +1116,12 @@ describe("pkg-test - refresh", function () {
     sandbox.stub(http, "get").returns({on : sandbox.spy()});
     sandbox.stub(attachment, "refreshMeta");
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
 
     sandbox.stub(registry, 'setPackage');
     sandbox.stub(registry, 'getPackage');
@@ -1077,8 +1149,10 @@ describe("pkg-test - refresh", function () {
 
     this.refreshFn({params: {name: "fwdpkg"}}, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "document not found"
     });
