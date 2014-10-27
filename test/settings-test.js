@@ -13,6 +13,16 @@ var settings   = require("../lib/settings");
 // Ignore logging
 winston.clear();
 
+function createRegistryMock() {
+  return {
+    getMeta         : sinon.stub(),
+    writeMeta       : sinon.spy(),
+    refreshMeta     : sinon.stub(),
+    iteratePackages : sinon.stub(),
+    setPackage      : sinon.stub()
+  };
+}
+
 // ==== Test Case
 
 describe("settings-test - init", function () {
@@ -51,7 +61,9 @@ describe("settings-test - init", function () {
       "forwarder.userAgent"   : defaults["forwarder.userAgent"],
       hostname                : defaults.hostname,
       baseUrl                 : defaults.baseUrl,
+      limit                   : defaults.limit,
       logfile                 : defaults.logfile,
+      loglevel                : defaults.loglevel,
       port                    : defaults.port,
       registryPath            : defaults.registryPath,
       metaTTL                 : defaults.metaTTL
@@ -98,11 +110,10 @@ describe("settings-test - get/set", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.registry = {
-      getMeta: sandbox.stub().returns({
-        settings : { "foo" : "bar" }
-      })
-    };
+    this.registry = createRegistryMock();
+    this.registry.getMeta.returns({
+      settings : { "foo" : "bar" }
+    });
     this.settings = settings.init(this.registry);
   });
 
@@ -145,7 +156,8 @@ describe("settings-test - render", function () {
         hostname : "some.host"
       }
     };
-    this.renderFn = settings.render(this.settings);
+    this.req = { settingsStore : this.settings };
+    this.renderFn = settings.render();
   });
 
   afterEach(function () {
@@ -155,7 +167,7 @@ describe("settings-test - render", function () {
   it("should render 'settings'", function () {
     var spy = sandbox.spy();
 
-    this.renderFn({}, {render: spy});
+    this.renderFn(this.req, {render: spy});
 
     sinon.assert.calledOnce(spy);
   });
@@ -165,7 +177,7 @@ describe("settings-test - render", function () {
     this.settings.get.withArgs("hostname").returns("localhost");
     var spy = sandbox.spy();
 
-    this.renderFn({}, {render: spy});
+    this.renderFn(this.req, {render: spy});
 
     sinon.assert.calledWith(spy, "settings", sinon.match({
       settings : {
@@ -179,7 +191,7 @@ describe("settings-test - render", function () {
     this.settings.get.withArgs("hostname").returns("some.host");
     var spy = sandbox.spy();
 
-    this.renderFn({}, {render: spy});
+    this.renderFn(this.req, {render: spy});
 
     sinon.assert.calledWith(spy, "settings", sinon.match({
       settings : {
@@ -197,12 +209,8 @@ describe("settings-test - save", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.registry = {
-      getMeta         : sandbox.stub().returns({}),
-      writeMeta       : sandbox.spy(),
-      iteratePackages : sandbox.stub(),
-      setPackage      : sandbox.stub()
-    };
+    this.registry = createRegistryMock();
+    this.registry.getMeta.returns({});
     this.settings = {
       get      : sandbox.stub(),
       set      : sandbox.stub(),
@@ -210,7 +218,7 @@ describe("settings-test - save", function () {
         hostname : "some.host"
       }
     };
-    this.saveFn = settings.save(this.registry, this.settings);
+    this.saveFn = settings.save(this.registry);
   });
 
   afterEach(function () {
@@ -221,6 +229,7 @@ describe("settings-test - save", function () {
     var spy = sandbox.spy();
 
     this.saveFn({
+      settingsStore : this.settings,
       body : {
       }
     }, {render: spy});
@@ -232,6 +241,7 @@ describe("settings-test - save", function () {
     sandbox.stub(attachment, "refreshMeta");
 
     this.saveFn({
+      settingsStore : this.settings,
       body : {
         hostname     : "localhost",
         port         : "3333",
@@ -259,6 +269,7 @@ describe("settings-test - save", function () {
     this.settings.get.withArgs("port").returns(3333);
 
     this.saveFn({
+      settingsStore : this.settings,
       body : {
         hostname     : "localhost",
         port         : "3333"
@@ -270,11 +281,63 @@ describe("settings-test - save", function () {
 
   it("should write new meta", function () {
     this.saveFn({
+      settingsStore : this.settings,
       body : {
         hostname : "localhost"
       }
     }, {render: sandbox.spy()});
 
     sinon.assert.calledOnce(this.registry.writeMeta);
+  });
+});
+
+// ==== Test Case
+
+describe("settings-test - middleware", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    this.registry = createRegistryMock();
+    this.registry.getMeta.returns({});
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it('has function', function() {
+    assert.isFunction(settings.middleware);
+  });
+
+  it('requires registry', function() {
+    assert.throws(settings.middleware, Error);
+  });
+
+  it('returns middleware function', function() {
+    assert.isFunction(settings.middleware(this.registry));
+  });
+
+  it('initializes settings and refreshes registry', function() {
+    sandbox.stub(settings, 'init');
+
+    settings.middleware(this.registry);
+
+    sinon.assert.calledOnce(settings.init);
+    sinon.assert.calledWith(settings.init, this.registry);
+
+    sinon.assert.calledOnce(this.registry.refreshMeta);
+  });
+
+  it('injects settingsStore into request and calls next', function() {
+    var fn   = settings.middleware(this.registry);
+    var req  = {};
+    var next = sinon.stub();
+
+    fn(req, {}, next);
+
+    assert.isObject(req.settingsStore);
+    sinon.assert.calledOnce(next);
   });
 });

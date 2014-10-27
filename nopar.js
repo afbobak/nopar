@@ -5,4 +5,4 @@ if (process.argv.length === 3 && process.argv[2] === '--detach') {
   require('daemon')();
 }
 
-require('./lib/server');
+require('./lib/server').start();
