@@ -3,11 +3,14 @@
 "use strict";
 
 var assert  = require("chai").assert;
+var path    = require("path");
+var request = require("supertest");
 var sinon   = require("sinon");
 var winston = require("winston");
 
 var attachment = require("../lib/attachment");
 var registry   = require("../lib/registry");
+var server     = require("../lib/server");
 var settings   = require("../lib/settings");
 
 // Ignore logging
@@ -343,5 +346,80 @@ describe("settings-test - middleware", function () {
 
     assert.isObject(req.settingsStore);
     sinon.assert.calledOnce(next);
+  });
+});
+
+// ==== Test Case
+
+describe('settings gui', function () {
+  var sandbox, app;
+  var registryPath = path.join(__dirname, 'registry');
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(registry, 'refreshMeta');
+    sandbox.stub(registry, 'writeMeta');
+    sandbox.stub(registry, 'getMeta').returns({
+      settings : { registryPath : registryPath }
+    });
+
+    app = server.createApp({
+      registryPath : registryPath,
+      loglevel     : 'silent'
+    });
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it('routes /settings', function () {
+    var route = {
+      get  : sinon.stub(),
+      post : sinon.stub()
+    };
+    route.get.returns(route);
+    sandbox.stub(app, 'route').returns(route);
+    sandbox.stub(settings, 'render').returns('render');
+    sandbox.stub(settings, 'save').returns('save');
+
+    settings.route(app);
+
+    sinon.assert.calledWith(app.route, '/settings');
+    sinon.assert.calledOnce(route.get);
+    sinon.assert.calledWith(route.get, 'render');
+    sinon.assert.calledOnce(route.post);
+    sinon.assert.calledWith(route.post, sinon.match.func, 'save');
+  });
+
+  it('renders with title', function (done) {
+    settings.route(app);
+
+    request(app)
+      .get('/settings')
+      .expect('Content-Type', 'text/html; charset=utf-8')
+      .expect(200, /<h3>Settings<\/h3>/, done);
+  });
+
+  it('saves settings', function (done) {
+    settings.route(app);
+
+    request(app)
+      .post('/settings')
+      .type('form')
+      .send({
+        hostname : settings.defaults.hostname,
+        port     : settings.defaults.port,
+        registry : 'http://npm.private:5984/'
+      })
+      .expect('Content-Type', 'text/html; charset=utf-8')
+      .expect(200, /Saved settings/, function (err) {
+        if (err) {
+          return done(err);
+        }
+        sinon.assert.calledOnce(registry.writeMeta);
+        done();
+      });
   });
 });

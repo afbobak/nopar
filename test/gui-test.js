@@ -11,7 +11,6 @@ var sinon   = require("sinon");
 var gui      = require('../lib/gui');
 var registry = require('../lib/registry');
 var server   = require('../lib/server');
-var settings = require('../lib/settings');
 
 var brand = /<a class="navbar-brand" href="\/">NOPAR \/<small>.*<\/small><\/a>/;
 var pkgProxied = require('./registry/proxied/proxied.json');
@@ -115,36 +114,6 @@ describe('gui', function () {
         .get('/')
         .expect('Content-Type', 'text/html; charset=utf-8')
         .expect(200, brand, done);
-    });
-  });
-
-  describe('settings page', function () {
-    it('routes /settings', function () {
-      var route = {
-        get  : sinon.stub(),
-        post : sinon.stub()
-      };
-      route.get.returns(route);
-      sandbox.stub(app, 'route').returns(route);
-      sandbox.stub(settings, 'render').returns('render');
-      sandbox.stub(settings, 'save').returns('save');
-
-      gui.route(app);
-
-      sinon.assert.calledWith(app.route, '/settings');
-      sinon.assert.calledOnce(route.get);
-      sinon.assert.calledWith(route.get, 'render');
-      sinon.assert.calledOnce(route.post);
-      sinon.assert.calledWith(route.post, 'save');
-    });
-
-    it('renders with title', function (done) {
-      gui.route(app);
-
-      request(app)
-        .get('/settings')
-        .expect('Content-Type', 'text/html; charset=utf-8')
-        .expect(200, /<h3>Settings<\/h3>/, done);
     });
   });
 
