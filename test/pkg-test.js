@@ -1,15 +1,13 @@
 /*jslint devel: true, node: true */
-/*global */
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
-var assert = require("chai").assert;
-var express = require("express");
-var fs     = require("fs");
-var http   = require("http");
-var path   = require("path");
+var assert  = require("chai").assert;
+var fs      = require("fs");
+var http    = require("http");
+var path    = require("path");
 var request = require("supertest");
-var sinon  = require("sinon");
+var sinon   = require("sinon");
 
 var attachment = require("../lib/attachment");
 var pkg        = require("../lib/pkg");

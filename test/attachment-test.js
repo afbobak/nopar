@@ -1,5 +1,4 @@
 /*jslint devel: true, node: true */
-/*global */
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 

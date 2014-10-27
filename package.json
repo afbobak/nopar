@@ -8,7 +8,7 @@
 	"main": "./nopar.js",
 	"scripts": {
 		"start": "./bin/nopar",
-		"test": "mocha -R spec test/*-test.js",
+		"test": "jshint *.js lib/*js test/*js && mocha -R spec test/*-test.js",
 		"watch": "mocha -w -G -R spec test/*-test.js",
 		"package": "scripts/package"
 	},
@@ -43,6 +43,7 @@
 	},
 	"devDependencies": {
 		"chai": "^1.9",
+		"jshint": "^2.5",
 		"mocha": "^1.21",
 		"sinon": "^1.10",
 		"supertest": "^0.14.0"

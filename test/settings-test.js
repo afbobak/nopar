@@ -1,5 +1,4 @@
 /*jslint devel: true, node: true */
-/*global */
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
@@ -8,20 +7,11 @@ var sinon   = require("sinon");
 var winston = require("winston");
 
 var attachment = require("../lib/attachment");
+var registry   = require("../lib/registry");
 var settings   = require("../lib/settings");
 
 // Ignore logging
 winston.clear();
-
-function createRegistryMock() {
-  return {
-    getMeta         : sinon.stub(),
-    writeMeta       : sinon.spy(),
-    refreshMeta     : sinon.stub(),
-    iteratePackages : sinon.stub(),
-    setPackage      : sinon.stub()
-  };
-}
 
 // ==== Test Case
 
@@ -30,10 +20,7 @@ describe("settings-test - init", function () {
 
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
-
-    this.registry = {
-      getMeta: sandbox.stub()
-    };
+    sandbox.stub(registry, 'getMeta');
   });
 
   afterEach(function () {
@@ -41,17 +28,17 @@ describe("settings-test - init", function () {
   });
 
   it("should get registry meta", function () {
-    this.registry.getMeta.returns({});
+    registry.getMeta.returns({});
 
-    settings.init(this.registry);
+    settings.init(registry);
 
-    sinon.assert.calledOnce(this.registry.getMeta);
+    sinon.assert.calledOnce(registry.getMeta);
   });
 
   it("should set defaults and settings to defaults for empty meta", function () {
-    this.registry.getMeta.returns({settings: {}});
+    registry.getMeta.returns({settings: {}});
 
-    var s = settings.init(this.registry);
+    var s = settings.init(registry);
 
     var defaults = settings.defaults;
     assert.deepEqual(s.defaults, {
@@ -80,22 +67,20 @@ describe("settings-test - init", function () {
   });
 
   it("should set autoForward to default if null", function () {
-    this.registry.getMeta.returns({settings: {
-      "forwarder.autoForward" : null
-    }});
+    registry.getMeta.returns({settings: {"forwarder.autoForward" : null}});
 
-    var s = settings.init(this.registry);
+    var s = settings.init(registry);
 
     var defaults = settings.defaults;
     assert.equal(s.data["forwarder.autoForward"], defaults["forwarder.autoForward"]);
   });
 
   it("should set ignoreCert to default if null", function () {
-    this.registry.getMeta.returns({settings: {
+    registry.getMeta.returns({settings: {
       "forwarder.ignoreCert" : null
     }});
 
-    var s = settings.init(this.registry);
+    var s = settings.init(registry);
 
     var defaults = settings.defaults;
     assert.equal(s.data["forwarder.ignoreCert"], defaults["forwarder.ignoreCert"]);
@@ -110,11 +95,20 @@ describe("settings-test - get/set", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.registry = createRegistryMock();
-    this.registry.getMeta.returns({
+    sandbox.stub(registry, "getMeta");
+    sandbox.stub(registry, "writeMeta");
+    sandbox.stub(registry, "refreshMeta");
+    sandbox.stub(registry, "iteratePackages");
+    sandbox.stub(registry, "setPackage");
+
+    registry.getMeta.returns({
       settings : { "foo" : "bar" }
     });
-    this.settings = settings.init(this.registry);
+    this.settings = settings.init(registry);
+  });
+
+  afterEach(function () {
+    sandbox.restore();
   });
 
   it("should get undefined value", function () {
@@ -209,8 +203,13 @@ describe("settings-test - save", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.registry = createRegistryMock();
-    this.registry.getMeta.returns({});
+    sandbox.stub(registry, "getMeta");
+    sandbox.stub(registry, "writeMeta");
+    sandbox.stub(registry, "refreshMeta");
+    sandbox.stub(registry, "iteratePackages");
+    sandbox.stub(registry, "setPackage");
+
+    registry.getMeta.returns({});
     this.settings = {
       get      : sandbox.stub(),
       set      : sandbox.stub(),
@@ -218,7 +217,7 @@ describe("settings-test - save", function () {
         hostname : "some.host"
       }
     };
-    this.saveFn = settings.save(this.registry);
+    this.saveFn = settings.save(registry);
   });
 
   afterEach(function () {
@@ -276,7 +275,7 @@ describe("settings-test - save", function () {
       }
     }, {render: sandbox.spy()});
 
-    sinon.assert.notCalled(this.registry.iteratePackages);
+    sinon.assert.notCalled(registry.iteratePackages);
   });
 
   it("should write new meta", function () {
@@ -285,9 +284,9 @@ describe("settings-test - save", function () {
       body : {
         hostname : "localhost"
       }
-    }, {render: sandbox.spy()});
+    }, { render: sandbox.spy() });
 
-    sinon.assert.calledOnce(this.registry.writeMeta);
+    sinon.assert.calledOnce(registry.writeMeta);
   });
 });
 
@@ -299,8 +298,13 @@ describe("settings-test - middleware", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.registry = createRegistryMock();
-    this.registry.getMeta.returns({});
+    sandbox.stub(registry, "getMeta");
+    sandbox.stub(registry, "writeMeta");
+    sandbox.stub(registry, "refreshMeta");
+    sandbox.stub(registry, "iteratePackages");
+    sandbox.stub(registry, "setPackage");
+
+    registry.getMeta.returns({});
   });
 
   afterEach(function () {
@@ -316,22 +320,22 @@ describe("settings-test - middleware", function () {
   });
 
   it('returns middleware function', function() {
-    assert.isFunction(settings.middleware(this.registry));
+    assert.isFunction(settings.middleware(registry));
   });
 
   it('initializes settings and refreshes registry', function() {
     sandbox.stub(settings, 'init');
 
-    settings.middleware(this.registry);
+    settings.middleware(registry);
 
     sinon.assert.calledOnce(settings.init);
-    sinon.assert.calledWith(settings.init, this.registry);
+    sinon.assert.calledWith(settings.init, registry);
 
-    sinon.assert.calledOnce(this.registry.refreshMeta);
+    sinon.assert.calledOnce(registry.refreshMeta);
   });
 
   it('injects settingsStore into request and calls next', function() {
-    var fn   = settings.middleware(this.registry);
+    var fn   = settings.middleware(registry);
     var req  = {};
     var next = sinon.stub();
 

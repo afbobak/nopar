@@ -1,10 +1,7 @@
 /*jslint devel: true, node: true */
-/*global */
 /*! Copyright (C) 2014 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
-var assert  = require("chai").assert;
-var express = require("express");
 var fs      = require("fs");
 var https   = require("https");
 var path    = require("path");
@@ -19,8 +16,6 @@ var settings = require('../lib/settings');
 var brand = /<a class="navbar-brand" href="\/">NOPAR \/<small>.*<\/small><\/a>/;
 var pkgProxied = require('./registry/proxied/proxied.json');
 var pkgProxiedHeader = /proxied<small class="text-muted">@2.0.0<\/small>/;
-
-function noopMiddleware(req, res, next) { next(); }
 
 // ==== Test Case
 
