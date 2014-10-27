@@ -1,0 +1,31 @@
+{
+  "boss"     : true,
+  "curly"    : true,
+  "eqeqeq"   : true,
+  "eqnull"   : true,
+  "forin"    : true,
+  "immed"    : true,
+  "indent"   : 2,
+  "latedef"  : true,
+  "maxlen"   : 120,
+  "newcap"   : true,
+  "noarg"    : true,
+  "node"     : true,
+  "sub"      : true,
+  "trailing" : true,
+  "white"    : true,
+  "undef"    : true,
+  "unused"   : true,
+  "predef"   : [
+    "after",
+    "afterEach",
+    "before",
+    "beforeEach",
+    "describe",
+    "it",
+    "setup",
+    "suite",
+    "teardown",
+    "test"
+  ]
+}

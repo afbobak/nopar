@@ -1,16 +1,18 @@
 /*jslint devel: true, node: true */
-/*global */
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
-var assert = require("chai").assert;
-var fs     = require("fs");
-var http   = require("http");
-var https  = require("https");
-var path   = require("path");
-var sinon  = require("sinon");
+var assert  = require("chai").assert;
+var fs      = require("fs");
+var http    = require("http");
+var https   = require("https");
+var path    = require("path");
+var request = require("supertest");
+var sinon   = require("sinon");
 
 var attachment = require("../lib/attachment");
+var registry   = require("../lib/registry");
+var server     = require('../lib/server');
 
 // ==== Test Case
 
@@ -20,14 +22,18 @@ describe("attachment-test - download", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.app = {
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
+
     this.res = {
       download : sandbox.stub(),
       json     : sandbox.stub()
     };
-    this.downloadFn = attachment.download(this.app);
+    this.downloadFn = attachment.download();
   });
 
   afterEach(function () {
@@ -39,12 +45,11 @@ describe("attachment-test - download", function () {
   });
 
   it("should return package not found", function () {
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub().returns(null)
-    });
+    registry.getPackage.returns(null);
 
     this.downloadFn({
-      params : { packagename : "non-existant" }
+      settingsStore : this.settingsStore,
+      params        : { name : "non-existant" }
     }, this.res);
 
     sinon.assert.called(this.res.json);
@@ -68,17 +73,14 @@ describe("attachment-test - download", function () {
         }
       }
     };
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub().returns(pkgMeta)
-    });
-    this.app.get.withArgs("settings").returns({
-      get : sandbox.stub().returns("/registryPath")
-    });
+    registry.getPackage.returns(pkgMeta);
+    this.settingsStore.get.returns("/registryPath");
     sandbox.stub(fs, "existsSync").returns(true);
 
     this.downloadFn({
-      params : {
-        packagename : "test",
+      settingsStore : this.settingsStore,
+      params        : {
+        name       : "test",
         attachment : "test-0.0.1-dev.tgz"
       }
     }, this.res);
@@ -96,8 +98,9 @@ describe("attachment-test - download", function () {
 
     // http://localhost:5984/abstrakt-npm-proxy/-/..%2Fregistry.json
     this.downloadFn({
-      params : {
-        packagename : "test",
+      settingsStore : this.settingsStore,
+      params        : {
+        name       : "test",
         attachment : "../invalidFile.json"
       }
     }, this.res);
@@ -130,14 +133,9 @@ describe("attachment-test - download", function () {
         }
       }
     };
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub().returns(pkgMeta)
-    });
-    var settings = {
-      get : sandbox.stub()
-    };
-    settings.get.withArgs("registryPath").returns("/path");
-    this.app.get.withArgs("settings").returns(settings);
+    registry.getPackage.returns(pkgMeta);
+    var get = this.settingsStore.get;
+    get.withArgs("registryPath").returns("/path");
     sandbox.stub(http, "get").returns({
       on : sandbox.spy()
     });
@@ -145,8 +143,9 @@ describe("attachment-test - download", function () {
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
-      params : {
-        packagename : "test",
+      settingsStore : this.settingsStore,
+      params        : {
+        name       : "test",
         attachment : "test-0.0.1-dev.tgz"
       }
     }, this.res);
@@ -178,18 +177,13 @@ describe("attachment-test - download", function () {
         }
       }
     };
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub().returns(pkgMeta)
-    });
-    var settings = {
-      get : sandbox.stub()
-    };
-    settings.get.withArgs("registryPath").returns("/path");
-    settings.get.withArgs("forwarder.proxy").returns("https://localhost:8080");
-    settings.get.withArgs("forwarder.autoForward").returns(true);
-    settings.get.withArgs("forwarder.ignoreCert").returns(true);
-    settings.get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
-    this.app.get.withArgs("settings").returns(settings);
+    registry.getPackage.returns(pkgMeta);
+    var get = this.settingsStore.get;
+    get.withArgs("registryPath").returns("/path");
+    get.withArgs("forwarder.proxy").returns("https://localhost:8080");
+    get.withArgs("forwarder.autoForward").returns(true);
+    get.withArgs("forwarder.ignoreCert").returns(true);
+    get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
     sandbox.stub(http, "get");
     sandbox.stub(https, "get").returns({
       on : sandbox.spy()
@@ -198,8 +192,9 @@ describe("attachment-test - download", function () {
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
-      params : {
-        packagename : "test",
+      settingsStore : this.settingsStore,
+      params        : {
+        name       : "test",
         attachment : "test-0.0.1-dev.tgz"
       }
     }, this.res);
@@ -238,18 +233,13 @@ describe("attachment-test - download", function () {
         }
       }
     };
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub().returns(pkgMeta)
-    });
-    var settings = {
-      get : sandbox.stub()
-    };
-    settings.get.withArgs("registryPath").returns("/path");
-    settings.get.withArgs("forwarder.proxy").returns("http://localhost:8080");
-    settings.get.withArgs("forwarder.autoForward").returns(true);
-    settings.get.withArgs("forwarder.ignoreCert").returns(false);
-    settings.get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
-    this.app.get.withArgs("settings").returns(settings);
+    registry.getPackage.returns(pkgMeta);
+    var get = this.settingsStore.get;
+    get.withArgs("registryPath").returns("/path");
+    get.withArgs("forwarder.proxy").returns("http://localhost:8080");
+    get.withArgs("forwarder.autoForward").returns(true);
+    get.withArgs("forwarder.ignoreCert").returns(false);
+    get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
     var spy = sandbox.spy();
     sandbox.stub(http, "get").returns({
       on : spy
@@ -258,8 +248,9 @@ describe("attachment-test - download", function () {
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
-      params : {
-        packagename : "test",
+      settingsStore : this.settingsStore,
+      params        : {
+        name       : "test",
         attachment : "test-0.0.1-dev.tgz"
       }
     }, this.res);
@@ -281,15 +272,21 @@ describe("attachment-test - attach", function () {
 
     sandbox.stub(fs, "createWriteStream");
 
-    this.app = {
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
+    this.settingsStore.get.withArgs("registryPath").returns("/path");
+
     this.req = {
-      headers     : {
+      settingsStore : this.settingsStore,
+      headers       : {
         "content-type" : "application/octet-stream"
       },
       params      : {
-        packagename : "test",
+        name       : "test",
         attachment : "test.tgz"
       },
       originalUrl : "/test",
@@ -299,15 +296,6 @@ describe("attachment-test - attach", function () {
     this.res = {
       json : sandbox.stub()
     };
-
-    var settings = {
-      get : sandbox.stub()
-    };
-    settings.get.withArgs("registryPath").returns("/path");
-    this.app.get.withArgs("settings").returns(settings);
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub()
-    });
 
     this.attachFn = attachment.attach(this.app);
   });
@@ -323,7 +311,7 @@ describe("attachment-test - attach", function () {
   it("should require content-type application/octet-stream", function () {
     this.attachFn({
       headers     : {},
-      params      : { packagename : "test" },
+      params      : { name : "test" },
       originalUrl : "/test"
     }, this.res);
 
@@ -396,10 +384,10 @@ describe("attachment-test - skimTarballs", function () {
       }
     };
 
-    this.settings = {
+    this.settingsStore = {
       get : sandbox.stub()
     };
-    this.settings.get.withArgs("registryPath").returns("/path");
+    this.settingsStore.get.withArgs("registryPath").returns("/path");
   });
 
   afterEach(function () {
@@ -413,7 +401,7 @@ describe("attachment-test - skimTarballs", function () {
   it("should do nothing with no attachments", function () {
     var callback = sandbox.spy();
 
-    attachment.skimTarballs(this.settings, {}, callback);
+    attachment.skimTarballs(this.settingsStore, {}, callback);
 
     sinon.assert.notCalled(fs.writeFile);
     sinon.assert.called(callback);
@@ -425,7 +413,7 @@ describe("attachment-test - skimTarballs", function () {
 
     var callback = sandbox.spy();
 
-    attachment.skimTarballs(this.settings, this.pkgMeta, callback);
+    attachment.skimTarballs(this.settingsStore, this.pkgMeta, callback);
 
     sinon.assert.called(fs.mkdirSync);
     sinon.assert.calledWith(fs.mkdirSync, "/path/test");
@@ -438,7 +426,7 @@ describe("attachment-test - skimTarballs", function () {
 
     var callback = sandbox.spy();
 
-    attachment.skimTarballs(this.settings, this.pkgMeta, callback);
+    attachment.skimTarballs(this.settingsStore, this.pkgMeta, callback);
 
     sinon.assert.called(fs.writeFile);
     sinon.assert.calledWith(fs.writeFile,
@@ -458,7 +446,7 @@ describe("attachment-test - skimTarballs", function () {
     var callback = sandbox.spy();
     delete this.pkgMeta._attachments["test-0.0.1.tgz"].data;
 
-    attachment.skimTarballs(this.settings, this.pkgMeta, callback);
+    attachment.skimTarballs(this.settingsStore, this.pkgMeta, callback);
 
     sinon.assert.notCalled(fs.writeFile);
     sinon.assert.called(callback);
@@ -475,38 +463,35 @@ describe("attachment-test - detach", function () {
 
     sandbox.stub(fs, "unlinkSync");
 
-    this.app = {
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+    registry.getPackage.returns({
+      "name" : "test",
+      "versions" : {
+        "0.0.1-dev" : {
+          "dist" : {
+            "tarball" : "http://localhost:5984/test/-/test-0.0.1-dev.tgz"
+          }
+        }
+      }
+    });
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
+    this.settingsStore.get.withArgs("registryPath").returns("/path");
+
     this.req = {
-      params      : {
-        packagename : "test",
-        attachment  : "test-0.0.1-dev.tgz"
+      settingsStore : this.settingsStore,
+      params        : {
+        name       : "test",
+        attachment : "test-0.0.1-dev.tgz"
       },
       originalUrl : "/test"
     };
     this.res = {
       json : sandbox.stub()
     };
-
-    var settings = {
-      get : sandbox.stub()
-    };
-    settings.get.withArgs("registryPath").returns("/path");
-    this.app.get.withArgs("settings").returns(settings);
-    this.app.get.withArgs("registry").returns({
-      setPackage : sandbox.stub(),
-      getPackage : sandbox.stub().returns({
-        "name" : "test",
-        "versions" : {
-          "0.0.1-dev" : {
-            "dist" : {
-              "tarball" : "http://localhost:5984/test/-/test-0.0.1-dev.tgz"
-            }
-          }
-        }
-      })
-    });
 
     this.detachFn = attachment.detach(this.app);
   });
@@ -539,6 +524,130 @@ describe("attachment-test - detach", function () {
     sinon.assert.calledWith(this.res.json, 404, {
       "error"  : "not_found",
       "reason" : "attachment not found"
+    });
+  });
+});
+
+// ==== Test Case
+
+describe('attachment npm functions', function () {
+  var sandbox, app;
+  var registryPath = path.join(__dirname, 'registry');
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(registry, 'refreshMeta');
+    sandbox.stub(registry, 'writeMeta');
+    sandbox.stub(registry, 'getMeta').returns({
+      settings : { registryPath : registryPath }
+    });
+
+    app = server.createApp({
+      registryPath : registryPath,
+      loglevel     : 'silent'
+    });
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  describe('#get', function () {
+    it.skip('routes /:name/-/:attachment', function () {
+      var route = {
+        get    : sinon.stub(),
+        put    : sinon.stub(),
+        delete : sinon.stub()
+      };
+      route.get.returns(route);
+      route.put.returns(route);
+      sandbox.stub(app, 'route').returns(route);
+
+      attachment.route(app);
+
+      sinon.assert.calledWith(app.route, '/:name/-/:attachment');
+    });
+
+    it('retrieves attachment', function (done) {
+      attachment.route(app);
+
+      request(app)
+        .get('/proxied/-/proxied-1.0.0.tgz')
+        .expect('Content-Type', 'application/octet-stream')
+        .expect(200, done);
+    });
+
+    it('retrieves attachment at revision', function (done) {
+      attachment.route(app);
+
+      request(app)
+        .get('/proxied/-/proxied-1.0.0.tgz/-rev/1')
+        .expect('Content-Type', 'application/octet-stream')
+        .expect(200, done);
+    });
+
+    it('uploads attachment', function (done) {
+      var filePath = path.join(__dirname, 'registry/proxied/proxied-1.0.0.tgz');
+      sandbox.stub(attachment, "refreshMeta");
+      sandbox.stub(registry, "setPackage");
+      sandbox.stub(fs, "createWriteStream");
+      fs.createWriteStream.returns({
+        on    : sinon.stub(),
+        once  : sinon.stub(),
+        emit  : sinon.stub(),
+        end   : sinon.stub(),
+        write : sinon.stub()
+      });
+
+      attachment.route(app);
+
+      request(app)
+        .put('/proxied/-/proxied-1.0.0.tgz')
+        .type('application/octet-stream')
+        .send('test content')
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, {
+          "ok": true,
+          "id": filePath,
+          "rev": '1'
+        }, function (err) {
+          if (err) {
+            return done(err);
+          }
+
+          sinon.assert.calledOnce(fs.createWriteStream);
+          sinon.assert.calledWith(fs.createWriteStream, filePath);
+          sinon.assert.calledOnce(attachment.refreshMeta);
+          sinon.assert.calledOnce(registry.setPackage);
+
+          done();
+        });
+    });
+
+    it('deletes attachment', function (done) {
+      var filePath = path.join(__dirname, 'registry/proxied/proxied-1.0.0.tgz');
+      sandbox.stub(attachment, "refreshMeta");
+      sandbox.stub(registry, "setPackage");
+      sandbox.stub(fs, "unlinkSync");
+
+      attachment.route(app);
+
+      request(app)
+        .del('/proxied/-/proxied-1.0.0.tgz')
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, { "ok": true }, function (err) {
+          if (err) {
+            return done(err);
+          }
+
+          sinon.assert.calledOnce(fs.unlinkSync);
+          sinon.assert.calledWith(fs.unlinkSync, filePath);
+          sinon.assert.calledOnce(attachment.refreshMeta);
+          sinon.assert.calledOnce(registry.setPackage);
+
+          done();
+        });
     });
   });
 });
