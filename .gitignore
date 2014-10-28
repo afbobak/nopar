@@ -3,6 +3,7 @@
 *.out
 *.pid
 *.tgz
+!/test/registry/*/*.tgz
 .DS_Store
 /.cache
 /.latest.id
