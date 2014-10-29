@@ -3,7 +3,6 @@
 "use strict";
 
 var assert  = require("chai").assert;
-var crypto  = require("crypto");
 var fs      = require("fs");
 var http    = require("http");
 var https   = require("https");
@@ -14,8 +13,6 @@ var sinon   = require("sinon");
 var attachment = require("../lib/attachment");
 var registry   = require("../lib/registry");
 var server     = require('../lib/server');
-
-var shasum = crypto.createHash('sha1');
 
 // ==== Test Case
 
@@ -586,31 +583,6 @@ describe("attachment-test - refreshMeta", function () {
     assert.equal(atmt.forwardUrl, tarball);
     sinon.assert.calledWith(fs.existsSync,
       '/some/registryPath/mypackage/mypackage-0.0.1.tgz');
-  });
-
-  it.skip('create meta data for URL dependencies', function () {
-    sandbox.stub(fs, 'existsSync').returns(true);
-    var settings = {
-      get : sinon.stub().returns('/some/registryPath')
-    };
-    var foo = 'http://somewhere/bla/foo-0.0.1.tgz';
-    var fooSha = crypto.createHash('sha1').update(foo, 'utf8').digest('base64');
-    var bar = 'https://somewhere/bla/bar-0.0.1.tgz';
-    var barSha = crypto.createHash('sha1').update(bar, 'utf8').digest('base64');
-    var pkgMeta = {
-      name     : 'mypackage',
-      versions : {
-        '0.0.1' : { dependencies : { 'foo' : foo } },
-        '1.0.0' : { devDependencies : { 'bar' : bar } }
-      }
-    };
-
-    attachment.refreshMeta(settings, pkgMeta);
-
-    var dep = pkgMeta._dependencies[fooSha];
-    assert.isObject(dep);
-    assert.isTrue(dep.cached);
-    assert.equal(dep.forwardUrl, foo);
   });
 });
 
