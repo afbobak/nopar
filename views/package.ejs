@@ -89,10 +89,10 @@
                       for (var j = 0; j < versions.length; j++) {
                         var vers = versions[j];
                         var cached = false;
-                        var pkgUrl;
+                        var pkgUrl, attachment;
                         if (pkg.versions[vers].dist) {
-                          pkgUrl = pkg.versions[vers].dist.tarball;
-                          var attachment  = pkgUrl.substr(pkgUrl.lastIndexOf("/") + 1);
+                          pkgUrl     = pkg.versions[vers].dist.tarball;
+                          attachment = pkgUrl.substr(pkgUrl.lastIndexOf("/") + 1);
                           if (pkg._attachments[attachment]) {
                             cached = pkg["_attachments"][attachment].cached;
                           }

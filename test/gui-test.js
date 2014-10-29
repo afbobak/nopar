@@ -170,7 +170,6 @@ describe('gui', function () {
     });
 
     it('renders proxied package', function (done) {
-      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
       sandbox.stub(registry, 'getDependents').returns(null);
 
       gui.route(app);
@@ -190,7 +189,6 @@ describe('gui', function () {
     });
 
     it('refreshes proxied package', function (done) {
-      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
       sandbox.stub(registry, 'setPackage');
       sandbox.stub(registry, 'getDependents').returns(null);
       var res = {
@@ -221,7 +219,6 @@ describe('gui', function () {
     });
 
     it('deletes package', function (done) {
-      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
       sandbox.stub(registry, 'removePackage');
       sandbox.stub(fs, 'rmdirSync');
       sandbox.stub(fs, 'existsSync').returns(true);
