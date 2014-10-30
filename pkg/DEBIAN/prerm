@@ -1,0 +1,11 @@
+#!/bin/sh -e
+
+if [ -f /etc/init.d/nopar ]; then
+	if [ -x "/usr/sbin/invoke-rc.d" ]; then
+	  invoke-rc.d nopar stop
+	elif [ -x "/usr/sbin/service" ]; then
+	  service nopar stop
+	else
+	  /etc/init.d/nopar stop
+	fi
+fi

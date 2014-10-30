@@ -1,0 +1,153 @@
+<!DOCTYPE html><% var active_page = "results"; %>
+<% include snippets/html_head %>
+  <body>
+    <% include snippets/chromeframe %>
+    <% include snippets/navbar %>
+
+    <div id="content" class="container">
+      <% include snippets/alert %>
+
+      <% var packages = Object.keys(registry).sort();
+         for (var i = 0; i < packages.length; i++) {
+           var idx;
+           var pkgName = packages[i];
+           var pkg = registry[pkgName];
+           var versions = pkg._versions;
+           var latest = pkg.versions[pkg["dist-tags"].latest]; %>
+      <h2>
+        <%= pkgName %><small class="text-muted">@<%= latest.version %></small>
+        <div class="actions btn-group">
+          <a class="btn action-json btn-link btn-xs" href="<%= latest.dist.tarball %>"><span class="glyphicon glyphicon-download-alt"></span> Latest</a>
+          <a class="btn action-json btn-link btn-xs" href="/<%= pkgName %>">JSON</a>
+        </div>
+        <div class="actions btn-group">
+         <% if (pkg["_proxied"]) { %>
+         <a class="btn btn-sm btn-link action-refresh" onclick="refreshPackage('<%= pkgName %>');" href="#">
+           <span class="glyphicon glyphicon-refresh"></span> Refresh
+         </a><% } %>
+         <a class="btn btn-sm btn-link action-delete" onclick="deletePackage('<%= pkgName %>');" href="#">
+           <span class="glyphicon glyphicon-trash"></span> Delete Package
+         </a>
+        </div>
+        <div class="tags pull-right">
+         <% if (pkg["_proxied"]) { %><div class="label label-warning">proxied</div><% } %>
+         <% if (pkg["_local"]) { %><div class="label label-success">local</div><% } %>
+        </div>
+      </h2>
+      <p class="description lead"><%= pkg.description %></p>
+       <div class="details">
+         <table class="table">
+           <tr><th>Maintainer</th><td><% var prefix = pkg["_local"] ? "/-/user/" : "https://npmjs.org/~"; for (idx = 0; idx < pkg.maintainers.length; idx++) { %><a href="<%= prefix + pkg.maintainers[idx].name %>"><%= pkg.maintainers[idx].name %><% if (pkg["_proxied"]) { %> <span class="glyphicon glyphicon-share"></span><% } %></a> <% }%></td></tr>
+           <% if (pkg.users) { var users = Object.keys(pkg.users).sort(); %><tr><th>Users</th><td><% for (idx = 0; idx < users.length; idx++) { %><%= users[idx] %> <% }%></td></tr><% } %>
+           <% if (pkg.repository) { %><tr><th>Repository</th><td><a href="<%= pkg.repository.href || pkg.repository.url %>"><%= pkg.repository.url %> <span class="glyphicon glyphicon-share"></span></a> (<%= pkg.repository.type %>)</td></tr><% } %>
+           <% if (latest.dependencies) { %>
+           <tr><th>Dependencies</th><td><% var deps = Object.keys(latest.dependencies).sort(); for (idx = 0; idx < deps.length; idx++) { %><a href="/-/package/<%= deps[idx] %>"><%= deps[idx] %></a> <% } %></td></tr><% } %>
+           <% if (latest.devDependencies) { %>
+           <tr><th>Dependencies (Development)</th><td><% var deps = Object.keys(latest.devDependencies).sort(); for (idx = 0; idx < deps.length; idx++) { %><a href="/-/package/<%= deps[idx] %>"><%= deps[idx] %></a> <% } %></td></tr><% } %>
+           <% if (pkg["_dependents"] && pkg["_dependents"]["_counts"].runtime) { %>
+           <tr><th>Dependents</th><td style="padding: 3px 0 0 8px;">
+            <table class="table table-condensed table-hover">
+             <thead><tr><th>Package</th><th>Version</th></tr></thead>
+             <tbody><%
+              var deps = Object.keys(pkg["_dependents"]).sort();
+              for (idx = 0; idx < deps.length; idx++) {
+                var n = deps[idx];
+                if (n === "_count") {
+                  continue;
+                }
+                if (pkg["_dependents"][n].type === "runtime") {
+                  %><tr><td style="border-top:none;"><a href="/-/package/<%= n %>"><%= n %></a></td><td style="border-top:none;"><%= pkg["_dependents"][n].version %></td></tr><%
+                }
+              } %>
+             </tbody>
+            </table>
+           </td></tr>
+           <% } %>
+           <% if (pkg["_dependents"] && pkg["_dependents"]["_counts"].dev) { %>
+           <tr><th>Dependents (Development)</th><td style="padding: 3px 0 0 8px;">
+            <table class="table table-condensed table-hover">
+             <thead><tr><th>Package</th><th>Version</th></tr></thead>
+             <tbody><%
+              var deps = Object.keys(pkg["_dependents"]).sort();
+              for (idx = 0; idx < deps.length; idx++) {
+                var n = deps[idx];
+                if (n === "_count") {
+                  continue;
+                }
+                if (pkg["_dependents"][n].type === "dev") {
+                  %><tr><td style="border-top:none;"><a href="/-/package/<%= n %>"><%= n %></a></td><td style="border-top:none;"><%= pkg["_dependents"][n].version %></td></tr><%
+                }
+              } %>
+             </tbody>
+            </table>
+           </td></tr>
+           <% } %>
+           <tr>
+             <th>Versions</th>
+             <td>
+               <ul class="versions list-inline"><%
+                      for (var j = 0; j < versions.length; j++) {
+                        var vers = versions[j];
+                        var cached = false;
+                        var pkgUrl, attachment;
+                        if (pkg.versions[vers].dist) {
+                          pkgUrl     = pkg.versions[vers].dist.tarball;
+                          attachment = pkgUrl.substr(pkgUrl.lastIndexOf("/") + 1);
+                          if (pkg._attachments[attachment]) {
+                            cached = pkg["_attachments"][attachment].cached;
+                          }
+                        } else {
+                          vers += " (no dist tag)";
+                        }
+                         %>
+                  <li class="version">
+                    <span class="label <% if (cached) {%><%= pkg["_local"] ? ' label-success' : ' label-warning' %><% } else { %>label-default<% } %>"><%= vers %></span>
+                    <!-- span class="label label-success">available</span>
+                    <span class="label">not cached</span>
+                    <div class="btn-group">
+                      <a class="btn btn-sm action-cache" href="/-cache/<%= pkgUrl %>"><span class="glyphicon glyphicon-star"></span> Cache</a>
+                      <a class="btn btn-sm action-purge" href="/-purge/<%= pkgUrl %>"><span class="glyphicon glyphicon-eject"></span> Purge</a>
+                      <a class="btn btn-sm action-download" href="<%= pkgUrl %>"><span class="glyphicon glyphicon-download-alt"></span> Download</a>
+                    </div -->
+                  </li>
+                  <% } %>
+                </ul>
+             </td>
+            </tr>
+         </table>
+         <% if (pkg._readme) { %><div class="readme"><%- pkg._readme %></div><% } %>
+       </div>
+       <!-- span class="label label-inverse">proxied</span -->
+      </div>
+  <% } %>
+    </div>
+
+    <% include snippets/js %>
+    <script>
+        function deletePackage(packageName) {
+          bootbox.dialog({
+            message : "<p class=''>You are going to delete the following package</p>" +
+                      "<p class='well'>" + packageName + "</p>" +
+                      "<p class=''>and <strong>ALL</strong> its attachments from the registry.</p>" +
+                      "<p class=''>Are you really sure?</p>",
+            buttons : {
+              danger : {
+                label     : "Delete Package",
+                className : "btn-danger",
+                callback  : function() {
+                  window.location = "/-/package/" + packageName + "/delete";
+                }
+              },
+              main : {
+                label     : "Keep it",
+                className : "btn-success"
+              }
+            }
+          });
+        }
+        function refreshPackage(packageName) {
+          window.location = "/-/package/" + packageName + "/refresh";
+        }
+    </script>
+  </body>
+</html>

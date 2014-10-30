@@ -1,0 +1,21 @@
+{
+	"_id":"proxied",
+	"name":"proxied",
+	"description":"NOPAR Test Package/proxied",
+	"dist-tags":{"latest":"2.0.0"},
+	"versions":{
+		"1.0.0":{"name":"proxied","version":"1.0.0","description":"NOPAR Test Package/proxied","repository":{"type":"git","url":"git@github.com:afbobak/test-pkg-proxied.git"},"homepage":"https://github.com/afbobak/test-pkg-proxied/","bugs":{"url":"https://github.com/afbobak/test-pkg-proxied/issues/"},"author":{"name":"Andreas F. Bobak","email":"bobak@abstrakt.ch"},"license":"BSD","main":"./index.js","dependencies":{"semver":"^2.2"},"devDependencies":{"chai":"^1.9","mocha":"^1.21","sinon":"^1.10"},"engines":{"node":">=0.10.25"},"readme":"Some Readme about this test package.","readmeFilename":"README.md","_id":"proxied@1.0.0","_shasum":"4672b95ca47812c926aa9d66cd5540877a9e5e42","_from":".","_npmVersion":"1.4.9","_npmUser":{"name":"bobak","email":"afb@osares.com"},"maintainers":[{"name":"bobak","email":"afb@osares.com"}],"dist":{"shasum":"4672b95ca47812c926aa9d66cd5540877a9e5e42","tarball":"http://localhost:5984/proxied/-/proxied-1.0.0.tgz"}},
+		"1.3.0":{"name":"proxied","version":"1.3.0","description":"NOPAR Test Package/proxied","repository":{"type":"git","url":"git@github.com:afbobak/test-pkg-proxied.git"},"homepage":"https://github.com/afbobak/test-pkg-proxied/","bugs":{"url":"https://github.com/afbobak/test-pkg-proxied/issues/"},"author":{"name":"Andreas F. Bobak","email":"bobak@abstrakt.ch"},"license":"BSD","main":"./index.js","dependencies":{"semver":"^2.2"},"devDependencies":{"chai":"^1.9","mocha":"^1.21","sinon":"^1.10"},"engines":{"node":">=0.10.25"},"readme":"Some Readme about this test package.","readmeFilename":"README.md","_id":"proxied@1.3.0","_shasum":"49500e17405aae5f25d79df4d8eb57e0b6135734","_from":".","_npmVersion":"1.4.9","_npmUser":{"name":"bobak","email":"afb@osares.com"},"maintainers":[{"name":"bobak","email":"afb@osares.com"}],"dist":{"shasum":"49500e17405aae5f25d79df4d8eb57e0b6135734","tarball":"http://localhost:5984/proxied/-/proxied-1.3.0.tgz"}},
+		"2.0.0":{"name":"proxied","version":"2.0.0","description":"NOPAR Test Package/proxied","repository":{"type":"git","url":"git@github.com:afbobak/test-pkg-proxied.git"},"homepage":"https://github.com/afbobak/test-pkg-proxied/","bugs":{"url":"https://github.com/afbobak/test-pkg-proxied/issues/"},"author":{"name":"Andreas F. Bobak","email":"bobak@abstrakt.ch"},"license":"BSD","main":"./index.js","dependencies":{"semver":"^2.2"},"devDependencies":{"chai":"^1.9","mocha":"^1.21","sinon":"^1.10"},"engines":{"node":">=0.10.25"},"readme":"Some Readme about this test package.","readmeFilename":"README.md","_id":"proxied@2.0.0","_shasum":"7f9c1696c5d0484a1e226074701190e3fbcc00e0","_from":".","_npmVersion":"1.4.9","_npmUser":{"name":"bobak","email":"afb@osares.com"},"maintainers":[{"name":"bobak","email":"afb@osares.com"}],"dist":{"shasum":"7f9c1696c5d0484a1e226074701190e3fbcc00e0","tarball":"http://localhost:5984/proxied/-/proxied-2.0.0.tgz"}}
+		},
+	"readme":"Some Readme about this test package.",
+	"maintainers":[{"name":"bobak","email":"afb@osares.com"}],
+	"_rev":3,
+	"_proxied":true,
+	"_mtime":"2014-10-27T03:13:23.000Z",
+	"_attachments":{
+		"proxied-1.0.0.tgz":{"cached":true,"forwardUrl":"http://localhost:5984/proxied/-/proxied-1.0.0.tgz"},
+		"proxied-1.3.0.tgz":{"cached":true,"forwardUrl":"http://localhost:5984/proxied/-/proxied-1.3.0.tgz"},
+		"proxied-2.0.0.tgz":{"cached":true,"forwardUrl":"http://localhost:5984/proxied/-/proxied-2.0.0.tgz"}
+	}
+}

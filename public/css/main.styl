@@ -30,6 +30,14 @@ body {
   margin-bottom : 0;
 }
 
+#search_results {
+  > li {
+    h3 {
+      margin-top : 0;
+    }
+  }
+}
+
 ul.packages {
   margin-left : 0;
   padding-left : 0;
@@ -37,37 +45,6 @@ ul.packages {
 
   > li {
     margin-bottom : 20px;
-
-    .panel-heading {
-      .panel-toggle {
-        text-decoration : none;
-
-        .glyphicon {
-          position  : relative;
-          top       : -3px;
-          left      : -4px;
-          margin    : 0 8px 0 0;
-          padding   : 0;
-          font-size : 21px;
-        }
-
-        > .glyphicon-collapse-down {
-          display : none;
-        }
-        > .glyphicon-collapse-up {
-          display : block;
-        }
-
-        &.collapsed {
-          > .glyphicon-collapse-down {
-            display : block;
-          }
-          > .glyphicon-collapse-up {
-            display : none;
-          }
-        }
-      }
-    }
 
     .panel-body {
       .actions {
@@ -86,22 +63,22 @@ ul.packages {
           width        : 100px;
         }
       }
+    }
+  }
+}
 
-      ul.versions {
-        margin     : 0;
-        list-style : none;
+ul.versions {
+  margin     : 0;
+  list-style : none;
 
-        .version {
-          margin  : 0;
-          padding : 0;
+  .version {
+    margin  : 0;
+    padding : 0;
 
-          .label {
-            display    : block;
-            min-width  : 64px;
-            text-align : center;
-          }
-        }
-      }
+    .label {
+      display    : block;
+      min-width  : 64px;
+      text-align : center;
     }
   }
 }

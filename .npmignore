@@ -1,5 +1,10 @@
-.DS_Store
+*.deb
+*.log
+*.out
+*.pid
 *.tgz
+.DS_Store
+/.cache
 /.latest.id
 /.travis.yml
 /node_modules

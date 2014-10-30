@@ -1,13 +1,16 @@
 /*jslint devel: true, node: true */
-/*global */
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
 var assert  = require("chai").assert;
+var path    = require("path");
+var request = require("supertest");
 var sinon   = require("sinon");
 var winston = require("winston");
 
 var attachment = require("../lib/attachment");
+var registry   = require("../lib/registry");
+var server     = require("../lib/server");
 var settings   = require("../lib/settings");
 
 // Ignore logging
@@ -20,10 +23,7 @@ describe("settings-test - init", function () {
 
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
-
-    this.registry = {
-      getMeta: sandbox.stub()
-    };
+    sandbox.stub(registry, 'getMeta');
   });
 
   afterEach(function () {
@@ -31,17 +31,17 @@ describe("settings-test - init", function () {
   });
 
   it("should get registry meta", function () {
-    this.registry.getMeta.returns({});
+    registry.getMeta.returns({});
 
-    settings.init(this.registry);
+    settings.init(registry);
 
-    sinon.assert.calledOnce(this.registry.getMeta);
+    sinon.assert.calledOnce(registry.getMeta);
   });
 
   it("should set defaults and settings to defaults for empty meta", function () {
-    this.registry.getMeta.returns({settings: {}});
+    registry.getMeta.returns({settings: {}});
 
-    var s = settings.init(this.registry);
+    var s = settings.init(registry);
 
     var defaults = settings.defaults;
     assert.deepEqual(s.defaults, {
@@ -51,7 +51,9 @@ describe("settings-test - init", function () {
       "forwarder.userAgent"   : defaults["forwarder.userAgent"],
       hostname                : defaults.hostname,
       baseUrl                 : defaults.baseUrl,
+      limit                   : defaults.limit,
       logfile                 : defaults.logfile,
+      loglevel                : defaults.loglevel,
       port                    : defaults.port,
       registryPath            : defaults.registryPath,
       metaTTL                 : defaults.metaTTL
@@ -68,22 +70,20 @@ describe("settings-test - init", function () {
   });
 
   it("should set autoForward to default if null", function () {
-    this.registry.getMeta.returns({settings: {
-      "forwarder.autoForward" : null
-    }});
+    registry.getMeta.returns({settings: {"forwarder.autoForward" : null}});
 
-    var s = settings.init(this.registry);
+    var s = settings.init(registry);
 
     var defaults = settings.defaults;
     assert.equal(s.data["forwarder.autoForward"], defaults["forwarder.autoForward"]);
   });
 
   it("should set ignoreCert to default if null", function () {
-    this.registry.getMeta.returns({settings: {
+    registry.getMeta.returns({settings: {
       "forwarder.ignoreCert" : null
     }});
 
-    var s = settings.init(this.registry);
+    var s = settings.init(registry);
 
     var defaults = settings.defaults;
     assert.equal(s.data["forwarder.ignoreCert"], defaults["forwarder.ignoreCert"]);
@@ -98,12 +98,20 @@ describe("settings-test - get/set", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.registry = {
-      getMeta: sandbox.stub().returns({
-        settings : { "foo" : "bar" }
-      })
-    };
-    this.settings = settings.init(this.registry);
+    sandbox.stub(registry, "getMeta");
+    sandbox.stub(registry, "writeMeta");
+    sandbox.stub(registry, "refreshMeta");
+    sandbox.stub(registry, "iteratePackages");
+    sandbox.stub(registry, "setPackage");
+
+    registry.getMeta.returns({
+      settings : { "foo" : "bar" }
+    });
+    this.settings = settings.init(registry);
+  });
+
+  afterEach(function () {
+    sandbox.restore();
   });
 
   it("should get undefined value", function () {
@@ -145,7 +153,8 @@ describe("settings-test - render", function () {
         hostname : "some.host"
       }
     };
-    this.renderFn = settings.render(this.settings);
+    this.req = { settingsStore : this.settings };
+    this.renderFn = settings.render();
   });
 
   afterEach(function () {
@@ -155,7 +164,7 @@ describe("settings-test - render", function () {
   it("should render 'settings'", function () {
     var spy = sandbox.spy();
 
-    this.renderFn({}, {render: spy});
+    this.renderFn(this.req, {render: spy});
 
     sinon.assert.calledOnce(spy);
   });
@@ -165,7 +174,7 @@ describe("settings-test - render", function () {
     this.settings.get.withArgs("hostname").returns("localhost");
     var spy = sandbox.spy();
 
-    this.renderFn({}, {render: spy});
+    this.renderFn(this.req, {render: spy});
 
     sinon.assert.calledWith(spy, "settings", sinon.match({
       settings : {
@@ -179,7 +188,7 @@ describe("settings-test - render", function () {
     this.settings.get.withArgs("hostname").returns("some.host");
     var spy = sandbox.spy();
 
-    this.renderFn({}, {render: spy});
+    this.renderFn(this.req, {render: spy});
 
     sinon.assert.calledWith(spy, "settings", sinon.match({
       settings : {
@@ -197,12 +206,13 @@ describe("settings-test - save", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.registry = {
-      getMeta         : sandbox.stub().returns({}),
-      writeMeta       : sandbox.spy(),
-      iteratePackages : sandbox.stub(),
-      setPackage      : sandbox.stub()
-    };
+    sandbox.stub(registry, "getMeta");
+    sandbox.stub(registry, "writeMeta");
+    sandbox.stub(registry, "refreshMeta");
+    sandbox.stub(registry, "iteratePackages");
+    sandbox.stub(registry, "setPackage");
+
+    registry.getMeta.returns({});
     this.settings = {
       get      : sandbox.stub(),
       set      : sandbox.stub(),
@@ -210,7 +220,7 @@ describe("settings-test - save", function () {
         hostname : "some.host"
       }
     };
-    this.saveFn = settings.save(this.registry, this.settings);
+    this.saveFn = settings.save(registry);
   });
 
   afterEach(function () {
@@ -221,6 +231,7 @@ describe("settings-test - save", function () {
     var spy = sandbox.spy();
 
     this.saveFn({
+      settingsStore : this.settings,
       body : {
       }
     }, {render: spy});
@@ -232,6 +243,7 @@ describe("settings-test - save", function () {
     sandbox.stub(attachment, "refreshMeta");
 
     this.saveFn({
+      settingsStore : this.settings,
       body : {
         hostname     : "localhost",
         port         : "3333",
@@ -259,22 +271,155 @@ describe("settings-test - save", function () {
     this.settings.get.withArgs("port").returns(3333);
 
     this.saveFn({
+      settingsStore : this.settings,
       body : {
         hostname     : "localhost",
         port         : "3333"
       }
     }, {render: sandbox.spy()});
 
-    sinon.assert.notCalled(this.registry.iteratePackages);
+    sinon.assert.notCalled(registry.iteratePackages);
   });
 
   it("should write new meta", function () {
     this.saveFn({
+      settingsStore : this.settings,
       body : {
         hostname : "localhost"
       }
-    }, {render: sandbox.spy()});
+    }, { render: sandbox.spy() });
 
-    sinon.assert.calledOnce(this.registry.writeMeta);
+    sinon.assert.calledOnce(registry.writeMeta);
+  });
+});
+
+// ==== Test Case
+
+describe("settings-test - middleware", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(registry, "getMeta");
+    sandbox.stub(registry, "writeMeta");
+    sandbox.stub(registry, "refreshMeta");
+    sandbox.stub(registry, "iteratePackages");
+    sandbox.stub(registry, "setPackage");
+
+    registry.getMeta.returns({});
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it('has function', function() {
+    assert.isFunction(settings.middleware);
+  });
+
+  it('requires registry', function() {
+    assert.throws(settings.middleware, Error);
+  });
+
+  it('returns middleware function', function() {
+    assert.isFunction(settings.middleware(registry));
+  });
+
+  it('initializes settings and refreshes registry', function() {
+    sandbox.stub(settings, 'init');
+
+    settings.middleware(registry);
+
+    sinon.assert.calledOnce(settings.init);
+    sinon.assert.calledWith(settings.init, registry);
+
+    sinon.assert.calledOnce(registry.refreshMeta);
+  });
+
+  it('injects settingsStore into request and calls next', function() {
+    var fn   = settings.middleware(registry);
+    var req  = {};
+    var next = sinon.stub();
+
+    fn(req, {}, next);
+
+    assert.isObject(req.settingsStore);
+    sinon.assert.calledOnce(next);
+  });
+});
+
+// ==== Test Case
+
+describe('settings gui', function () {
+  var sandbox, app;
+  var registryPath = path.join(__dirname, 'registry');
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(registry, 'refreshMeta');
+    sandbox.stub(registry, 'writeMeta');
+    sandbox.stub(registry, 'getMeta').returns({
+      settings : { registryPath : registryPath }
+    });
+
+    app = server.createApp({
+      registryPath : registryPath,
+      loglevel     : 'silent'
+    });
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it('routes /settings', function () {
+    var route = {
+      get  : sinon.stub(),
+      post : sinon.stub()
+    };
+    route.get.returns(route);
+    sandbox.stub(app, 'route').returns(route);
+    sandbox.stub(settings, 'render').returns('render');
+    sandbox.stub(settings, 'save').returns('save');
+
+    settings.route(app);
+
+    sinon.assert.calledWith(app.route, '/settings');
+    sinon.assert.calledOnce(route.get);
+    sinon.assert.calledWith(route.get, 'render');
+    sinon.assert.calledOnce(route.post);
+    sinon.assert.calledWith(route.post, sinon.match.func, 'save');
+  });
+
+  it('renders with title', function (done) {
+    settings.route(app);
+
+    request(app)
+      .get('/settings')
+      .expect('Content-Type', 'text/html; charset=utf-8')
+      .expect(200, /<h3>Settings<\/h3>/, done);
+  });
+
+  it('saves settings', function (done) {
+    settings.route(app);
+
+    request(app)
+      .post('/settings')
+      .type('form')
+      .send({
+        hostname : settings.defaults.hostname,
+        port     : settings.defaults.port,
+        registry : 'http://npm.private:5984/'
+      })
+      .expect('Content-Type', 'text/html; charset=utf-8')
+      .expect(200, /Saved settings/, function (err) {
+        if (err) {
+          return done(err);
+        }
+        sinon.assert.calledOnce(registry.writeMeta);
+        done();
+      });
   });
 });

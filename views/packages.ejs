@@ -1,0 +1,45 @@
+<!DOCTYPE html><% var active_page = "results"; %>
+<% include snippets/html_head %>
+  <body>
+    <% include snippets/chromeframe %>
+    <% include snippets/navbar %>
+
+    <div id="content" class="container">
+      <% include snippets/alert %>
+
+      <h1>Search Results</h1>
+
+      <ul id="search_results" class="list-group">
+      <% var packages = Object.keys(registry).sort();
+         for (var i = 0; i < packages.length; i++) {
+           var idx;
+           var pkgName = packages[i];
+           var pkg = registry[pkgName];
+           var versions = pkg._versions;
+           var latest = pkg.versions[pkg["dist-tags"].latest]; %>
+         <li class="list-group-item">
+          <h3>
+            <a href="/-/package/<%= pkgName %>"><%= pkgName %></a>
+            <small class="text-muted">@<%= latest.version %></small>
+            <small class="tags pull-right">
+              <% if (pkg["_proxied"]) { %><div class="label label-warning">proxied</div><% } %>
+              <% if (pkg["_local"]) { %><div class="label label-success">local</div><% } %>
+            </small>
+          </h3>
+          <p class="description"><%= pkg.description %></p>
+         </li>
+      <% } %>
+      </ul>
+    </div>
+
+    <div id="footer" class="navbar navbar-fixed-bottom navbar-default">
+      <div class="container">
+        <div class="container">
+          <p class="result-info">Found <%= count %> package<%= count > 1 ? "s" : "" %> out of <%= total %> <%= filter === 'all' ? '' : (filter + ' ') %>packages</p>
+        </div>
+      </div>
+    </div>
+
+    <% include snippets/js %>
+  </body>
+</html>

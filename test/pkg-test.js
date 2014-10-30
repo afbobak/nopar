@@ -1,16 +1,20 @@
 /*jslint devel: true, node: true */
-/*global */
 /*! Copyright (C) 2013 by Andreas F. Bobak, Switzerland. All Rights Reserved. !*/
 "use strict";
 
-var assert = require("chai").assert;
-var fs     = require("fs");
-var http   = require("http");
-var path   = require("path");
-var sinon  = require("sinon");
+var assert  = require("chai").assert;
+var fs      = require("fs");
+var http    = require("http");
+var path    = require("path");
+var request = require("supertest");
+var sinon   = require("sinon");
 
 var attachment = require("../lib/attachment");
 var pkg        = require("../lib/pkg");
+var registry   = require("../lib/registry");
+var server     = require('../lib/server');
+
+var pkgProxied = require('./registry/proxied/proxied.json');
 
 // ==== Test Case
 
@@ -20,13 +24,22 @@ describe("pkg-test - getPackage", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.app = {
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
+
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
-    this.getFn = pkg.getPackage(this.app);
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
+
+    this.getFn = pkg.getPackage();
   });
 
   afterEach(function () {
@@ -38,19 +51,18 @@ describe("pkg-test - getPackage", function () {
   });
 
   it("should return package not found", function () {
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub().returns(null)
-    });
-    this.app.get.withArgs("settings").returns({
-      get : sandbox.stub().returns(false)
-    });
+    registry.getPackage.returns(null);
+    this.settingsStore.get.returns(false);
 
     this.getFn({
-      params : { packagename : "non-existant" }
+      settingsStore : this.settingsStore,
+      params        : { name : "non-existant" }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.called(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "document not found"
     });
@@ -58,43 +70,43 @@ describe("pkg-test - getPackage", function () {
 
   it("should return full package", function () {
     var pkgMeta = { a : "b", "_mtime": new Date() };
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub().returns(pkgMeta)
-    });
+    registry.getPackage.returns(pkgMeta);
 
     this.getFn({
-      params : { packagename : "pkg" }
+      settingsStore : this.settingsStore,
+      params        : { name : "pkg" }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, pkgMeta);
   });
 
   it("should return package version not found", function () {
     var pkgMeta = {
       versions : {
         "0.0.1" : {
-          "name"  : "pkg",
+          name    : "pkg",
           version : "0,0.1"
         }
       }
     };
-    this.app.get.withArgs("registry").returns({
-      getPackage : sandbox.stub().returns(pkgMeta)
-    });
-    this.app.get.withArgs("settings").returns({
-      get : sandbox.stub().returns(false)
-    });
+    registry.getPackage.returns(pkgMeta);
+    this.settingsStore.get.returns(false);
 
     this.getFn({
-      params : {
-        packagename : "pkg",
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "pkg",
         version : "0.0.2"
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "document not found"
     });
@@ -109,20 +121,23 @@ describe("pkg-test - getPackage", function () {
         }
       }
     };
-    var getPackage = sandbox.stub();
+
+    var getPackage = registry.getPackage;
     getPackage.withArgs("pkg", "0.0.1").returns(pkgMeta.versions["0.0.1"]);
     getPackage.withArgs("pkg").returns(pkgMeta);
-    this.app.get.withArgs("registry").returns({getPackage : getPackage});
 
     this.getFn({
-      params : {
-        packagename : "pkg",
-        version     : "0.0.1"
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "pkg",
+        version : "0.0.1"
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, pkgMeta.versions["0.0.1"]);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, pkgMeta.versions["0.0.1"]);
   });
 });
 
@@ -136,23 +151,26 @@ describe("pkg-test - getPackage proxied", function () {
 
     sandbox.stub(http, "get").returns({on : sandbox.spy()});
     sandbox.stub(attachment, "refreshMeta");
-    this.app = {
+
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.registry").returns("http://u.url:8888/the/path/");
+    get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
+
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
-    this.app.get.withArgs("registry").returns({
-      setPackage : sandbox.stub(),
-      getPackage : sandbox.stub().returns(null)
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
     });
-    this.getSetting = sandbox.stub();
-    this.getSetting.withArgs("forwarder.registry").returns("http://u.url:8888/the/path/");
-    this.getSetting.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
-    this.app.get.withArgs("settings").returns({
-      get : this.getSetting
-    });
-    this.getFn = pkg.getPackage(this.app);
+
+    this.getFn = pkg.getPackage();
   });
 
   afterEach(function () {
@@ -160,13 +178,15 @@ describe("pkg-test - getPackage proxied", function () {
   });
 
   it("should get full package JSON from forwarder", function () {
-    this.getSetting.withArgs("forwarder.autoForward").returns(true);
-    this.getSetting.withArgs("forwarder.ignoreCert").returns(true);
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.autoForward").returns(true);
+    get.withArgs("forwarder.ignoreCert").returns(true);
 
     this.getFn({
-      params : {
-        packagename : "fwdpkg",
-        version     : "0.0.1"
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "fwdpkg",
+        version : "0.0.1"
       }
     }, this.res);
 
@@ -181,14 +201,16 @@ describe("pkg-test - getPackage proxied", function () {
   });
 
   it("should get full package JSON from forwarder via proxy", function () {
-    this.getSetting.withArgs("forwarder.autoForward").returns(true);
-    this.getSetting.withArgs("forwarder.ignoreCert").returns(false);
-    this.getSetting.withArgs("forwarder.proxy").returns("http://localhost:8080");
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.autoForward").returns(true);
+    get.withArgs("forwarder.ignoreCert").returns(false);
+    get.withArgs("forwarder.proxy").returns("http://localhost:8080");
 
     this.getFn({
-      params : {
-        packagename : "fwdpkg",
-        version     : "0.0.1"
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "fwdpkg",
+        version : "0.0.1"
       }
     }, this.res);
 
@@ -206,18 +228,22 @@ describe("pkg-test - getPackage proxied", function () {
   });
 
   it("should not get package from forwarder", function () {
-    this.getSetting.withArgs("forwarder.autoForward").returns(false);
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.autoForward").returns(false);
 
     this.getFn({
-      params : {
-        packagename : "fwdpkg",
-        version     : "0.0.1"
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "fwdpkg",
+        version : "0.0.1"
       }
     }, this.res);
 
     sinon.assert.notCalled(http.get);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "document not found"
     });
@@ -225,7 +251,8 @@ describe("pkg-test - getPackage proxied", function () {
 
   it("should rewrite attachment urls and create fwd url map", function () {
     /*jslint nomen: true*/
-    this.getSetting.withArgs("forwarder.autoForward").returns(true);
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.autoForward").returns(true);
     var on = sandbox.stub();
     var pkgMeta = {
       name     : "fwdpkg",
@@ -244,9 +271,10 @@ describe("pkg-test - getPackage proxied", function () {
     on.withArgs("end").yields();
 
     this.getFn({
-      params : {
-        packagename : "fwdpkg",
-        version     : "0.0.1"
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "fwdpkg",
+        version : "0.0.1"
       }
     }, this.res);
     http.get["yield"]({
@@ -265,12 +293,13 @@ describe("pkg-test - getPackage proxied", function () {
     http.get.returns({
       on : spy
     });
-    this.getSetting.withArgs("forwarder.autoForward").returns(true);
+    this.settingsStore.get.withArgs("forwarder.autoForward").returns(true);
 
     this.getFn({
-      params : {
-        packagename : "fwdpkg",
-        version     : "0.0.1"
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "fwdpkg",
+        version : "0.0.1"
       }
     }, this.res);
 
@@ -294,21 +323,22 @@ describe("pkg-test - publishFull", function () {
       cb();
     });
 
-    this.app = {
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
-    this.settings = {};
-    this.app.get.withArgs("settings").returns(this.settings);
-    this.setPackageStub = sandbox.stub();
-    this.getPackageStub = sandbox.stub();
-    this.app.get.withArgs("registry").returns({
-      setPackage : this.setPackageStub,
-      getPackage : this.getPackageStub
-    });
+
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
-    this.publishFullFn = pkg.publishFull(this.app);
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
+
+    this.publishFullFn = pkg.publishFull();
   });
 
   afterEach(function () {
@@ -321,13 +351,16 @@ describe("pkg-test - publishFull", function () {
 
   it("should require content-type application/json", function () {
     this.publishFullFn({
-      headers     : {},
-      params      : { packagename : "test" },
-      originalUrl : "/test"
+      settingsStore : this.settingsStore,
+      headers       : {},
+      params        : { name : "test" },
+      originalUrl   : "/test"
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 400, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 400);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "wrong_content",
       "reason" : "content-type MUST be application/json"
     });
@@ -339,20 +372,23 @@ describe("pkg-test - publishFull", function () {
       "_rev" : 1,
       "name" : "test"
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test" },
-      originalUrl : "/test",
-      body        : {
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test" },
+      originalUrl   : "/test",
+      body          : {
         "_id"  : "test",
         "name" : "test"
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 409, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 409);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "conflict",
       "reason" : "must supply latest _rev to update existing package"
     });
@@ -364,20 +400,23 @@ describe("pkg-test - publishFull", function () {
       "_rev" : 2,
       "name" : "test"
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test", revision: 1 },
-      originalUrl : "/test",
-      body        : {
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test", revision: 1 },
+      originalUrl   : "/test",
+      body          : {
         "_id"  : "test",
         "name" : "test"
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 409, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 409);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "conflict",
       "reason" : "revision does not match one in document"
     });
@@ -389,34 +428,38 @@ describe("pkg-test - publishFull", function () {
       "_rev" : 2,
       "name" : "test"
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test" },
-      originalUrl : "/test",
-      body        : {
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test" },
+      originalUrl   : "/test",
+      body          : {
         "_id"  : "test",
         "name" : "test",
         "_rev" : 1
       }
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 409, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 409);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "conflict",
       "reason" : "revision does not match one in document"
     });
   });
 
   it("should add package and persist registry for new package", function () {
-    this.getPackageStub.returns(null);
+    registry.getPackage.returns(null);
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test" },
-      originalUrl : "/test",
-      body        : {
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test" },
+      originalUrl   : "/test",
+      body          : {
         "_id"  : "test",
         "name" : "test"
       }
@@ -429,15 +472,18 @@ describe("pkg-test - publishFull", function () {
       "_proxied" : false
     };
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, pkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      pkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should skim off attachment and persist for new package", function () {
-    this.getPackageStub.returns(null);
+    registry.getPackage.returns(null);
 
     var tarballBytes = new Buffer("I'm a tarball");
     var tarballBase64 = tarballBytes.toString('base64');
@@ -455,14 +501,16 @@ describe("pkg-test - publishFull", function () {
     };
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test" },
-      originalUrl : "/test",
-      body        : pkgMeta
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test" },
+      originalUrl   : "/test",
+      body          : pkgMeta
     }, this.res);
 
     sinon.assert.called(attachment.skimTarballs);
-    sinon.assert.calledWith(attachment.skimTarballs, this.settings, pkgMeta);
+    sinon.assert.calledWith(attachment.skimTarballs, this.settingsStore,
+      pkgMeta);
 
     var newPkgMeta = {
       "_id"      : "test",
@@ -471,11 +519,14 @@ describe("pkg-test - publishFull", function () {
       "_proxied" : false
     };
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      newPkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, newPkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should update package and persist registry for existing pkg", function () {
@@ -488,13 +539,14 @@ describe("pkg-test - publishFull", function () {
         "0.0.2" : {}
       }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test", revision : 2 },
-      originalUrl : "/test",
-      body        : {
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test", revision : 2 },
+      originalUrl   : "/test",
+      body          : {
         "_id"  : "test",
         "name" : "test",
         "_rev" : 2,
@@ -519,11 +571,14 @@ describe("pkg-test - publishFull", function () {
     };
 
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      newPkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, newPkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should update and persist pkg if _rev is same but different type", function () {
@@ -536,13 +591,14 @@ describe("pkg-test - publishFull", function () {
         "0.0.2" : {}
       }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test", revision : 2 },
-      originalUrl : "/test",
-      body        : {
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test", revision : 2 },
+      originalUrl   : "/test",
+      body          : {
         "_id"  : "test",
         "name" : "test",
         "_rev" : 2,
@@ -567,11 +623,14 @@ describe("pkg-test - publishFull", function () {
     };
 
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      newPkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, newPkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should update and persist if _rev is same inside document", function () {
@@ -584,13 +643,14 @@ describe("pkg-test - publishFull", function () {
         "0.0.2" : {}
       }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test" },
-      originalUrl : "/test",
-      body        : {
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test" },
+      originalUrl   : "/test",
+      body          : {
         "_id"  : "test",
         "name" : "test",
         "_rev" : 2,
@@ -615,11 +675,14 @@ describe("pkg-test - publishFull", function () {
     };
 
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      newPkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, newPkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should skim attachments, update and persist for existing pkg", function () {
@@ -632,7 +695,7 @@ describe("pkg-test - publishFull", function () {
         "0.0.2" : {}
       }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     var tarballBytes = new Buffer("I'm a tarball");
     var tarballBase64 = tarballBytes.toString('base64');
@@ -655,14 +718,16 @@ describe("pkg-test - publishFull", function () {
     };
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test" },
-      originalUrl : "/test",
-      body        : payload
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test" },
+      originalUrl   : "/test",
+      body          : payload
     }, this.res);
 
     sinon.assert.called(attachment.skimTarballs);
-    sinon.assert.calledWith(attachment.skimTarballs, this.settings, payload);
+    sinon.assert.calledWith(attachment.skimTarballs, this.settingsStore,
+      payload);
 
     var newPkgMeta = {
       "_id"  : "test",
@@ -676,24 +741,28 @@ describe("pkg-test - publishFull", function () {
     };
 
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, newPkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, newPkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, {"ok" : true});
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      newPkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, newPkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
   it("should keep old version", function () {
-    this.getPackageStub.returns({});
+    registry.getPackage.returns({});
 
     this.publishFullFn({
-      headers     : { "content-type" : "application/json" },
-      params      : { packagename : "test" },
-      originalUrl : "/test"
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "test" },
+      originalUrl   : "/test"
     }, this.res);
 
     sinon.assert.notCalled(attachment.refreshMeta);
-    sinon.assert.notCalled(this.setPackageStub);
+    sinon.assert.notCalled(registry.setPackage);
   });
 });
 
@@ -707,19 +776,23 @@ describe("pkg-test - publish", function () {
     sandbox = sinon.sandbox.create();
 
     sandbox.stub(attachment, "refreshMeta");
-    this.app = {
+
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
-    this.setPackageStub = sandbox.stub();
-    this.getPackageStub = sandbox.stub();
-    this.app.get.withArgs("registry").returns({
-      setPackage : this.setPackageStub,
-      getPackage : this.getPackageStub
-    });
+
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
-    this.publishFn = pkg.publish(this.app);
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
+
+    this.publishFn = pkg.publish();
   });
 
   afterEach(function () {
@@ -732,13 +805,16 @@ describe("pkg-test - publish", function () {
 
   it("should require content-type application/json", function () {
     this.publishFn({
-      headers     : {},
-      params      : { packagename : "test" },
-      originalUrl : "/test"
+      settingsStore : this.settingsStore,
+      headers       : {},
+      params        : { name : "test" },
+      originalUrl   : "/test"
     }, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 400, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 400);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "wrong_content",
       "reason" : "content-type MUST be application/json"
     });
@@ -754,13 +830,14 @@ describe("pkg-test - publish", function () {
         "0.0.1-dev" : {}
       }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFn({
-      headers     : { "content-type" : "application/json" },
-      params      : {
-        packagename : "test",
-        version     : "0.0.1-dev"
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : {
+        name    : "test",
+        version : "0.0.1-dev"
       },
       originalUrl : "/test/0.0.1-dev"
     }, this.res);
@@ -768,11 +845,14 @@ describe("pkg-test - publish", function () {
     pkgMeta._rev++;
 
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, pkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      pkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, "0.0.1-dev");
   });
 
   it("should reset revision if it's a checksum", function () {
@@ -784,13 +864,14 @@ describe("pkg-test - publish", function () {
       "dist-tags" : { latest : "0.0.1-dev" },
       versions    : { "0.0.1-dev" : {} }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFn({
-      headers     : { "content-type" : "application/json" },
-      params      : {
-        packagename : "test",
-        version     : "0.0.1-dev"
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : {
+        name    : "test",
+        version : "0.0.1-dev"
       },
       originalUrl : "/test/0.0.1-dev"
     }, this.res);
@@ -798,22 +879,26 @@ describe("pkg-test - publish", function () {
     pkgMeta._rev = 1;
 
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, pkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      pkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, "0.0.1-dev");
   });
 
   it("should add tag and return latest version number in body", function () {
-    this.getPackageStub.returns(null);
+    registry.getPackage.returns(null);
 
     this.publishFn({
-      headers     : { "content-type" : "application/json" },
-      params      : {
-        packagename : "test",
-        version     : "0.0.1-dev",
-        tagname     : "latest"
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : {
+        name    : "test",
+        version : "0.0.1-dev",
+        tagname : "latest"
       },
       originalUrl : "/test/0.0.1-dev/-tag/latest"
     }, this.res);
@@ -829,11 +914,14 @@ describe("pkg-test - publish", function () {
     };
 
     sinon.assert.called(attachment.refreshMeta);
-    sinon.assert.calledWith(attachment.refreshMeta, this.settings, pkgMeta);
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      pkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, "0.0.1-dev");
   });
 
   it("should keep latest if version<latest", function () {
@@ -845,14 +933,15 @@ describe("pkg-test - publish", function () {
       "dist-tags" : { latest : "0.0.2" },
       versions    : { "0.0.2" : {} }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.publishFn({
-      headers     : { "content-type" : "application/json" },
-      params      : {
-        packagename : "test",
-        version     : "0.0.1-dev",
-        tagname     : "latest"
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : {
+        name    : "test",
+        version : "0.0.1-dev",
+        tagname : "latest"
       },
       originalUrl : "/test/0.0.1-dev/-tag/latest"
     }, this.res);
@@ -864,8 +953,10 @@ describe("pkg-test - publish", function () {
       "dist-tags" : { latest : "0.0.2" },
       versions    : { "0.0.2" : {}, "0.0.1-dev": {} }
     };
-    sinon.assert.calledWith(this.setPackageStub, pkgMeta);
-    sinon.assert.calledWith(this.res.json, 200, "\"0.0.1-dev\"");
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.calledWith(registry.setPackage, pkgMeta);
+    sinon.assert.calledWith(this.json, "0.0.1-dev");
   });
 });
 
@@ -878,22 +969,29 @@ describe("pkg-test - tag", function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
 
-    this.app = {
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
-    this.setPackageStub = sandbox.stub();
-    this.getPackageStub = sandbox.stub();
-    this.app.get.withArgs("registry").returns({
-      setPackage : this.setPackageStub,
-      getPackage : this.getPackageStub
-    });
+
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
-    this.tagFn = pkg.tag(this.app);
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
+
+    this.tagFn = pkg.tag();
   });
 
-  it("should have function", function () {
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+    it("should have function", function () {
     assert.isFunction(pkg.tag);
   });
 
@@ -909,25 +1007,27 @@ describe("pkg-test - tag", function () {
         latest : "0.1.0"
       }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.tagFn({
       headers     : { "content-type" : "application/json" },
       params      : {
-        packagename : pkgMeta.name,
-        tagname     : "release"
+        name    : pkgMeta.name,
+        tagname : "release"
       },
-      body        : "0.1.0",
+      body        : '"0.1.0"',
       originalUrl : "/test/0.0.1-dev/tag/release"
     }, this.res);
 
     pkgMeta._rev = 2;
     pkgMeta["dist-tags"].release = "0.1.0";
 
-    sinon.assert.called(this.setPackageStub);
-    sinon.assert.calledWith(this.setPackageStub, pkgMeta);
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 201, pkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 201);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, pkgMeta);
   });
 });
 
@@ -943,19 +1043,22 @@ describe("pkg-test - unpublish", function () {
     sandbox.stub(fs, "unlinkSync");
     sandbox.stub(fs, "rmdirSync");
 
-    this.app = {
+    sandbox.stub(registry, 'getPackage');
+    sandbox.stub(registry, 'removePackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
-    this.removePackageStub = sandbox.stub();
-    this.getPackageStub    = sandbox.stub();
-    this.app.get.withArgs("registry").returns({
-      removePackage : this.removePackageStub,
-      getPackage    : this.getPackageStub
-    });
+
     this.res = {
-      json : sandbox.stub()
+      status : sandbox.stub(),
     };
-    this.unpublishFn = pkg.unpublish(this.app);
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
+
+    this.unpublishFn = pkg.unpublish();
   });
 
   afterEach(function () {
@@ -967,9 +1070,7 @@ describe("pkg-test - unpublish", function () {
   });
 
   it("should delete package meta, attachments and folder", function () {
-    this.app.get.withArgs("settings").returns({
-      get : sandbox.stub().returns("/path")
-    });
+    this.settingsStore.get.returns("/path");
     sandbox.stub(fs, "existsSync").
       withArgs("/path/test/test-0.0.1-dev.tgz").returns(true);
     var pkgMeta = {
@@ -983,17 +1084,18 @@ describe("pkg-test - unpublish", function () {
         }
       }
     };
-    this.getPackageStub.returns(pkgMeta);
+    registry.getPackage.returns(pkgMeta);
 
     this.unpublishFn({
-      params      : {
-        packagename : "test"
-      },
-      originalUrl : "/test"
+      settingsStore : this.settingsStore,
+      params        : { name : "test" },
+      originalUrl   : "/test",
+      accepts       : function () { return false; },
+      flash         : sinon.stub()
     }, this.res);
 
-    sinon.assert.calledOnce(this.removePackageStub);
-    sinon.assert.calledWith(this.removePackageStub, "test");
+    sinon.assert.calledOnce(registry.removePackage);
+    sinon.assert.calledWith(registry.removePackage, "test");
 
     sinon.assert.calledOnce(fs.unlinkSync);
     sinon.assert.calledWith(fs.unlinkSync, "/path/test/test-0.0.1-dev.tgz");
@@ -1013,24 +1115,24 @@ describe("pkg-test - refresh", function () {
 
     sandbox.stub(http, "get").returns({on : sandbox.spy()});
     sandbox.stub(attachment, "refreshMeta");
-    this.app = {
+    this.res = {
+      status : sandbox.stub(),
+    };
+    this.json = sandbox.stub();
+    this.res.status.returns({
+      json : this.json
+    });
+
+    sandbox.stub(registry, 'setPackage');
+    sandbox.stub(registry, 'getPackage');
+
+    this.settingsStore = {
       get : sandbox.stub()
     };
-    this.res = {
-      json : sandbox.stub()
-    };
-    this.getPackageStub = sandbox.stub();
-    this.app.get.withArgs("registry").returns({
-      setPackage : sandbox.stub(),
-      getPackage : this.getPackageStub
-    });
-    this.getSetting = sandbox.stub();
-    this.getSetting.withArgs("forwarder.registry").
-      returns("http://u.url:8888/the/path/");
-    this.getSetting.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
-    this.app.get.withArgs("settings").returns({
-      get : this.getSetting
-    });
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.registry").returns("http://u.url:8888/the/path/");
+    get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
+
     this.refreshFn = pkg.refresh(this.app);
   });
 
@@ -1043,21 +1145,26 @@ describe("pkg-test - refresh", function () {
   });
 
   it("should return document not found", function () {
-    this.getPackageStub.returns(null);
+    registry.getPackage.returns(null);
 
-    this.refreshFn({params: {packagename: "fwdpkg"}}, this.res);
+    this.refreshFn({params: {name: "fwdpkg"}}, this.res);
 
-    sinon.assert.called(this.res.json);
-    sinon.assert.calledWith(this.res.json, 404, {
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 404);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {
       "error"  : "not_found",
       "reason" : "document not found"
     });
   });
 
   it("should refresh full package JSON from forwarder", function () {
-    this.getPackageStub.returns({});
+    registry.getPackage.returns({});
 
-    this.refreshFn({params: {packagename: "fwdpkg"}}, this.res);
+    this.refreshFn({
+      params        : {name : "fwdpkg"},
+      settingsStore : this.settingsStore
+    }, this.res);
 
     sinon.assert.called(http.get);
     sinon.assert.calledWith(http.get, {
@@ -1066,6 +1173,189 @@ describe("pkg-test - refresh", function () {
       port     : "8888",
       path     : "/the/path/fwdpkg",
       rejectUnauthorized : true
+    });
+  });
+});
+
+// ==== Test Case
+
+describe('package npm functions', function () {
+  var sandbox, app, pkgMeta;
+  var registryPath = path.join(__dirname, 'registry');
+
+  beforeEach(function () {
+    pkgMeta = JSON.parse(JSON.stringify(pkgProxied));
+    pkgMeta['_mtime'] = new Date();
+
+    sandbox = sinon.sandbox.create();
+
+    sandbox.stub(registry, 'init');
+    sandbox.stub(registry, 'refreshMeta');
+    sandbox.stub(registry, 'getMeta').returns({
+      settings : { registryPath : registryPath }
+    });
+
+    app = server.createApp({
+      registryPath : registryPath,
+      loglevel     : 'silent'
+    });
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  describe('#get', function () {
+    it('routes /:name/:version?', function () {
+      sandbox.stub(app, 'get');
+
+      pkg.route(app);
+
+      sinon.assert.calledWith(app.get, '/:name/:version?');
+    });
+
+    it('retrieves package meta json', function (done) {
+      pkg.route(app);
+
+      request(app)
+        .get('/proxied')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, /"_rev":3/, done);
+    });
+  });
+
+  describe('#publish', function () {
+    it('routes /:name', function () {
+      sandbox.stub(app, 'put');
+
+      pkg.route(app);
+
+      sinon.assert.calledWith(app.put, '/:name');
+    });
+
+    it('publishes full package meta json', function (done) {
+      sandbox.stub(registry, 'getPackage');
+      sandbox.stub(registry, 'setPackage');
+
+      pkg.route(app);
+
+      request(app)
+        .put('/proxied')
+        .set('Content-Type', 'application/json')
+        .send(pkgMeta)
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, {"ok": true}, done);
+    });
+
+    it('routes /:name/-rev/:revision', function () {
+      sandbox.stub(app, 'put');
+
+      pkg.route(app);
+
+      sinon.assert.calledWith(app.put, '/:name/-rev/:revision');
+    });
+
+    it('shows conflicting package meta json revisions', function (done) {
+      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
+      sandbox.stub(registry, 'setPackage');
+
+      pkg.route(app);
+
+      request(app)
+        .put('/proxied/-rev/test')
+        .set('Content-Type', 'application/json')
+        .send(pkgMeta)
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(409, { error: 'conflict',
+          reason: 'revision does not match one in document' }, done);
+    });
+
+    it('routes /:name/:version/-tag/:tagname', function () {
+      sandbox.stub(app, 'put');
+
+      pkg.route(app);
+
+      sinon.assert.calledWith(app.put, '/:name/:version/-tag/:tagname');
+    });
+
+    it('publishes and tags specific version of package', function (done) {
+      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
+      sandbox.stub(registry, 'setPackage');
+      sandbox.stub(attachment, 'refreshMeta');
+
+      pkg.route(app);
+
+      request(app)
+        .put('/proxied/2.1.0/-tag/latest')
+        .set('Content-Type', 'application/json')
+        .send(pkgMeta)
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, '"2.1.0"', done);
+    });
+  });
+
+  describe('#tag', function () {
+    it('routes /:name/:tagname', function () {
+      sandbox.stub(app, 'put');
+
+      pkg.route(app);
+
+      sinon.assert.calledWith(app.put, '/:name/:tagname');
+    });
+
+    it('tags package meta json as text/plain', function (done) {
+      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
+      sandbox.stub(registry, 'setPackage');
+
+      pkg.route(app);
+
+      request(app)
+        .put('/proxied/someTag')
+        .set('Content-Type', 'text/plain')
+        .send('2.0.0')
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(201, /"name":"proxied".*"someTag":"2.0.0".*"_rev":4/, done);
+    });
+
+    it('tags package meta json as application/json', function (done) {
+      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
+      sandbox.stub(registry, 'setPackage');
+
+      pkg.route(app);
+
+      request(app)
+        .put('/proxied/someTag')
+        .set('Content-Type', 'application/json')
+        .send('"2.0.0"')
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(201, /"name":"proxied".*"someTag":"2.0.0".*"_rev":4/, done);
+    });
+  });
+
+  describe('#unpublish', function () {
+    it('routes /:name/-rev/:revision', function () {
+      sandbox.stub(app, 'delete');
+
+      pkg.route(app);
+
+      sinon.assert.calledWith(app['delete'], '/:name/-rev/:revision');
+    });
+
+    it('deletes specific package version', function (done) {
+      sandbox.stub(fs, 'existsSync').returns(true);
+      sandbox.stub(fs, 'unlinkSync');
+      sandbox.stub(fs, 'rmdirSync');
+      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
+      sandbox.stub(registry, 'removePackage');
+
+      pkg.route(app);
+
+      request(app)
+        .del('/proxied/-rev/1.0.0')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, {"ok": true}, done);
     });
   });
 });

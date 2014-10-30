@@ -1,0 +1,26 @@
+#!/bin/sh -e
+
+case "$1" in
+  purge)
+    update-rc.d -f nopar remove >/dev/null
+    rm -fr /var/lib/nopar
+    rm -fr /var/log/nopar
+    ;;
+
+  remove | upgrade)
+    update-rc.d -f nopar remove >/dev/null
+    ;;
+
+  faild-upgrade)
+    ;;
+
+  abort-*)
+    ;;
+
+  disappear)
+    ;;
+
+  *)
+    echo "postrm called with unknown argument '\$1'" >&2
+    exit 0
+esac
