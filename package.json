@@ -1,6 +1,6 @@
 {
 	"name": "nopar",
-	"version": "0.5.0",
+	"version": "0.6.0",
 	"description": "Abstrakt Node Package Registry & Proxy",
 	"bin": {
 		"nopar": "bin/nopar"
