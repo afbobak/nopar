@@ -1,4 +1,10 @@
 
+0.6.2 / 2014-11-16
+==================
+
+ * test: for _mtime on getPackage
+ * fix: convert string mtime to Date
+
 0.6.1 / 2014-11-16
 ==================
 

@@ -230,7 +230,21 @@ describe("registry-test - get pkg version", function () {
   it("should return pkg info if package version does exist", function () {
     var result = registry.getPackage("pkg", "0.0.1");
 
-    assert.deepEqual(result, OLD_META.pkg.versions["0.0.1"]);
+    assert.equal(result.name, "pkg");
+    assert.equal(result.version, "0.0.1");
+  });
+
+  it("should not calculate _mtime on specific version", function () {
+    var result = registry.getPackage("pkg", "0.0.1");
+
+    assert.isUndefined(result._mtime);
+  });
+
+  it("should calculate _mtime on full meta", function () {
+    var result = registry.getPackage("pkg");
+
+    assert.isDefined(result._mtime);
+    assert.isFunction(result._mtime.getTime);
   });
 });
 
