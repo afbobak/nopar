@@ -1,4 +1,10 @@
 
+0.6.1 / 2014-11-16
+==================
+
+ * improve: move error handling to the bottom and add one if != dev
+ * fix: Internal Server Error
+
 0.6.0 / 2014-10-30
 ==================
 
