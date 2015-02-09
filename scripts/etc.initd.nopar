@@ -35,7 +35,9 @@ fi
 start () {
   echo -n "Starting NOPAR Server ${NOPAR_HOSTNAME}:${NOPAR_PORT}"
   cd ${NOPAR_HOME} && node nopar --detach >> $NOPAR_LOGFILE 2>&1 &
-  pid=`cat nopar.pid`
+  # Wait a bit to give nopar time to write the PID file
+  sleep 1
+  pid=`cat ${NOPAR_RUN_PATH}/nopar.pid`
   touch $LOCK_FILE
   echo $pid > $LOCK_FILE
   success $"NOPAR start"
@@ -46,7 +48,7 @@ stop () {
   echo -n "Stopping NOPAR Server:"
   pid=`cat $LOCK_FILE`
   kill $pid
-  rm -f $LOCK_FILE $NOPAR_RUN_PATH/nopar.pid
+  rm -f $LOCK_FILE ${NOPAR_RUN_PATH}/nopar.pid
   success $"NOPAR stop"
   echo
 }
