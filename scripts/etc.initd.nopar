@@ -34,10 +34,9 @@ fi
 
 start () {
   echo -n "Starting NOPAR Server ${NOPAR_HOSTNAME}:${NOPAR_PORT}"
-  cd ${NOPAR_HOME} && node lib/server.js >> $NOPAR_LOGFILE 2>&1 &
-  pid=`jobs -p`
+  cd ${NOPAR_HOME} && node nopar --detach >> $NOPAR_LOGFILE 2>&1 &
+  pid=`cat nopar.pid`
   touch $LOCK_FILE
-  echo $pid > $NOPAR_RUN_PATH/nopar.pid
   echo $pid > $LOCK_FILE
   success $"NOPAR start"
   echo
