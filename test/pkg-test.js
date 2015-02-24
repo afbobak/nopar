@@ -306,6 +306,32 @@ describe("pkg-test - getPackage proxied", function () {
     sinon.assert.calledOnce(spy);
     sinon.assert.calledWith(spy, "error");
   });
+
+  it.only("should catch syntax errors from JSON.parse when receiving invalid metadata", function () {
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.autoForward").returns(true);
+    var on = sandbox.stub();
+    var pkgMeta = 'Invalid JSON';
+    on.withArgs("data").yields(pkgMeta);
+    on.withArgs("end").yields();
+
+    this.getFn({
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "fwdpkg",
+        version : "0.0.1"
+      }
+    }, this.res);
+
+    assert.doesNotThrow(function ()
+    {
+      http.get["yield"]({
+        statusCode  : 200,
+        setEncoding : sandbox.spy(),
+        on          : on
+      });
+    }, SyntaxError);
+  });
 });
 
 // ==== Test Case
