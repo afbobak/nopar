@@ -307,7 +307,7 @@ describe("pkg-test - getPackage proxied", function () {
     sinon.assert.calledWith(spy, "error");
   });
 
-  it.only("should catch syntax errors from JSON.parse when receiving invalid metadata", function () {
+  it("should catch syntax errors from JSON.parse when receiving invalid metadata", function () {
     var get = this.settingsStore.get;
     get.withArgs("forwarder.autoForward").returns(true);
     var on = sandbox.stub();
@@ -323,8 +323,7 @@ describe("pkg-test - getPackage proxied", function () {
       }
     }, this.res);
 
-    assert.doesNotThrow(function ()
-    {
+    assert.doesNotThrow(function () {
       http.get["yield"]({
         statusCode  : 200,
         setEncoding : sandbox.spy(),
