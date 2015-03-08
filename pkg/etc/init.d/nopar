@@ -17,7 +17,7 @@ test -x /usr/bin/nopar || exit 0
 
 umask 022
 
-export NOPAR_RUN_AS=nopar
+export NOPAR_RUN_AS_USER=nopar
 
 if test -f /etc/default/nopar; then
   . /etc/default/nopar
