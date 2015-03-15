@@ -1,4 +1,17 @@
 
+0.6.3 / 2015-03-15
+==================
+
+ * fix: nopar user env variable in Debian scripts
+ * fix/improve: DEBIAN start/stop/script
+ * improve: add favicon
+ * Fixed code formatting
+ * Removed exclusive test-case
+ * Added test case
+ * Prevent JSON.parse to throw an error when the metadata received is not valid JSON
+ * fix: initd script reads/writes correct nopar.pid file
+ * fix: add daemon to package.json and create nopar.pid
+
 0.6.2 / 2014-11-16
 ==================
 
