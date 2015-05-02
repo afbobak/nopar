@@ -18,6 +18,14 @@ var OLD_META = {
         version : "0.0.1"
       }
     }
+  },
+  scopedPkg : {
+    versions : {
+      "0.0.1" : {
+        "name"  : "@scoped/pkg",
+        version : "0.0.1"
+      }
+    }
   }
 };
 var metaVersion = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"))).version;
@@ -169,6 +177,16 @@ describe("registry-test", function () {
       assert(!result);
     });
 
+    it("should check if scoped package folder exists and return null if not", function () {
+      registry.init(REGISTRY_PATH);
+      fs.existsSync.withArgs("/some/path/registry/@scoped/pkg").returns(false);
+
+      var result = registry.getPackage("@scoped/pkg");
+
+      sinon.assert.calledWith(fs.existsSync, "/some/path/registry/@scoped/pkg");
+      assert(!result);
+    });
+
     it("should check if package meta exists and return null if not", function () {
       registry.init(REGISTRY_PATH);
       fs.existsSync.withArgs("/some/path/registry/pkg").returns(true);
@@ -177,6 +195,17 @@ describe("registry-test", function () {
       var result = registry.getPackage("pkg");
 
       sinon.assert.calledWith(fs.existsSync, "/some/path/registry/pkg/pkg.json");
+      assert(!result);
+    });
+
+    it("should check if scoped package meta exists and return null if not", function () {
+      registry.init(REGISTRY_PATH);
+      fs.existsSync.withArgs("/some/path/registry/@scoped/pkg").returns(true);
+      fs.existsSync.withArgs("/some/path/registry/@scoped/pkg/pkg.json").returns(false);
+
+      var result = registry.getPackage("@scoped/pkg");
+
+      sinon.assert.calledWith(fs.existsSync, "/some/path/registry/@scoped/pkg/pkg.json");
       assert(!result);
     });
   });
@@ -207,6 +236,11 @@ describe("registry-test - get pkg version", function () {
     fs.existsSync.withArgs("/some/path/registry/pkg/pkg.json").returns(true);
     fs.readFileSync.withArgs("/some/path/registry/pkg/pkg.json").
       returns(JSON.stringify(OLD_META.pkg));
+
+    fs.existsSync.withArgs("/some/path/registry/@scoped/pkg").returns(true);
+    fs.existsSync.withArgs("/some/path/registry/@scoped/pkg/pkg.json").returns(true);
+    fs.readFileSync.withArgs("/some/path/registry/@scoped/pkg/pkg.json").
+      returns(JSON.stringify(OLD_META.scopedPkg));
   });
 
   afterEach(function () {
@@ -219,6 +253,13 @@ describe("registry-test - get pkg version", function () {
 
     sinon.assert.calledWith(fs.readFileSync, "/some/path/registry/pkg/pkg.json");
     assert.deepEqual(result.versions, OLD_META.pkg.versions);
+  });
+
+  it("should read scoped package meta return it", function () {
+    var result = registry.getPackage("@scoped/pkg");
+
+    sinon.assert.calledWith(fs.readFileSync, "/some/path/registry/@scoped/pkg/pkg.json");
+    assert.deepEqual(result.versions, OLD_META.scopedPkg.versions);
   });
 
   it("should return null if package version does not exist", function () {
@@ -270,6 +311,10 @@ describe("registry-test - write pkg", function () {
     registry.init(REGISTRY_PATH);
     fs.existsSync.withArgs("/some/path/registry/pkg").returns(true);
     fs.writeFileSync.withArgs("/some/path/registry/pkg/pkg.json");
+
+    fs.existsSync.withArgs("/some/path/registry/@scoped").returns(true);
+    fs.existsSync.withArgs("/some/path/registry/@scoped/pkg").returns(true);
+    fs.writeFileSync.withArgs("/some/path/registry/@scoped/pkg/pkg.json");
   });
 
   afterEach(function () {
@@ -310,6 +355,27 @@ describe("registry-test - write pkg", function () {
     sinon.assert.calledWith(fs.mkdirSync, "/some/path/registry/pkg");
   });
 
+  it("should create scoped package path", function () {
+    var pkg = { name : "@scoped/pkg" };
+    fs.existsSync.withArgs("/some/path/registry/@scoped").returns(false);
+    fs.existsSync.withArgs("/some/path/registry/@scoped/pkg").returns(false);
+
+    registry.setPackage(pkg);
+
+    sinon.assert.calledWith(fs.mkdirSync, "/some/path/registry/@scoped");
+    sinon.assert.calledWith(fs.mkdirSync, "/some/path/registry/@scoped/pkg");
+  });
+
+  it("should create scoped package path when scope already exists", function () {
+    var pkg = { name : "@scoped/pkg" };
+    fs.existsSync.withArgs("/some/path/registry/@scoped").returns(true);
+    fs.existsSync.withArgs("/some/path/registry/@scoped/pkg").returns(false);
+
+    registry.setPackage(pkg);
+
+    sinon.assert.calledWith(fs.mkdirSync, "/some/path/registry/@scoped/pkg");
+  });
+
   it("should write new package meta", function () {
     var pkg = {
       name    : "pkg",
@@ -325,6 +391,24 @@ describe("registry-test - write pkg", function () {
 
     sinon.assert.notCalled(fs.mkdirSync, "/some/path/registry/pkg");
     sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/pkg/pkg.json",
+      JSON.stringify(pkg));
+  });
+
+  it("should write new scoped package meta", function () {
+    var pkg = {
+      name    : "@scoped/pkg",
+      versions : {
+        "0.0.1" : {
+          name    : "@scoped/pkg",
+          version : "0,0.1"
+        }
+      }
+    };
+
+    registry.setPackage(pkg);
+
+    sinon.assert.notCalled(fs.mkdirSync, "/some/path/registry/@scoped/pkg");
+    sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/@scoped/pkg/pkg.json",
       JSON.stringify(pkg));
   });
 });
@@ -388,6 +472,23 @@ describe("registry-test - delete pkg", function () {
     sinon.assert.calledOnce(registry.getPackage);
     sinon.assert.callOrder(registry.getPackage, fs.unlinkSync);
     sinon.assert.calledWith(fs.unlinkSync, "/some/path/registry/pkg/pkg.json");
+    sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json", JSON.stringify({
+      version : "1.0.0",
+      count   : 4,
+      local   : 3,
+      proxied : 1
+    }));
+  });
+
+  it("should unlink scoped package meta", function () {
+    fs.existsSync.returns(true);
+    sandbox.stub(registry, "getPackage").returns({"_proxied" : true});
+
+    registry.removePackage("@scoped/pkg");
+
+    sinon.assert.calledOnce(registry.getPackage);
+    sinon.assert.callOrder(registry.getPackage, fs.unlinkSync);
+    sinon.assert.calledWith(fs.unlinkSync, "/some/path/registry/@scoped/pkg/pkg.json");
     sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/registry.json", JSON.stringify({
       version : "1.0.0",
       count   : 4,

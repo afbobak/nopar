@@ -1,0 +1,25 @@
+{
+	"name": "@scoped/proxied",
+	"version": "2.0.0",
+	"description": "NOPAR Test Package/proxied",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:afbobak/test-pkg-proxied.git"
+	},
+	"homepage": "https://github.com/afbobak/test-pkg-proxied/",
+	"bugs": "https://github.com/afbobak/test-pkg-proxied/issues/",
+	"author": "Andreas F. Bobak <bobak@abstrakt.ch>",
+	"license": "BSD",
+	"main": "./index.js",
+	"dependencies": {
+		"semver": "^2.2"
+	},
+	"devDependencies": {
+		"chai": "^1.9",
+		"mocha": "^1.21",
+		"sinon": "^1.10"
+	},
+	"engines": {
+		"node": ">=0.10.25"
+	}
+}

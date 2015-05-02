@@ -200,6 +200,29 @@ describe("pkg-test - getPackage proxied", function () {
     });
   });
 
+  it("should get full scoped package JSON from forwarder", function () {
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.autoForward").returns(true);
+    get.withArgs("forwarder.ignoreCert").returns(true);
+
+    this.getFn({
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "@scoped/fwdpkg",
+        version : "0.0.1"
+      }
+    }, this.res);
+
+    sinon.assert.called(http.get);
+    sinon.assert.calledWith(http.get, {
+      headers  : { "User-Agent" : "nopar/0.0.0-test" },
+      hostname : "u.url",
+      port     : "8888",
+      path     : "/the/path/@scoped%2ffwdpkg",
+      rejectUnauthorized : false
+    });
+  });
+
   it("should get full package JSON from forwarder via proxy", function () {
     var get = this.settingsStore.get;
     get.withArgs("forwarder.autoForward").returns(true);
@@ -1244,6 +1267,16 @@ describe('package npm functions', function () {
 
       request(app)
         .get('/proxied')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, /"_rev":3/, done);
+    });
+
+    it('retrieves @scoped package meta json', function (done) {
+      pkg.route(app);
+
+      request(app)
+        .get('/@scoped%2fproxied')
         .set('Accept', 'application/json')
         .expect('Content-Type', 'application/json; charset=utf-8')
         .expect(200, /"_rev":3/, done);

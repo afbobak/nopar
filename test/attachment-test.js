@@ -346,6 +346,20 @@ describe("attachment-test - attach", function () {
     sinon.assert.calledWith(fs.mkdirSync, "/path/test");
   });
 
+  it("should create scoped path if it doesn't exist", function () {
+    sandbox.stub(fs, "existsSync").returns(false);
+    sandbox.stub(fs, "mkdirSync");
+
+    this.req.params.name = '@scoped/test';
+
+    this.attachFn(this.req, this.res);
+    this.req.on.yields();
+
+    sinon.assert.called(fs.mkdirSync);
+    sinon.assert.calledWith(fs.mkdirSync, "/path/@scoped");
+    sinon.assert.calledWith(fs.mkdirSync, "/path/@scoped/test");
+  });
+
   it("should create write stream and pipe to it", function () {
     sandbox.stub(fs, "existsSync").returns(true);
     fs.createWriteStream.returns("MY_FD");
@@ -583,6 +597,29 @@ describe("attachment-test - refreshMeta", function () {
     assert.equal(atmt.forwardUrl, tarball);
     sinon.assert.calledWith(fs.existsSync,
       '/some/registryPath/mypackage/mypackage-0.0.1.tgz');
+  });
+
+  it('create scoped cached flag attachment meta data', function () {
+    sandbox.stub(fs, 'existsSync').returns(true);
+    var settings = {
+      get : sinon.stub().returns('/some/registryPath')
+    };
+    var tarball = 'http://mynpm/@scoped/mypackage/-/mypackage-0.0.1.tgz';
+    var pkgMeta = {
+      name     : '@scoped/mypackage',
+      versions : {
+        '0.0.1' : { dist : { tarball : tarball } }
+      }
+    };
+
+    attachment.refreshMeta(settings, pkgMeta);
+
+    var atmt = pkgMeta._attachments['mypackage-0.0.1.tgz'];
+    assert.isObject(atmt);
+    assert.isTrue(atmt.cached);
+    assert.equal(atmt.forwardUrl, tarball);
+    sinon.assert.calledWith(fs.existsSync,
+      '/some/registryPath/@scoped/mypackage/mypackage-0.0.1.tgz');
   });
 });
 
