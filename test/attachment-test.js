@@ -375,6 +375,24 @@ describe("attachment-test - attach", function () {
     sinon.assert.called(this.req.pipe);
     sinon.assert.calledWith(this.req.pipe, "MY_FD");
   });
+
+  it("should create scoped write stream and pipe to it", function () {
+    sandbox.stub(fs, "existsSync").returns(true);
+    fs.createWriteStream.returns("MY_FD");
+
+    this.req.params.name = '@scoped/test';
+
+    this.attachFn(this.req, this.res);
+
+    sinon.assert.called(fs.createWriteStream);
+    sinon.assert.calledWith(fs.createWriteStream, "/path/@scoped/test/test.tgz", {
+      flags    : "w",
+      encoding : null,
+      mode     : "0660"
+    });
+    sinon.assert.called(this.req.pipe);
+    sinon.assert.calledWith(this.req.pipe, "MY_FD");
+  });
 });
 
 
@@ -404,6 +422,26 @@ describe("attachment-test - skimTarballs", function () {
       },
       "_attachments": {
         "test-0.0.1.tgz": {
+          "content-type": "application/octet-stream",
+          "data": this.tarballBase64,
+          "length": tarball.byteLength
+        }
+      }
+    };
+
+    this.scopedMeta = {
+      "_id"  : "@scopped/test",
+      "name" : "@scoped/test",
+      "versions": {
+        "0.0.1": {
+          "dist": {
+            "shasum": "0dd79a57eae458d4b9cf7adc59813cdf812deef9",
+            "tarball": "http://localhost:5984/@scoped/test/-/@scoped/test-0.0.1.tgz"
+          }
+        }
+      },
+      "_attachments": {
+        "@scoped/test-0.0.1.tgz": {
           "content-type": "application/octet-stream",
           "data": this.tarballBase64,
           "length": tarball.byteLength
@@ -448,6 +486,21 @@ describe("attachment-test - skimTarballs", function () {
     sinon.assert.called(callback);
   });
 
+  it("should create scoped path if it doesn't exist", function () {
+    sandbox.stub(fs, "existsSync").returns(false);
+    sandbox.stub(fs, "mkdirSync");
+
+    var callback = sandbox.spy();
+
+    attachment.skimTarballs(this.settingsStore, this.scopedMeta, callback);
+
+    sinon.assert.called(fs.mkdirSync);
+    sinon.assert.calledWith(fs.mkdirSync, "/path/@scoped");
+    sinon.assert.calledWith(fs.mkdirSync, "/path/@scoped/test");
+
+    sinon.assert.called(callback);
+  });
+
   it("should write tarball to disk", function () {
     sandbox.stub(fs, "existsSync").returns(true);
 
@@ -458,6 +511,25 @@ describe("attachment-test - skimTarballs", function () {
     sinon.assert.called(fs.writeFile);
     sinon.assert.calledWith(fs.writeFile,
       "/path/test/test-0.0.1.tgz", this.tarballBase64,
+      {
+        flags    : "w",
+        encoding : 'base64',
+        mode     : "0660"
+      });
+
+    sinon.assert.called(callback);
+  });
+
+  it("should write tarball to disk", function () {
+    sandbox.stub(fs, "existsSync").returns(true);
+
+    var callback = sandbox.spy();
+
+    attachment.skimTarballs(this.settingsStore, this.scopedMeta, callback);
+
+    sinon.assert.called(fs.writeFile);
+    sinon.assert.calledWith(fs.writeFile,
+      "/path/@scoped/test/test-0.0.1.tgz", this.tarballBase64,
       {
         flags    : "w",
         encoding : 'base64',
