@@ -18,14 +18,14 @@
         <%= pkgName %><small class="text-muted">@<%= latest.version %></small>
         <div class="actions btn-group">
           <a class="btn action-json btn-link btn-xs" href="<%= latest.dist.tarball %>"><span class="glyphicon glyphicon-download-alt"></span> Latest</a>
-          <a class="btn action-json btn-link btn-xs" href="/<%= pkgName %>">JSON</a>
+          <a class="btn action-json btn-link btn-xs" href="/<%= pkg.path %>">JSON</a>
         </div>
         <div class="actions btn-group">
          <% if (pkg["_proxied"]) { %>
-         <a class="btn btn-sm btn-link action-refresh" onclick="refreshPackage('<%= pkgName %>');" href="#">
+         <a class="btn btn-sm btn-link action-refresh" onclick="refreshPackage('<%= pkg.path %>');" href="#">
            <span class="glyphicon glyphicon-refresh"></span> Refresh
          </a><% } %>
-         <a class="btn btn-sm btn-link action-delete" onclick="deletePackage('<%= pkgName %>');" href="#">
+         <a class="btn btn-sm btn-link action-delete" onclick="deletePackage('<%= pkg.path %>');" href="#">
            <span class="glyphicon glyphicon-trash"></span> Delete Package
          </a>
         </div>

@@ -200,6 +200,29 @@ describe("pkg-test - getPackage proxied", function () {
     });
   });
 
+  it("should get full scoped package JSON from forwarder", function () {
+    var get = this.settingsStore.get;
+    get.withArgs("forwarder.autoForward").returns(true);
+    get.withArgs("forwarder.ignoreCert").returns(true);
+
+    this.getFn({
+      settingsStore : this.settingsStore,
+      params        : {
+        name    : "@scoped/fwdpkg",
+        version : "0.0.1"
+      }
+    }, this.res);
+
+    sinon.assert.called(http.get);
+    sinon.assert.calledWith(http.get, {
+      headers  : { "User-Agent" : "nopar/0.0.0-test" },
+      hostname : "u.url",
+      port     : "8888",
+      path     : "/the/path/@scoped%2ffwdpkg",
+      rejectUnauthorized : false
+    });
+  });
+
   it("should get full package JSON from forwarder via proxy", function () {
     var get = this.settingsStore.get;
     get.withArgs("forwarder.autoForward").returns(true);
@@ -507,6 +530,37 @@ describe("pkg-test - publishFull", function () {
     sinon.assert.calledWith(this.json, {"ok" : true});
   });
 
+  it("should add package and persist registry for new scoped package", function () {
+    registry.getPackage.returns(null);
+
+    this.publishFullFn({
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "@scoped/test" },
+      originalUrl   : "/@scoped%2ftest",
+      body          : {
+        "_id"  : "@scoped/test",
+        "name" : "@scoped/test"
+      }
+    }, this.res);
+
+    var pkgMeta = {
+      "_id"      : "@scoped/test",
+      "name"     : "@scoped/test",
+      "_rev"     : 1,
+      "_proxied" : false
+    };
+    sinon.assert.called(attachment.refreshMeta);
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      pkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, pkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
+  });
+
   it("should skim off attachment and persist for new package", function () {
     registry.getPackage.returns(null);
 
@@ -540,6 +594,53 @@ describe("pkg-test - publishFull", function () {
     var newPkgMeta = {
       "_id"      : "test",
       "name"     : "test",
+      "_rev"     : 1,
+      "_proxied" : false
+    };
+    sinon.assert.called(attachment.refreshMeta);
+    sinon.assert.calledWith(attachment.refreshMeta, this.settingsStore,
+      newPkgMeta);
+    sinon.assert.called(registry.setPackage);
+    sinon.assert.calledWith(registry.setPackage, newPkgMeta);
+    sinon.assert.calledOnce(this.res.status);
+    sinon.assert.calledWith(this.res.status, 200);
+    sinon.assert.called(this.json);
+    sinon.assert.calledWith(this.json, {"ok" : true});
+  });
+
+  it("should skim off attachment and persist for new scoped package", function () {
+    registry.getPackage.returns(null);
+
+    var tarballBytes = new Buffer("I'm a tarball");
+    var tarballBase64 = tarballBytes.toString('base64');
+
+    var pkgMeta = {
+      "_id"  : "@scoped/test",
+      "name" : "@scoped/test",
+      "_attachments": {
+        "@scoped/test-0.0.1.tgz": {
+          "content-type": "application/octet-stream",
+          "data": tarballBase64,
+          "length": tarballBytes.byteLength
+        }
+      }
+    };
+
+    this.publishFullFn({
+      settingsStore : this.settingsStore,
+      headers       : { "content-type" : "application/json" },
+      params        : { name : "@scoped/test" },
+      originalUrl   : "/@scoped%2ftest",
+      body          : pkgMeta
+    }, this.res);
+
+    sinon.assert.called(attachment.skimTarballs);
+    sinon.assert.calledWith(attachment.skimTarballs, this.settingsStore,
+      pkgMeta);
+
+    var newPkgMeta = {
+      "_id"      : "@scoped/test",
+      "name"     : "@scoped/test",
       "_rev"     : 1,
       "_proxied" : false
     };
@@ -1248,6 +1349,16 @@ describe('package npm functions', function () {
         .expect('Content-Type', 'application/json; charset=utf-8')
         .expect(200, /"_rev":3/, done);
     });
+
+    it('retrieves @scoped package meta json', function (done) {
+      pkg.route(app);
+
+      request(app)
+        .get('/@scoped%2fproxied')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, /"_rev":3/, done);
+    });
   });
 
   describe('#publish', function () {
@@ -1267,6 +1378,24 @@ describe('package npm functions', function () {
 
       request(app)
         .put('/proxied')
+        .set('Content-Type', 'application/json')
+        .send(pkgMeta)
+        .expect('Content-Type', 'application/json; charset=utf-8')
+        .expect(200, {"ok": true}, done);
+    });
+
+    it('publishes full scoped package meta json', function (done) {
+      sandbox.stub(registry, 'getPackage');
+      sandbox.stub(registry, 'setPackage');
+
+      var scopedProxied = require('./registry/@scoped/proxied/proxied.json');
+      pkgMeta = JSON.parse(JSON.stringify(scopedProxied));
+      pkgMeta['_mtime'] = new Date();
+
+      pkg.route(app);
+
+      request(app)
+        .put('/@scoped%2fproxied')
         .set('Content-Type', 'application/json')
         .send(pkgMeta)
         .expect('Content-Type', 'application/json; charset=utf-8')
