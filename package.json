@@ -30,11 +30,7 @@
 		"connect-flash": "~0.1.1",
 		"cookie-parser": "^1.3.2",
 		"daemon": "^1.1.0",
-<<<<<<< HEAD
 		"ejs": "^2.3",
-=======
-		"ejs": "^1.0",
->>>>>>> f6f1661f3b3805fb2c04f3c04c80d6544050d9b5
 		"errorhandler": "^1.1.1",
 		"express": "^4.5",
 		"express-session": "^1.6.3",
