@@ -1,3 +1,17 @@
+0.7.1 / 2015-06-02
+==================
+
+  * 955b8b8 fix: gui tests for scoped packages
+  * 48439bc fix: allow '/' scoped packages for UI
+  * 1aefc5e fix: repository URLs in style of 'git+http'
+  * 9c57683 improve: be smarter with scoped URLs
+  * b2f142d Run tests on 0.12 as well
+  * 9da939a Only respond after attachment stream is finished writing
+  * eeed233 chore: fix merge conflict
+  * 90b2f94 chore: bump dependencies
+  * f6f1661 chore: bump winston@1.0
+  * 2a615ab doc: bring History up-to-date
+
 0.7.0 / 2015-05-03
 ==================
 
