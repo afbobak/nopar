@@ -88,7 +88,7 @@ describe("pkg-test - getPackage", function () {
       versions : {
         "0.0.1" : {
           name    : "pkg",
-          version : "0,0.1"
+          version : "0.0.1"
         }
       }
     };
@@ -1514,5 +1514,37 @@ describe('package npm functions', function () {
         .expect('Content-Type', 'application/json; charset=utf-8')
         .expect(200, {"ok": true}, done);
     });
+  });
+});
+
+
+// ==== Test Case
+
+describe("pkg-test - enhancePackage", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it("should have function", function () {
+    assert.isFunction(pkg.enhancePackage);
+  });
+
+  it("should convert git+http", function () {
+    var pkgMeta = {
+      name : 'test',
+      repository : { url : 'git+https://github.com/test.git' },
+      versions : { "0.0.1" : { name : "pkg", version : "0.0.1" } },
+      "dist-tags" : { latest : "0.0.1" }
+    };
+
+    pkg.enhancePackage(pkgMeta);
+
+    assert.equal(pkgMeta.repository.href, 'https://github.com/test/');
   });
 });
