@@ -88,7 +88,7 @@ describe("pkg-test - getPackage", function () {
       versions : {
         "0.0.1" : {
           name    : "pkg",
-          version : "0,0.1"
+          version : "0.0.1"
         }
       }
     };
@@ -1337,7 +1337,7 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.get, '/:name/:version?');
+      sinon.assert.calledWith(app.get, '/:scope(@[^\/]+)?/:name/:version?');
     });
 
     it('retrieves package meta json', function (done) {
@@ -1367,7 +1367,7 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.put, '/:name');
+      sinon.assert.calledWith(app.put, '/:scope(@[^\/]+)?/:name');
     });
 
     it('publishes full package meta json', function (done) {
@@ -1407,7 +1407,8 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.put, '/:name/-rev/:revision');
+      sinon.assert.calledWith(app.put,
+        '/:scope(@[^\/]+)?/:name/-rev/:revision');
     });
 
     it('shows conflicting package meta json revisions', function (done) {
@@ -1430,7 +1431,8 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.put, '/:name/:version/-tag/:tagname');
+      sinon.assert.calledWith(app.put,
+        '/:scope(@[^\/]+)?/:name/:version/-tag/:tagname');
     });
 
     it('publishes and tags specific version of package', function (done) {
@@ -1455,7 +1457,7 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.put, '/:name/:tagname');
+      sinon.assert.calledWith(app.put, '/:scope(@[^\/]+)?/:name/:tagname');
     });
 
     it('tags package meta json as text/plain', function (done) {
@@ -1493,7 +1495,8 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app['delete'], '/:name/-rev/:revision');
+      sinon.assert.calledWith(app['delete'],
+        '/:scope(@[^\/]+)?/:name/-rev/:revision');
     });
 
     it('deletes specific package version', function (done) {
@@ -1511,5 +1514,37 @@ describe('package npm functions', function () {
         .expect('Content-Type', 'application/json; charset=utf-8')
         .expect(200, {"ok": true}, done);
     });
+  });
+});
+
+
+// ==== Test Case
+
+describe("pkg-test - enhancePackage", function () {
+  var sandbox;
+
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+
+  it("should have function", function () {
+    assert.isFunction(pkg.enhancePackage);
+  });
+
+  it("should convert git+http", function () {
+    var pkgMeta = {
+      name : 'test',
+      repository : { url : 'git+https://github.com/test.git' },
+      versions : { "0.0.1" : { name : "pkg", version : "0.0.1" } },
+      "dist-tags" : { latest : "0.0.1" }
+    };
+
+    pkg.enhancePackage(pkgMeta);
+
+    assert.equal(pkgMeta.repository.href, 'https://github.com/test/');
   });
 });
