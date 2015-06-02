@@ -166,7 +166,7 @@ describe('gui', function () {
 
       gui.route(app);
 
-      sinon.assert.calledWith(app.get, '/package/:name');
+      sinon.assert.calledWith(app.get, '/package/:scope(@[^\/]+)?/:name');
     });
 
     it('renders proxied package', function (done) {
@@ -185,7 +185,7 @@ describe('gui', function () {
 
       gui.route(app);
 
-      sinon.assert.calledWith(app.get, '/package/:name/refresh');
+      sinon.assert.calledWith(app.get, '/package/:scope(@[^\/]+)?/:name/refresh');
     });
 
     it('refreshes proxied package', function (done) {
@@ -215,7 +215,7 @@ describe('gui', function () {
 
       gui.route(app);
 
-      sinon.assert.calledWith(app.get, '/package/:name/delete');
+      sinon.assert.calledWith(app.get, '/package/:scope(@[^\/]+)?/:name/delete');
     });
 
     it('deletes package', function (done) {
