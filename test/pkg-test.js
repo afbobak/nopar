@@ -1337,7 +1337,7 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.get, '/:name/:version?');
+      sinon.assert.calledWith(app.get, '/:scope(@[^\/]+)?/:name/:version?');
     });
 
     it('retrieves package meta json', function (done) {
@@ -1367,7 +1367,7 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.put, '/:name');
+      sinon.assert.calledWith(app.put, '/:scope(@[^\/]+)?/:name');
     });
 
     it('publishes full package meta json', function (done) {
@@ -1407,7 +1407,8 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.put, '/:name/-rev/:revision');
+      sinon.assert.calledWith(app.put,
+        '/:scope(@[^\/]+)?/:name/-rev/:revision');
     });
 
     it('shows conflicting package meta json revisions', function (done) {
@@ -1430,7 +1431,8 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.put, '/:name/:version/-tag/:tagname');
+      sinon.assert.calledWith(app.put,
+        '/:scope(@[^\/]+)?/:name/:version/-tag/:tagname');
     });
 
     it('publishes and tags specific version of package', function (done) {
@@ -1455,7 +1457,7 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app.put, '/:name/:tagname');
+      sinon.assert.calledWith(app.put, '/:scope(@[^\/]+)?/:name/:tagname');
     });
 
     it('tags package meta json as text/plain', function (done) {
@@ -1493,7 +1495,8 @@ describe('package npm functions', function () {
 
       pkg.route(app);
 
-      sinon.assert.calledWith(app['delete'], '/:name/-rev/:revision');
+      sinon.assert.calledWith(app['delete'],
+        '/:scope(@[^\/]+)?/:name/-rev/:revision');
     });
 
     it('deletes specific package version', function (done) {
