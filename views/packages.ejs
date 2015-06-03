@@ -19,7 +19,7 @@
            var latest = pkg.versions[pkg["dist-tags"].latest]; %>
          <li class="list-group-item">
           <h3>
-            <a href="/-/package/<%= pkg.path %>"><%= pkgName %></a>
+            <a href="/-/package/<%= pkg.path.replace('%2f', '/') %>"><%= pkgName %></a>
             <small class="text-muted">@<%= latest.version %></small>
             <small class="tags pull-right">
               <% if (pkg["_proxied"]) { %><div class="label label-warning">proxied</div><% } %>
