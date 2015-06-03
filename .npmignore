@@ -8,4 +8,6 @@
 /.latest.id
 /.travis.yml
 /node_modules
+/pkg
 /registry
+/test
