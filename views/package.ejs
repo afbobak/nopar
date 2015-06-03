@@ -22,10 +22,10 @@
         </div>
         <div class="actions btn-group">
          <% if (pkg["_proxied"]) { %>
-         <a class="btn btn-sm btn-link action-refresh" onclick="refreshPackage('<%= pkg.path %>');" href="#">
+         <a class="btn btn-sm btn-link action-refresh" onclick="refreshPackage('<%= pkg.path.replace('%2f', '/') %>');" href="#">
            <span class="glyphicon glyphicon-refresh"></span> Refresh
          </a><% } %>
-         <a class="btn btn-sm btn-link action-delete" onclick="deletePackage('<%= pkg.path %>');" href="#">
+         <a class="btn btn-sm btn-link action-delete" onclick="deletePackage('<%= pkg.path.replace('%2f', '/') %>');" href="#">
            <span class="glyphicon glyphicon-trash"></span> Delete Package
          </a>
         </div>
