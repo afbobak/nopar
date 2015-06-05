@@ -13,6 +13,7 @@
            var pkgName = packages[i];
            var pkg = registry[pkgName];
            var versions = pkg._versions;
+           var outdated = pkg["_outdated"];
            var latest = pkg.versions[pkg["dist-tags"].latest]; %>
       <h2>
         <%= pkgName %><small class="text-muted">@<%= latest.version %></small>
@@ -41,9 +42,9 @@
            <% if (pkg.users) { var users = Object.keys(pkg.users).sort(); %><tr><th>Users</th><td><% for (idx = 0; idx < users.length; idx++) { %><%= users[idx] %> <% }%></td></tr><% } %>
            <% if (pkg.repository) { %><tr><th>Repository</th><td><a href="<%= pkg.repository.href || pkg.repository.url %>"><%= pkg.repository.url %> <span class="glyphicon glyphicon-share"></span></a> (<%= pkg.repository.type %>)</td></tr><% } %>
            <% if (latest.dependencies) { %>
-           <tr><th>Dependencies</th><td><% var deps = Object.keys(latest.dependencies).sort(); for (idx = 0; idx < deps.length; idx++) { %><a href="/-/package/<%= deps[idx] %>"><%= deps[idx] %></a> <% } %></td></tr><% } %>
+           <tr><th>Dependencies</th><td><% var deps = Object.keys(latest.dependencies).sort(); for (idx = 0; idx < deps.length; idx++) { %><a class="<%= (pkg["_outdated"][deps[idx]] ? 'label label-danger' : '') %>" href="/-/package/<%= deps[idx] %>"><%= deps[idx] %><%= (pkg["_outdated"][deps[idx]] ? ('@' + pkg["_outdated"][deps[idx]]) : '') %></a> <% } %></td></tr><% } %>
            <% if (latest.devDependencies) { %>
-           <tr><th>Dependencies (Development)</th><td><% var deps = Object.keys(latest.devDependencies).sort(); for (idx = 0; idx < deps.length; idx++) { %><a href="/-/package/<%= deps[idx] %>"><%= deps[idx] %></a> <% } %></td></tr><% } %>
+           <tr><th>Dependencies (Development)</th><td><% var deps = Object.keys(latest.devDependencies).sort(); for (idx = 0; idx < deps.length; idx++) { %><a class="<%= (pkg["_outdated"][deps[idx]] ? 'label label-danger' : '') %>" href="/-/package/<%= deps[idx] %>"><%= deps[idx] %><%= (pkg["_outdated"][deps[idx]] ? ('@' + pkg["_outdated"][deps[idx]]) : '') %></a> <% } %></td></tr><% } %>
            <% if (pkg["_dependents"] && pkg["_dependents"]["_counts"].runtime) { %>
            <tr><th>Dependents</th><td style="padding: 3px 0 0 8px;">
             <table class="table table-condensed table-hover">
