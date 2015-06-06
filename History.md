@@ -1,3 +1,12 @@
+0.8.0 / 2015-06-06
+==================
+
+  * ff1fe51 fix: copy-paste bug
+  * 64cf35b fix: can't sort non-semver versions
+  * b582105 feat: mark outdated dependents
+  * 318bd4f feat: mark outdated dependencies
+  * 23337de improve: don't publish pkg and test files
+
 0.7.2 / 2015-06-03
 ==================
 

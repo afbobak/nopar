@@ -518,7 +518,10 @@ describe("registry-test - dependents", function () {
   it("should walk packages", function () {
     sandbox.stub(registry, "iteratePackages");
 
-    registry.getDependents("nopar");
+    registry.getDependents({
+      name : "nopar",
+      versions : { "0.0.1" : { name  : "nopar", version : "0.0.1" } }
+    });
 
     sinon.assert.calledOnce(registry.iteratePackages);
   });
@@ -551,18 +554,23 @@ describe("registry-test - dependents", function () {
         }
       }];
 
-      var deps = registry.getDependents("nopar");
+      var deps = registry.getDependents({
+        name : "nopar",
+        versions : { "0.0.1" : { name  : "nopar", version : "0.0.1" } }
+      });
 
-      assert.deepEqual(deps, {
+      assert.deepEqual({
         "_counts" : {
           runtime : 1,
-          dev : 0
+          dev : 0,
+          peer : 0
         },
         "dep1" : {
+          outdated : false,
           version : "0.1.0",
           type    : "runtime"
         }
-      });
+      }, deps);
     });
 
     it("should return devDependencies", function () {
@@ -576,14 +584,19 @@ describe("registry-test - dependents", function () {
         }
       }];
 
-      var deps = registry.getDependents("nopar");
+      var deps = registry.getDependents({
+        name : "nopar",
+        versions : { "0.0.1" : { name  : "nopar", version : "0.0.1" } }
+      });
 
       assert.deepEqual(deps, {
         "_counts" : {
           runtime : 0,
-          dev : 1
+          dev : 1,
+          peer : 0
         },
         "dep1" : {
+          outdated : false,
           version : "0.1.0",
           type    : "dev"
         }
