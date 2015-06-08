@@ -210,6 +210,15 @@ describe('gui', function () {
           done);
     });
 
+    it('routes /package/:name/dist-tags', function () {
+      sandbox.stub(app, 'get');
+
+      gui.route(app);
+
+      sinon.assert.calledWith(app.get,
+        '/package/:scope(@[^\/]+)?/:name/dist-tags');
+    });
+
     it('routes /package/:name/delete', function () {
       sandbox.stub(app, 'get');
 
