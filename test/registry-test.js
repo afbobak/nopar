@@ -12,6 +12,7 @@ var registry = require("../lib/registry");
 var REGISTRY_PATH = "/some/path/registry";
 var OLD_META = {
   pkg : {
+    "dist-tags" : { "latest" : "0.0.1" },
     versions : {
       "0.0.1" : {
         "name"  : "pkg",
@@ -20,6 +21,7 @@ var OLD_META = {
     }
   },
   scopedPkg : {
+    "dist-tags" : { "latest" : "0.0.1" },
     versions : {
       "0.0.1" : {
         "name"  : "@scoped/pkg",
@@ -287,6 +289,12 @@ describe("registry-test - get pkg version", function () {
     assert.isDefined(result._mtime);
     assert.isFunction(result._mtime.getTime);
   });
+
+  it("should not calculate _highestVersion", function () {
+    var result = registry.getPackage("pkg");
+
+    assert.equal(result["_highestVersion"], "0.0.1");
+  });
 });
 
 // ==== Test Case
@@ -520,6 +528,7 @@ describe("registry-test - dependents", function () {
 
     registry.getDependents({
       name : "nopar",
+      "dist-tags" : { "latest" : "0.0.1" },
       versions : { "0.0.1" : { name  : "nopar", version : "0.0.1" } }
     });
 
@@ -556,6 +565,7 @@ describe("registry-test - dependents", function () {
 
       var deps = registry.getDependents({
         name : "nopar",
+        "dist-tags" : { "latest" : "0.0.1" },
         versions : { "0.0.1" : { name  : "nopar", version : "0.0.1" } }
       });
 
@@ -586,6 +596,7 @@ describe("registry-test - dependents", function () {
 
       var deps = registry.getDependents({
         name : "nopar",
+        "dist-tags" : { "latest" : "0.0.1" },
         versions : { "0.0.1" : { name  : "nopar", version : "0.0.1" } }
       });
 
