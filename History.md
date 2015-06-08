@@ -1,3 +1,9 @@
+0.8.1 / 2015-06-08
+==================
+
+  * 6e4ddc3 feat: add support for /-/package/xxx/dist-tags
+  * e2fffb8 fix: be consistent with latest and highest version
+
 0.8.0 / 2015-06-06
 ==================
 
