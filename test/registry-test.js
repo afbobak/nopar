@@ -17,6 +17,10 @@ var OLD_META = {
       "0.0.1" : {
         "name"  : "pkg",
         version : "0.0.1"
+      },
+      "0.0.2" : {
+        "name"  : "pkg",
+        version : "0.0.2"
       }
     }
   },
@@ -265,7 +269,7 @@ describe("registry-test - get pkg version", function () {
   });
 
   it("should return null if package version does not exist", function () {
-    var result = registry.getPackage("pkg", "0.0.2");
+    var result = registry.getPackage("pkg", "0.1.0");
 
     assert(!result);
   });
@@ -290,10 +294,10 @@ describe("registry-test - get pkg version", function () {
     assert.isFunction(result._mtime.getTime);
   });
 
-  it("should not calculate _highestVersion", function () {
+  it("should not calculate _highest-version", function () {
     var result = registry.getPackage("pkg");
 
-    assert.equal(result["_highestVersion"], "0.0.1");
+    assert.equal(result["_highest-version"], "0.0.2");
   });
 });
 
