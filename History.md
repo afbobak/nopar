@@ -1,3 +1,8 @@
+0.8.2 / 2015-06-11
+==================
+
+  * c976f0b feat: display tagged versions, also fix highest version
+
 0.8.1 / 2015-06-08
 ==================
 
