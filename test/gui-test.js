@@ -14,7 +14,7 @@ var server   = require('../lib/server');
 
 var brand = /<a class="navbar-brand" href="\/">NOPAR \/<small>.*<\/small><\/a>/;
 var pkgProxied = require('./registry/proxied/proxied.json');
-var pkgProxiedHeader = /proxied<small class="text-muted">@2.0.0<\/small>/;
+var pkgProxiedHeader = /proxied<small><span>@<\/span><span>2\.0\.0<\/span><\/small>/;
 
 // ==== Test Case
 

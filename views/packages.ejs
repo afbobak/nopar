@@ -20,7 +20,7 @@
          <li class="list-group-item">
           <h3>
             <a href="/-/package/<%= pkg.path.replace('%2f', '/') %>"><%= pkgName %></a>
-            <small class="text-muted">@<%= latest.version %><% if (latest.version !== pkg["_highestVersion"]) { %>/<%= pkg["_highestVersion"] %><% } %></small>
+            <small><span>@</span><span<% if (pkg["_highest-version"]) { %> style="color:black"<% } %>><%= latest.version %></span><% if (pkg["_highest-version"]) { %><span>/<%= pkg["_highest-version"] %></span><% } %></small>
             <small class="tags pull-right">
               <% if (pkg["_proxied"]) { %><div class="label label-warning">proxied</div><% } %>
               <% if (pkg["_local"]) { %><div class="label label-success">local</div><% } %>
