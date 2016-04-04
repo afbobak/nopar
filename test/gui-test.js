@@ -238,7 +238,7 @@ describe('gui', function () {
       request(app)
         .get('/package/proxied/delete')
         .expect('Content-Type', 'text/plain; charset=utf-8')
-        .expect(302, /Found\. Redirecting to \//, done);
+        .expect(302, /.* Redirecting to \//, done);
     });
   });
 });
