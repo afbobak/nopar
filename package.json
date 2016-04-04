@@ -36,18 +36,16 @@
     "express-session": "^1.6.3",
     "marked": "^0.3.2",
     "morgan": "^1.4",
-    "mustache": "^2.0",
-    "semver": "^4.3",
-    "serve-favicon": "^2.0.1",
-    "stylus": "^0.51.1",
-    "winston": "^1.0"
+    "semver": "^5.1.0",
+    "stylus": "^0.54.2",
+    "winston": "^2.2.0"
   },
   "devDependencies": {
-    "chai": "^2.3",
+    "chai": "^3.5.0",
     "jshint": "^2.5",
     "mocha": "^2.2",
     "sinon": "^1.14",
-    "supertest": "^0.15"
+    "supertest": "^1.2.0"
   },
   "engines": {
     "node": ">=0.10.25"
