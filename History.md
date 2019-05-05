@@ -1,3 +1,11 @@
+0.8.5 / 2019-05-05
+==================
+
+  * 0ba6dc0 refactor: use daemonize-process instead of daemonize
+  * e1abb8b fix: regexp for node 0.10/0.12/4.1
+  * 2d80694 chore: bump dependencies and remove unused ones
+  * 747582b fix: RUN_AS->RUNAS
+
 0.8.4 / 2015-06-12
 ==================
 
