@@ -19,15 +19,12 @@ winston.clear();
 // ==== Test Case
 
 describe("settings-test - init", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-    sandbox.stub(registry, 'getMeta');
+    sinon.stub(registry, 'getMeta');
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should get registry meta", function () {
@@ -93,16 +90,12 @@ describe("settings-test - init", function () {
 // ==== Test Case
 
 describe("settings-test - get/set", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, "getMeta");
-    sandbox.stub(registry, "writeMeta");
-    sandbox.stub(registry, "refreshMeta");
-    sandbox.stub(registry, "iteratePackages");
-    sandbox.stub(registry, "setPackage");
+    sinon.stub(registry, "getMeta");
+    sinon.stub(registry, "writeMeta");
+    sinon.stub(registry, "refreshMeta");
+    sinon.stub(registry, "iteratePackages");
+    sinon.stub(registry, "setPackage");
 
     registry.getMeta.returns({
       settings : { "foo" : "bar" }
@@ -111,7 +104,7 @@ describe("settings-test - get/set", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should get undefined value", function () {
@@ -142,13 +135,9 @@ describe("settings-test - get/set", function () {
 // ==== Test Case
 
 describe("settings-test - render", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
     this.settings = {
-      get      : sandbox.stub(),
+      get      : sinon.stub(),
       defaults : {
         hostname : "some.host"
       }
@@ -158,11 +147,11 @@ describe("settings-test - render", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should render 'settings'", function () {
-    var spy = sandbox.spy();
+    var spy = sinon.spy();
 
     this.renderFn(this.req, {render: spy});
 
@@ -172,7 +161,7 @@ describe("settings-test - render", function () {
   it("should use settings data", function () {
     this.settings.get.returns("");
     this.settings.get.withArgs("hostname").returns("localhost");
-    var spy = sandbox.spy();
+    var spy = sinon.spy();
 
     this.renderFn(this.req, {render: spy});
 
@@ -186,7 +175,7 @@ describe("settings-test - render", function () {
   it("should nullify settings with default values", function () {
     this.settings.get.returns("");
     this.settings.get.withArgs("hostname").returns("some.host");
-    var spy = sandbox.spy();
+    var spy = sinon.spy();
 
     this.renderFn(this.req, {render: spy});
 
@@ -201,21 +190,17 @@ describe("settings-test - render", function () {
 // ==== Test Case
 
 describe("settings-test - save", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, "getMeta");
-    sandbox.stub(registry, "writeMeta");
-    sandbox.stub(registry, "refreshMeta");
-    sandbox.stub(registry, "iteratePackages");
-    sandbox.stub(registry, "setPackage");
+    sinon.stub(registry, "getMeta");
+    sinon.stub(registry, "writeMeta");
+    sinon.stub(registry, "refreshMeta");
+    sinon.stub(registry, "iteratePackages");
+    sinon.stub(registry, "setPackage");
 
     registry.getMeta.returns({});
     this.settings = {
-      get      : sandbox.stub(),
-      set      : sandbox.stub(),
+      get      : sinon.stub(),
+      set      : sinon.stub(),
       defaults : {
         hostname : "some.host"
       }
@@ -224,11 +209,11 @@ describe("settings-test - save", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should render 'settings'", function () {
-    var spy = sandbox.spy();
+    var spy = sinon.spy();
 
     this.saveFn({
       settingsStore : this.settings,
@@ -240,7 +225,7 @@ describe("settings-test - save", function () {
   });
 
   it("should set new settings", function () {
-    sandbox.stub(attachment, "refreshMeta");
+    sinon.stub(attachment, "refreshMeta");
 
     this.saveFn({
       settingsStore : this.settings,
@@ -253,7 +238,7 @@ describe("settings-test - save", function () {
         ignoreCert  : true,
         userAgent   : "bla"
       }
-    }, {render: sandbox.spy()});
+    }, {render: sinon.spy()});
 
     sinon.assert.called(this.settings.set);
     sinon.assert.calledWith(this.settings.set, "hostname", "localhost");
@@ -276,7 +261,7 @@ describe("settings-test - save", function () {
         hostname     : "localhost",
         port         : "3333"
       }
-    }, {render: sandbox.spy()});
+    }, {render: sinon.spy()});
 
     sinon.assert.notCalled(registry.iteratePackages);
   });
@@ -287,7 +272,7 @@ describe("settings-test - save", function () {
       body : {
         hostname : "localhost"
       }
-    }, { render: sandbox.spy() });
+    }, { render: sinon.spy() });
 
     sinon.assert.calledOnce(registry.writeMeta);
   });
@@ -296,22 +281,18 @@ describe("settings-test - save", function () {
 // ==== Test Case
 
 describe("settings-test - middleware", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, "getMeta");
-    sandbox.stub(registry, "writeMeta");
-    sandbox.stub(registry, "refreshMeta");
-    sandbox.stub(registry, "iteratePackages");
-    sandbox.stub(registry, "setPackage");
+    sinon.stub(registry, "getMeta");
+    sinon.stub(registry, "writeMeta");
+    sinon.stub(registry, "refreshMeta");
+    sinon.stub(registry, "iteratePackages");
+    sinon.stub(registry, "setPackage");
 
     registry.getMeta.returns({});
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it('has function', function() {
@@ -327,7 +308,7 @@ describe("settings-test - middleware", function () {
   });
 
   it('initializes settings and refreshes registry', function() {
-    sandbox.stub(settings, 'init');
+    sinon.stub(settings, 'init');
 
     settings.middleware(registry);
 
@@ -352,15 +333,13 @@ describe("settings-test - middleware", function () {
 // ==== Test Case
 
 describe('settings gui', function () {
-  var sandbox, app;
+  var app;
   var registryPath = path.join(__dirname, 'registry');
 
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, 'refreshMeta');
-    sandbox.stub(registry, 'writeMeta');
-    sandbox.stub(registry, 'getMeta').returns({
+    sinon.stub(registry, 'refreshMeta');
+    sinon.stub(registry, 'writeMeta');
+    sinon.stub(registry, 'getMeta').returns({
       settings : { registryPath : registryPath }
     });
 
@@ -371,7 +350,7 @@ describe('settings gui', function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it('routes /settings', function () {
@@ -380,9 +359,9 @@ describe('settings gui', function () {
       post : sinon.stub()
     };
     route.get.returns(route);
-    sandbox.stub(app, 'route').returns(route);
-    sandbox.stub(settings, 'render').returns('render');
-    sandbox.stub(settings, 'save').returns('save');
+    sinon.stub(app, 'route').returns(route);
+    sinon.stub(settings, 'render').returns('render');
+    sinon.stub(settings, 'save').returns('save');
 
     settings.route(app);
 

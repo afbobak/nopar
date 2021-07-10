@@ -1,11 +1,11 @@
 <!DOCTYPE html><% var active_page = "results"; %>
-<% include snippets/html_head %>
+<%- include('snippets/html_head') %>
   <body>
-    <% include snippets/chromeframe %>
-    <% include snippets/navbar %>
+    <%- include('snippets/chromeframe') %>
+    <%- include('snippets/navbar', {active_page: active_page, version: version}) %>
 
     <div id="content" class="container">
-      <% include snippets/alert %>
+      <%- include('snippets/alert') %>
 
       <h1>Search Results</h1>
 
@@ -40,6 +40,6 @@
       </div>
     </div>
 
-    <% include snippets/js %>
+    <%- include('snippets/js') %>
   </body>
 </html>

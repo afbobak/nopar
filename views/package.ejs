@@ -1,11 +1,11 @@
 <!DOCTYPE html><% var active_page = "results"; %>
-<% include snippets/html_head %>
+<%- include('snippets/html_head') %>
   <body>
-    <% include snippets/chromeframe %>
-    <% include snippets/navbar %>
+    <%- include('snippets/chromeframe') %>
+    <%- include('snippets/navbar', {active_page: active_page, version: version}) %>
 
     <div id="content" class="container">
-      <% include snippets/alert %>
+      <%- include('snippets/alert') %>
 
       <% var packages = Object.keys(registry).sort();
          for (var i = 0; i < packages.length; i++) {
@@ -144,7 +144,7 @@
   <% } %>
     </div>
 
-    <% include snippets/js %>
+    <%- include('snippets/js') %>
     <script>
         function deletePackage(packageName) {
           bootbox.dialog({

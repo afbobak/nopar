@@ -19,22 +19,18 @@ var pkgProxied = require('./registry/proxied/proxied.json');
 // ==== Test Case
 
 describe("pkg-test - getPackage", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
 
     this.res = {
-      status : sandbox.stub(),
+      status : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -43,7 +39,7 @@ describe("pkg-test - getPackage", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -144,28 +140,24 @@ describe("pkg-test - getPackage", function () {
 // ==== Test Case
 
 describe("pkg-test - getPackage proxied", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
+    sinon.stub(http, "get").returns({on : sinon.spy()});
+    sinon.stub(attachment, "refreshMeta");
 
-    sandbox.stub(http, "get").returns({on : sandbox.spy()});
-    sandbox.stub(attachment, "refreshMeta");
-
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
     var get = this.settingsStore.get;
     get.withArgs("forwarder.registry").returns("http://u.url:8888/the/path/");
     get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
 
     this.res = {
-      status : sandbox.stub(),
+      status : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -174,7 +166,7 @@ describe("pkg-test - getPackage proxied", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should get full package JSON from forwarder", function () {
@@ -276,7 +268,7 @@ describe("pkg-test - getPackage proxied", function () {
     /*jslint nomen: true*/
     var get = this.settingsStore.get;
     get.withArgs("forwarder.autoForward").returns(true);
-    var on = sandbox.stub();
+    var on = sinon.stub();
     var pkgMeta = {
       name     : "fwdpkg",
       _proxied : true,
@@ -302,7 +294,7 @@ describe("pkg-test - getPackage proxied", function () {
     }, this.res);
     http.get["yield"]({
       statusCode  : 200,
-      setEncoding : sandbox.spy(),
+      setEncoding : sinon.spy(),
       on          : on
     });
 
@@ -312,7 +304,7 @@ describe("pkg-test - getPackage proxied", function () {
   });
 
   it("should catch error events from http", function () {
-    var spy = sandbox.spy();
+    var spy = sinon.spy();
     http.get.returns({
       on : spy
     });
@@ -333,7 +325,7 @@ describe("pkg-test - getPackage proxied", function () {
   it("should catch syntax errors from JSON.parse when receiving invalid metadata", function () {
     var get = this.settingsStore.get;
     get.withArgs("forwarder.autoForward").returns(true);
-    var on = sandbox.stub();
+    var on = sinon.stub();
     var pkgMeta = 'Invalid JSON';
     on.withArgs("data").yields(pkgMeta);
     on.withArgs("end").yields();
@@ -349,7 +341,7 @@ describe("pkg-test - getPackage proxied", function () {
     assert.doesNotThrow(function () {
       http.get["yield"]({
         statusCode  : 200,
-        setEncoding : sandbox.spy(),
+        setEncoding : sinon.spy(),
         on          : on
       });
     }, SyntaxError);
@@ -359,29 +351,25 @@ describe("pkg-test - getPackage proxied", function () {
 // ==== Test Case
 
 describe("pkg-test - publishFull", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
     /*jslint nomen: true*/
-    sandbox.stub(attachment, "refreshMeta");
-    sandbox.stub(attachment, "skimTarballs", function (settings, pkgMeta, cb) {
+    sinon.stub(attachment, "refreshMeta");
+    sinon.stub(attachment, "skimTarballs").callsFake(function (settings, pkgMeta, cb) {
       delete pkgMeta._attachments;
       cb();
     });
 
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
 
     this.res = {
-      status : sandbox.stub(),
+      status : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -390,7 +378,7 @@ describe("pkg-test - publishFull", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have functions", function () {
@@ -896,24 +884,20 @@ describe("pkg-test - publishFull", function () {
 // ==== Test Case
 
 describe("pkg-test - publish", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
+    sinon.stub(attachment, "refreshMeta");
 
-    sandbox.stub(attachment, "refreshMeta");
-
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
 
     this.res = {
-      status : sandbox.stub(),
+      status : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -922,7 +906,7 @@ describe("pkg-test - publish", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -1090,22 +1074,18 @@ describe("pkg-test - publish", function () {
 // ==== Test Case
 
 describe("pkg-test - tag", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
 
     this.res = {
-      status : sandbox.stub(),
+      status : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -1114,7 +1094,7 @@ describe("pkg-test - tag", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
     it("should have function", function () {
@@ -1161,25 +1141,21 @@ describe("pkg-test - tag", function () {
 // ==== Test Case
 
 describe("pkg-test - unpublish", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
+    sinon.stub(fs, "unlinkSync");
+    sinon.stub(fs, "rmdirSync");
 
-    sandbox.stub(fs, "unlinkSync");
-    sandbox.stub(fs, "rmdirSync");
-
-    sandbox.stub(registry, 'getPackage');
-    sandbox.stub(registry, 'removePackage');
+    sinon.stub(registry, 'getPackage');
+    sinon.stub(registry, 'removePackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
 
     this.res = {
-      status : sandbox.stub(),
+      status : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -1188,7 +1164,7 @@ describe("pkg-test - unpublish", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -1197,7 +1173,7 @@ describe("pkg-test - unpublish", function () {
 
   it("should delete package meta, attachments and folder", function () {
     this.settingsStore.get.returns("/path");
-    sandbox.stub(fs, "existsSync").
+    sinon.stub(fs, "existsSync").
       withArgs("/path/test/test-0.0.1-dev.tgz").returns(true);
     var pkgMeta = {
       name     : "test",
@@ -1234,26 +1210,22 @@ describe("pkg-test - unpublish", function () {
 // ==== Test Case
 
 describe("pkg-test - refresh", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(http, "get").returns({on : sandbox.spy()});
-    sandbox.stub(attachment, "refreshMeta");
+    sinon.stub(http, "get").returns({on : sinon.spy()});
+    sinon.stub(attachment, "refreshMeta");
     this.res = {
-      status : sandbox.stub(),
+      status : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
 
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
     var get = this.settingsStore.get;
     get.withArgs("forwarder.registry").returns("http://u.url:8888/the/path/");
@@ -1263,7 +1235,7 @@ describe("pkg-test - refresh", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -1306,18 +1278,16 @@ describe("pkg-test - refresh", function () {
 // ==== Test Case
 
 describe('package npm functions', function () {
-  var sandbox, app, pkgMeta;
+  var app, pkgMeta;
   var registryPath = path.join(__dirname, 'registry');
 
   beforeEach(function () {
     pkgMeta = JSON.parse(JSON.stringify(pkgProxied));
     pkgMeta['_mtime'] = new Date();
 
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, 'init');
-    sandbox.stub(registry, 'refreshMeta');
-    sandbox.stub(registry, 'getMeta').returns({
+    sinon.stub(registry, 'init');
+    sinon.stub(registry, 'refreshMeta');
+    sinon.stub(registry, 'getMeta').returns({
       settings : { registryPath : registryPath }
     });
 
@@ -1328,12 +1298,12 @@ describe('package npm functions', function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   describe('#get', function () {
     it('routes /:name/:version?', function () {
-      sandbox.stub(app, 'get');
+      sinon.stub(app, 'get');
 
       pkg.route(app);
 
@@ -1363,7 +1333,7 @@ describe('package npm functions', function () {
 
   describe('#publish', function () {
     it('routes /:name', function () {
-      sandbox.stub(app, 'put');
+      sinon.stub(app, 'put');
 
       pkg.route(app);
 
@@ -1371,8 +1341,8 @@ describe('package npm functions', function () {
     });
 
     it('publishes full package meta json', function (done) {
-      sandbox.stub(registry, 'getPackage');
-      sandbox.stub(registry, 'setPackage');
+      sinon.stub(registry, 'getPackage');
+      sinon.stub(registry, 'setPackage');
 
       pkg.route(app);
 
@@ -1385,8 +1355,8 @@ describe('package npm functions', function () {
     });
 
     it('publishes full scoped package meta json', function (done) {
-      sandbox.stub(registry, 'getPackage');
-      sandbox.stub(registry, 'setPackage');
+      sinon.stub(registry, 'getPackage');
+      sinon.stub(registry, 'setPackage');
 
       var scopedProxied = require('./registry/@scoped/proxied/proxied.json');
       pkgMeta = JSON.parse(JSON.stringify(scopedProxied));
@@ -1403,7 +1373,7 @@ describe('package npm functions', function () {
     });
 
     it('routes /:name/-rev/:revision', function () {
-      sandbox.stub(app, 'put');
+      sinon.stub(app, 'put');
 
       pkg.route(app);
 
@@ -1412,8 +1382,8 @@ describe('package npm functions', function () {
     });
 
     it('shows conflicting package meta json revisions', function (done) {
-      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
-      sandbox.stub(registry, 'setPackage');
+      sinon.stub(registry, 'getPackage').returns(pkgMeta);
+      sinon.stub(registry, 'setPackage');
 
       pkg.route(app);
 
@@ -1427,7 +1397,7 @@ describe('package npm functions', function () {
     });
 
     it('routes /:name/:version/-tag/:tagname', function () {
-      sandbox.stub(app, 'put');
+      sinon.stub(app, 'put');
 
       pkg.route(app);
 
@@ -1436,9 +1406,9 @@ describe('package npm functions', function () {
     });
 
     it('publishes and tags specific version of package', function (done) {
-      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
-      sandbox.stub(registry, 'setPackage');
-      sandbox.stub(attachment, 'refreshMeta');
+      sinon.stub(registry, 'getPackage').returns(pkgMeta);
+      sinon.stub(registry, 'setPackage');
+      sinon.stub(attachment, 'refreshMeta');
 
       pkg.route(app);
 
@@ -1453,7 +1423,7 @@ describe('package npm functions', function () {
 
   describe('#tag', function () {
     it('routes /:name/:tagname', function () {
-      sandbox.stub(app, 'put');
+      sinon.stub(app, 'put');
 
       pkg.route(app);
 
@@ -1461,8 +1431,8 @@ describe('package npm functions', function () {
     });
 
     it('tags package meta json as text/plain', function (done) {
-      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
-      sandbox.stub(registry, 'setPackage');
+      sinon.stub(registry, 'getPackage').returns(pkgMeta);
+      sinon.stub(registry, 'setPackage');
 
       pkg.route(app);
 
@@ -1475,8 +1445,8 @@ describe('package npm functions', function () {
     });
 
     it('tags package meta json as application/json', function (done) {
-      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
-      sandbox.stub(registry, 'setPackage');
+      sinon.stub(registry, 'getPackage').returns(pkgMeta);
+      sinon.stub(registry, 'setPackage');
 
       pkg.route(app);
 
@@ -1491,7 +1461,7 @@ describe('package npm functions', function () {
 
   describe('#unpublish', function () {
     it('routes /:name/-rev/:revision', function () {
-      sandbox.stub(app, 'delete');
+      sinon.stub(app, 'delete');
 
       pkg.route(app);
 
@@ -1500,11 +1470,11 @@ describe('package npm functions', function () {
     });
 
     it('deletes specific package version', function (done) {
-      sandbox.stub(fs, 'existsSync').returns(true);
-      sandbox.stub(fs, 'unlinkSync');
-      sandbox.stub(fs, 'rmdirSync');
-      sandbox.stub(registry, 'getPackage').returns(pkgMeta);
-      sandbox.stub(registry, 'removePackage');
+      sinon.stub(fs, 'existsSync').returns(true);
+      sinon.stub(fs, 'unlinkSync');
+      sinon.stub(fs, 'rmdirSync');
+      sinon.stub(registry, 'getPackage').returns(pkgMeta);
+      sinon.stub(registry, 'removePackage');
 
       pkg.route(app);
 
@@ -1521,14 +1491,8 @@ describe('package npm functions', function () {
 // ==== Test Case
 
 describe("pkg-test - enhancePackage", function () {
-  var sandbox;
-
-  beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-  });
-
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {

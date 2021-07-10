@@ -12,19 +12,15 @@ var server   = require('../lib/server');
 // ==== Test Case
 
 describe('server', function () {
-  var sandbox, app;
-
-  beforeEach(function () {
-    sandbox  = sinon.sandbox.create();
-  });
+  var app;
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   describe('views', function () {
     beforeEach(function () {
-      sandbox.stub(registry, 'refreshMeta').returns({});
+      sinon.stub(registry, 'refreshMeta').returns({});
       app = server.createApp({
         registryPath : './registry',
         loglevel     : 'silent'

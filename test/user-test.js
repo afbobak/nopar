@@ -11,15 +11,13 @@ var server   = require('../lib/server');
 var user     = require("../lib/user");
 
 describe('user', function () {
-  var sandbox, app;
+  var app;
   var registryPath = path.join(__dirname, 'registry');
 
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, 'refreshMeta');
-    sandbox.stub(registry, 'writeMeta');
-    sandbox.stub(registry, 'getMeta').returns({
+    sinon.stub(registry, 'refreshMeta');
+    sinon.stub(registry, 'writeMeta');
+    sinon.stub(registry, 'getMeta').returns({
       settings : { registryPath : registryPath }
     });
 
@@ -30,12 +28,12 @@ describe('user', function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   describe('#update', function () {
     it('routes /-/user/:couchuser', function () {
-      sandbox.stub(app, 'put');
+      sinon.stub(app, 'put');
 
       user.route(app);
 

@@ -19,18 +19,16 @@ var pkgProxiedHeader = /proxied<small><span>@<\/span><span>2\.0\.0<\/span><\/sma
 // ==== Test Case
 
 describe('gui', function () {
-  var sandbox, app, pkgMeta;
+  var app, pkgMeta;
   var registryPath = path.join(__dirname, 'registry');
 
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
     pkgMeta = JSON.parse(JSON.stringify(pkgProxied));
     pkgMeta['_mtime'] = new Date();
 
-    sandbox.stub(registry, 'refreshMeta');
-    sandbox.stub(registry, 'writeMeta');
-    sandbox.stub(registry, 'getMeta').returns({
+    sinon.stub(registry, 'refreshMeta');
+    sinon.stub(registry, 'writeMeta');
+    sinon.stub(registry, 'getMeta').returns({
       count   : 123,
       local   : 23,
       proxied : 100,
@@ -44,12 +42,12 @@ describe('gui', function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   describe('routes public files from', function () {
     it('/', function () {
-      sandbox.stub(app, 'use');
+      sinon.stub(app, 'use');
 
       gui.route(app);
 
@@ -57,7 +55,7 @@ describe('gui', function () {
     });
 
     it('/css', function () {
-      sandbox.stub(app, 'use');
+      sinon.stub(app, 'use');
 
       gui.route(app);
 
@@ -78,7 +76,7 @@ describe('gui', function () {
       it('javascript', function (done) {
         request(app)
           .get('/js/bootstrap.js')
-          .expect('Content-Type', 'application/javascript')
+          .expect('Content-Type', 'application/javascript; charset=UTF-8')
           .expect(200, /Bootstrap/, done);
       });
 
@@ -92,7 +90,7 @@ describe('gui', function () {
       it('fonts', function (done) {
         request(app)
           .get('/fonts/glyphicons-halflings-regular.woff')
-          .expect('Content-Type', 'application/font-woff')
+          .expect('Content-Type', 'font/woff')
           .expect(200, done);
       });
     });
@@ -100,7 +98,7 @@ describe('gui', function () {
 
   describe('index page', function () {
     it('routes GET /', function () {
-      sandbox.stub(app, 'get');
+      sinon.stub(app, 'get');
 
       gui.routeIndex(app);
 
@@ -119,7 +117,7 @@ describe('gui', function () {
 
   describe('packages pages', function () {
     it('routes /packages/:filter?', function () {
-      sandbox.stub(app, 'get');
+      sinon.stub(app, 'get');
 
       gui.route(app);
 
@@ -127,7 +125,7 @@ describe('gui', function () {
     });
 
     it('defaults to all packages', function (done) {
-      sandbox.stub(fs, 'readdirSync').returns([]);
+      sinon.stub(fs, 'readdirSync').returns([]);
 
       gui.route(app);
 
@@ -138,7 +136,7 @@ describe('gui', function () {
     });
 
     it('renders list of local packages', function (done) {
-      sandbox.stub(fs, 'readdirSync').returns([]);
+      sinon.stub(fs, 'readdirSync').returns([]);
 
       gui.route(app);
 
@@ -149,7 +147,7 @@ describe('gui', function () {
     });
 
     it('renders list of proxied packages', function (done) {
-      sandbox.stub(fs, 'readdirSync').returns([]);
+      sinon.stub(fs, 'readdirSync').returns([]);
 
       gui.route(app);
 
@@ -162,7 +160,7 @@ describe('gui', function () {
 
   describe('package pages', function () {
     it('routes /package/:name', function () {
-      sandbox.stub(app, 'get');
+      sinon.stub(app, 'get');
 
       gui.route(app);
 
@@ -170,7 +168,7 @@ describe('gui', function () {
     });
 
     it('renders proxied package', function (done) {
-      sandbox.stub(registry, 'getDependents').returns(null);
+      sinon.stub(registry, 'getDependents').returns(null);
 
       gui.route(app);
 
@@ -181,7 +179,7 @@ describe('gui', function () {
     });
 
     it('routes /package/:name/refresh', function () {
-      sandbox.stub(app, 'get');
+      sinon.stub(app, 'get');
 
       gui.route(app);
 
@@ -189,14 +187,14 @@ describe('gui', function () {
     });
 
     it('refreshes proxied package', function (done) {
-      sandbox.stub(registry, 'setPackage');
-      sandbox.stub(registry, 'getDependents').returns(null);
+      sinon.stub(registry, 'setPackage');
+      sinon.stub(registry, 'getDependents').returns(null);
       var res = {
         statusCode  : 200,
         setEncoding : sinon.stub(),
         on          : sinon.stub()
       };
-      sandbox.stub(https, 'get').yields(res);
+      sinon.stub(https, 'get').yields(res);
       https.get.returns({ on : sinon.stub() });
       res.on.withArgs('data').yields(JSON.stringify(pkgMeta));
       res.on.withArgs('end').yields();
@@ -211,7 +209,7 @@ describe('gui', function () {
     });
 
     it('routes /package/:name/dist-tags', function () {
-      sandbox.stub(app, 'get');
+      sinon.stub(app, 'get');
 
       gui.route(app);
 
@@ -220,7 +218,7 @@ describe('gui', function () {
     });
 
     it('routes /package/:name/delete', function () {
-      sandbox.stub(app, 'get');
+      sinon.stub(app, 'get');
 
       gui.route(app);
 
@@ -228,10 +226,10 @@ describe('gui', function () {
     });
 
     it('deletes package', function (done) {
-      sandbox.stub(registry, 'removePackage');
-      sandbox.stub(fs, 'rmdirSync');
-      sandbox.stub(fs, 'existsSync').returns(true);
-      sandbox.stub(fs, 'unlinkSync');
+      sinon.stub(registry, 'removePackage');
+      sinon.stub(fs, 'rmdirSync');
+      sinon.stub(fs, 'existsSync').returns(true);
+      sinon.stub(fs, 'unlinkSync');
 
       gui.route(app);
 

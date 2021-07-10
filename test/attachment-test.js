@@ -17,23 +17,19 @@ var server     = require('../lib/server');
 // ==== Test Case
 
 describe("attachment-test - download", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
 
     this.res = {
-      download : sandbox.stub(),
-      status   : sandbox.stub(),
+      download : sinon.stub(),
+      status   : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -41,7 +37,7 @@ describe("attachment-test - download", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -81,7 +77,7 @@ describe("attachment-test - download", function () {
     };
     registry.getPackage.returns(pkgMeta);
     this.settingsStore.get.returns("/registryPath");
-    sandbox.stub(fs, "existsSync").returns(true);
+    sinon.stub(fs, "existsSync").returns(true);
 
     this.downloadFn({
       settingsStore : this.settingsStore,
@@ -100,7 +96,7 @@ describe("attachment-test - download", function () {
   });
 
   it("should not return invalid files", function () {
-    sandbox.stub(fs, "existsSync");
+    sinon.stub(fs, "existsSync");
 
     // http://localhost:5984/abstrakt-npm-proxy/-/..%2Fregistry.json
     this.downloadFn({
@@ -144,10 +140,10 @@ describe("attachment-test - download", function () {
     registry.getPackage.returns(pkgMeta);
     var get = this.settingsStore.get;
     get.withArgs("registryPath").returns("/path");
-    sandbox.stub(http, "get").returns({
-      on : sandbox.spy()
+    sinon.stub(http, "get").returns({
+      on : sinon.spy()
     });
-    sandbox.stub(fs, "existsSync").returns(false);
+    sinon.stub(fs, "existsSync").returns(false);
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
@@ -192,11 +188,11 @@ describe("attachment-test - download", function () {
     get.withArgs("forwarder.autoForward").returns(true);
     get.withArgs("forwarder.ignoreCert").returns(true);
     get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
-    sandbox.stub(http, "get");
-    sandbox.stub(https, "get").returns({
-      on : sandbox.spy()
+    sinon.stub(http, "get");
+    sinon.stub(https, "get").returns({
+      on : sinon.spy()
     });
-    sandbox.stub(fs, "existsSync").returns(false);
+    sinon.stub(fs, "existsSync").returns(false);
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
@@ -248,11 +244,11 @@ describe("attachment-test - download", function () {
     get.withArgs("forwarder.autoForward").returns(true);
     get.withArgs("forwarder.ignoreCert").returns(false);
     get.withArgs("forwarder.userAgent").returns("nopar/0.0.0-test");
-    var spy = sandbox.spy();
-    sandbox.stub(http, "get").returns({
+    var spy = sinon.spy();
+    sinon.stub(http, "get").returns({
       on : spy
     });
-    sandbox.stub(fs, "existsSync").returns(false);
+    sinon.stub(fs, "existsSync").returns(false);
     fs.existsSync.withArgs("/path/test").returns(true);
 
     this.downloadFn({
@@ -272,18 +268,14 @@ describe("attachment-test - download", function () {
 // ==== Test Case
 
 describe("attachment-test - attach", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
+    sinon.stub(fs, "createWriteStream");
 
-    sandbox.stub(fs, "createWriteStream");
-
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
     this.settingsStore.get.withArgs("registryPath").returns("/path");
 
@@ -297,13 +289,13 @@ describe("attachment-test - attach", function () {
         attachment : "test.tgz"
       },
       originalUrl : "/test",
-      pipe        : sandbox.stub(),
-      on          : sandbox.stub()
+      pipe        : sinon.stub(),
+      on          : sinon.stub()
     };
     this.res = {
-      status   : sandbox.stub(),
+      status   : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -312,7 +304,7 @@ describe("attachment-test - attach", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -336,8 +328,8 @@ describe("attachment-test - attach", function () {
   });
 
   it("should create path if it doesn't exist", function () {
-    sandbox.stub(fs, "existsSync").returns(false);
-    sandbox.stub(fs, "mkdirSync");
+    sinon.stub(fs, "existsSync").returns(false);
+    sinon.stub(fs, "mkdirSync");
 
     this.attachFn(this.req, this.res);
     this.req.on.yields();
@@ -347,8 +339,8 @@ describe("attachment-test - attach", function () {
   });
 
   it("should create scoped path if it doesn't exist", function () {
-    sandbox.stub(fs, "existsSync").returns(false);
-    sandbox.stub(fs, "mkdirSync");
+    sinon.stub(fs, "existsSync").returns(false);
+    sinon.stub(fs, "mkdirSync");
 
     this.req.params.name = '@scoped/test';
 
@@ -361,7 +353,7 @@ describe("attachment-test - attach", function () {
   });
 
   it("should create write stream and pipe to it", function () {
-    sandbox.stub(fs, "existsSync").returns(true);
+    sinon.stub(fs, "existsSync").returns(true);
     fs.createWriteStream.returns("MY_FD");
 
     this.attachFn(this.req, this.res);
@@ -377,7 +369,7 @@ describe("attachment-test - attach", function () {
   });
 
   it("should create scoped write stream and pipe to it", function () {
-    sandbox.stub(fs, "existsSync").returns(true);
+    sinon.stub(fs, "existsSync").returns(true);
     fs.createWriteStream.returns("MY_FD");
 
     this.req.params.name = '@scoped/test';
@@ -399,12 +391,8 @@ describe("attachment-test - attach", function () {
 // ==== Test Case
 
 describe("attachment-test - skimTarballs", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(fs, "writeFile").yields();
+    sinon.stub(fs, "writeFile").yields();
 
     var tarball = new Buffer("I'm a tarball");
     this.tarballBase64 = tarball.toString('base64');
@@ -450,13 +438,13 @@ describe("attachment-test - skimTarballs", function () {
     };
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
     this.settingsStore.get.withArgs("registryPath").returns("/path");
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -464,7 +452,7 @@ describe("attachment-test - skimTarballs", function () {
   });
 
   it("should do nothing with no attachments", function () {
-    var callback = sandbox.spy();
+    var callback = sinon.spy();
 
     attachment.skimTarballs(this.settingsStore, {}, callback);
 
@@ -473,10 +461,10 @@ describe("attachment-test - skimTarballs", function () {
   });
 
   it("should create path if it doesn't exist", function () {
-    sandbox.stub(fs, "existsSync").returns(false);
-    sandbox.stub(fs, "mkdirSync");
+    sinon.stub(fs, "existsSync").returns(false);
+    sinon.stub(fs, "mkdirSync");
 
-    var callback = sandbox.spy();
+    var callback = sinon.spy();
 
     attachment.skimTarballs(this.settingsStore, this.pkgMeta, callback);
 
@@ -487,10 +475,10 @@ describe("attachment-test - skimTarballs", function () {
   });
 
   it("should create scoped path if it doesn't exist", function () {
-    sandbox.stub(fs, "existsSync").returns(false);
-    sandbox.stub(fs, "mkdirSync");
+    sinon.stub(fs, "existsSync").returns(false);
+    sinon.stub(fs, "mkdirSync");
 
-    var callback = sandbox.spy();
+    var callback = sinon.spy();
 
     attachment.skimTarballs(this.settingsStore, this.scopedMeta, callback);
 
@@ -502,9 +490,9 @@ describe("attachment-test - skimTarballs", function () {
   });
 
   it("should write tarball to disk", function () {
-    sandbox.stub(fs, "existsSync").returns(true);
+    sinon.stub(fs, "existsSync").returns(true);
 
-    var callback = sandbox.spy();
+    var callback = sinon.spy();
 
     attachment.skimTarballs(this.settingsStore, this.pkgMeta, callback);
 
@@ -521,9 +509,9 @@ describe("attachment-test - skimTarballs", function () {
   });
 
   it("should write tarball to disk", function () {
-    sandbox.stub(fs, "existsSync").returns(true);
+    sinon.stub(fs, "existsSync").returns(true);
 
-    var callback = sandbox.spy();
+    var callback = sinon.spy();
 
     attachment.skimTarballs(this.settingsStore, this.scopedMeta, callback);
 
@@ -541,8 +529,8 @@ describe("attachment-test - skimTarballs", function () {
 
   it("should not write tarballs that have no attached data", function () {
     /*jslint nomen: true */
-    sandbox.stub(fs, "existsSync").returns(true);
-    var callback = sandbox.spy();
+    sinon.stub(fs, "existsSync").returns(true);
+    var callback = sinon.spy();
     delete this.pkgMeta._attachments["test-0.0.1.tgz"].data;
 
     attachment.skimTarballs(this.settingsStore, this.pkgMeta, callback);
@@ -555,15 +543,11 @@ describe("attachment-test - skimTarballs", function () {
 // ==== Test Case
 
 describe("attachment-test - detach", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
+    sinon.stub(fs, "unlinkSync");
 
-    sandbox.stub(fs, "unlinkSync");
-
-    sandbox.stub(registry, 'setPackage');
-    sandbox.stub(registry, 'getPackage');
+    sinon.stub(registry, 'setPackage');
+    sinon.stub(registry, 'getPackage');
     registry.getPackage.returns({
       "name" : "test",
       "versions" : {
@@ -576,7 +560,7 @@ describe("attachment-test - detach", function () {
     });
 
     this.settingsStore = {
-      get : sandbox.stub()
+      get : sinon.stub()
     };
     this.settingsStore.get.withArgs("registryPath").returns("/path");
 
@@ -589,9 +573,9 @@ describe("attachment-test - detach", function () {
       originalUrl : "/test"
     };
     this.res = {
-      status   : sandbox.stub(),
+      status   : sinon.stub(),
     };
-    this.json = sandbox.stub();
+    this.json = sinon.stub();
     this.res.status.returns({
       json : this.json
     });
@@ -600,7 +584,7 @@ describe("attachment-test - detach", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -608,7 +592,7 @@ describe("attachment-test - detach", function () {
   });
 
   it("should delete attachment", function () {
-    sandbox.stub(fs, "existsSync").returns(true);
+    sinon.stub(fs, "existsSync").returns(true);
 
     this.detachFn(this.req, this.res);
 
@@ -638,18 +622,12 @@ describe("attachment-test - detach", function () {
 // ==== Test Case
 
 describe("attachment-test - refreshMeta", function () {
-  var sandbox;
-
-  beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-  });
-
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it('create cached flag attachment meta data', function () {
-    sandbox.stub(fs, 'existsSync').returns(true);
+    sinon.stub(fs, 'existsSync').returns(true);
     var settings = {
       get : sinon.stub().returns('/some/registryPath')
     };
@@ -672,7 +650,7 @@ describe("attachment-test - refreshMeta", function () {
   });
 
   it('create scoped cached flag attachment meta data', function () {
-    sandbox.stub(fs, 'existsSync').returns(true);
+    sinon.stub(fs, 'existsSync').returns(true);
     var settings = {
       get : sinon.stub().returns('/some/registryPath')
     };
@@ -698,15 +676,13 @@ describe("attachment-test - refreshMeta", function () {
 // ==== Test Case
 
 describe('attachment npm functions', function () {
-  var sandbox, app;
+  var app;
   var registryPath = path.join(__dirname, 'registry');
 
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(registry, 'refreshMeta');
-    sandbox.stub(registry, 'writeMeta');
-    sandbox.stub(registry, 'getMeta').returns({
+    sinon.stub(registry, 'refreshMeta');
+    sinon.stub(registry, 'writeMeta');
+    sinon.stub(registry, 'getMeta').returns({
       settings : { registryPath : registryPath }
     });
 
@@ -717,7 +693,7 @@ describe('attachment npm functions', function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   describe('#get', function () {
@@ -729,7 +705,7 @@ describe('attachment npm functions', function () {
       };
       route.get.returns(route);
       route.put.returns(route);
-      sandbox.stub(app, 'route').returns(route);
+      sinon.stub(app, 'route').returns(route);
 
       attachment.route(app);
 
@@ -756,9 +732,9 @@ describe('attachment npm functions', function () {
 
     it('uploads attachment', function (done) {
       var filePath = path.join(__dirname, 'registry/proxied/proxied-1.0.0.tgz');
-      sandbox.stub(attachment, "refreshMeta");
-      sandbox.stub(registry, "setPackage");
-      sandbox.stub(fs, "createWriteStream");
+      sinon.stub(attachment, "refreshMeta");
+      sinon.stub(registry, "setPackage");
+      sinon.stub(fs, "createWriteStream");
       fs.createWriteStream.returns({
         on    : sinon.stub(),
         once  : sinon.stub(),
@@ -794,9 +770,9 @@ describe('attachment npm functions', function () {
 
     it('deletes attachment', function (done) {
       var filePath = path.join(__dirname, 'registry/proxied/proxied-1.0.0.tgz');
-      sandbox.stub(attachment, "refreshMeta");
-      sandbox.stub(registry, "setPackage");
-      sandbox.stub(fs, "unlinkSync");
+      sinon.stub(attachment, "refreshMeta");
+      sinon.stub(registry, "setPackage");
+      sinon.stub(fs, "unlinkSync");
 
       attachment.route(app);
 

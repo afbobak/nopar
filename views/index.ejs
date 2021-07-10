@@ -1,11 +1,11 @@
 <!DOCTYPE html><% var active_page = "packages"; %>
-<% include snippets/html_head %>
+<%- include('snippets/html_head') %>
   <body>
-    <% include snippets/chromeframe %>
-    <% include snippets/navbar %>
+    <%- include('snippets/chromeframe') %>
+    <%- include('snippets/navbar', {active_page: active_page, version: version}) %>
 
     <div class="container">
-      <% include snippets/alert %>
+      <%- include('snippets/alert') %>
 
       <h3>Packages</h3>
       <dl class="dl-horizontal">
@@ -15,6 +15,6 @@
       </dl>
     </div>
 
-    <% include snippets/js %>
+    <%- include('snippets/js') %>
   </body>
 </html>

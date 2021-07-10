@@ -39,20 +39,16 @@ var metaVersion = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package
 // ==== Test Case
 
 describe("registry-test", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(fs, "existsSync");
-    sandbox.stub(fs, "readFileSync").returns("{}");
-    sandbox.stub(fs, "mkdirSync");
-    sandbox.stub(fs, "writeFileSync");
-    sandbox.stub(fs, "readdirSync").returns([]);
+    sinon.stub(fs, "existsSync");
+    sinon.stub(fs, "readFileSync").returns("{}");
+    sinon.stub(fs, "mkdirSync");
+    sinon.stub(fs, "writeFileSync");
+    sinon.stub(fs, "readdirSync").returns([]);
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
     registry.destroy();
   });
 
@@ -145,7 +141,7 @@ describe("registry-test", function () {
 
   describe("get pkg", function () {
     beforeEach(function () {
-      sandbox.stub(registry, "refreshMeta");
+      sinon.stub(registry, "refreshMeta");
 
       fs.existsSync.withArgs("/some/path/registry").returns(true);
       fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -220,17 +216,13 @@ describe("registry-test", function () {
 // ==== Test Case
 
 describe("registry-test - get pkg version", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(fs, "existsSync");
-    sandbox.stub(fs, "readFileSync");
-    sandbox.stub(fs, "mkdirSync");
-    sandbox.stub(fs, "writeFileSync");
-    sandbox.stub(fs, "statSync").returns({ mtime : new Date() });
-    sandbox.stub(registry, "refreshMeta");
+    sinon.stub(fs, "existsSync");
+    sinon.stub(fs, "readFileSync");
+    sinon.stub(fs, "mkdirSync");
+    sinon.stub(fs, "writeFileSync");
+    sinon.stub(fs, "statSync").returns({ mtime : new Date() });
+    sinon.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -250,7 +242,7 @@ describe("registry-test - get pkg version", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
     registry.destroy();
   });
 
@@ -304,16 +296,12 @@ describe("registry-test - get pkg version", function () {
 // ==== Test Case
 
 describe("registry-test - write pkg", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(fs, "existsSync");
-    sandbox.stub(fs, "readFileSync");
-    sandbox.stub(fs, "mkdirSync");
-    sandbox.stub(fs, "writeFileSync");
-    sandbox.stub(registry, "refreshMeta");
+    sinon.stub(fs, "existsSync");
+    sinon.stub(fs, "readFileSync");
+    sinon.stub(fs, "mkdirSync");
+    sinon.stub(fs, "writeFileSync");
+    sinon.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -330,7 +318,7 @@ describe("registry-test - write pkg", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
     registry.destroy();
   });
 
@@ -401,7 +389,7 @@ describe("registry-test - write pkg", function () {
 
     registry.setPackage(pkg);
 
-    sinon.assert.notCalled(fs.mkdirSync, "/some/path/registry/pkg");
+    sinon.assert.neverCalledWith(fs.mkdirSync, "/some/path/registry/pkg");
     sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/pkg/pkg.json",
       JSON.stringify(pkg));
   });
@@ -419,7 +407,7 @@ describe("registry-test - write pkg", function () {
 
     registry.setPackage(pkg);
 
-    sinon.assert.notCalled(fs.mkdirSync, "/some/path/registry/@scoped/pkg");
+    sinon.assert.neverCalledWith(fs.mkdirSync, "/some/path/registry/@scoped/pkg");
     sinon.assert.calledWith(fs.writeFileSync, "/some/path/registry/@scoped/pkg/pkg.json",
       JSON.stringify(pkg));
   });
@@ -428,16 +416,12 @@ describe("registry-test - write pkg", function () {
 // ==== Test Case
 
 describe("registry-test - delete pkg", function () {
-  var sandbox;
-
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-
-    sandbox.stub(fs, "existsSync");
-    sandbox.stub(fs, "readFileSync");
-    sandbox.stub(fs, "writeFileSync");
-    sandbox.stub(fs, "unlinkSync");
-    sandbox.stub(registry, "refreshMeta");
+    sinon.stub(fs, "existsSync");
+    sinon.stub(fs, "readFileSync");
+    sinon.stub(fs, "writeFileSync");
+    sinon.stub(fs, "unlinkSync");
+    sinon.stub(registry, "refreshMeta");
 
     fs.existsSync.withArgs("/some/path/registry").returns(true);
     fs.existsSync.withArgs("/some/path/registry/registry.json").returns(true);
@@ -453,7 +437,7 @@ describe("registry-test - delete pkg", function () {
   });
 
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
     registry.destroy();
   });
 
@@ -477,7 +461,7 @@ describe("registry-test - delete pkg", function () {
 
   it("should unlink package meta", function () {
     fs.existsSync.returns(true);
-    sandbox.stub(registry, "getPackage").returns({"_proxied" : true});
+    sinon.stub(registry, "getPackage").returns({"_proxied" : true});
 
     registry.removePackage("pkg");
 
@@ -494,7 +478,7 @@ describe("registry-test - delete pkg", function () {
 
   it("should unlink scoped package meta", function () {
     fs.existsSync.returns(true);
-    sandbox.stub(registry, "getPackage").returns({"_proxied" : true});
+    sinon.stub(registry, "getPackage").returns({"_proxied" : true});
 
     registry.removePackage("@scoped/pkg");
 
@@ -513,14 +497,8 @@ describe("registry-test - delete pkg", function () {
 // ==== Test Case
 
 describe("registry-test - dependents", function () {
-  var sandbox;
-
-  beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-  });
-
   afterEach(function () {
-    sandbox.restore();
+    sinon.restore();
   });
 
   it("should have function", function () {
@@ -528,7 +506,7 @@ describe("registry-test - dependents", function () {
   });
 
   it("should walk packages", function () {
-    sandbox.stub(registry, "iteratePackages");
+    sinon.stub(registry, "iteratePackages");
 
     registry.getDependents({
       name : "nopar",
