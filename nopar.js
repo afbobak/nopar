@@ -7,6 +7,6 @@ if (process.argv.length === 3 && process.argv[2] === '--detach') {
 var NOPAR_RUN_PATH = process.env['NOPAR_RUN_PATH'] || '.';
 var fs = require("fs");
 var path = require("path");
-fs.writeFileSync(path.join(NOPAR_RUN_PATH, "nopar.pid"), process.pid);
+fs.writeFileSync(path.join(NOPAR_RUN_PATH, "nopar.pid"), String(process.pid));
 
 require('./lib/server').start();
